@@ -75,7 +75,7 @@ return array(
     ),
     'hero' => array(
         array(
-            'src' => 'banner-nueva-coleccion.jpg',
+            'src' => 'banner-nueva-coleccion.png',
             'alt' => 'Nueva colección. La magia de crecer. Prendas llenas de encanto para acompañar cada historia de la infancia.',
         ),
         array(

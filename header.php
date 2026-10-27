@@ -19,7 +19,7 @@ $nj_search_action = nj_home_url();
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Baloo+2:wght@700;800&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
   <?php if (defined('NJ_PREVIEW')) : ?>
-    <link rel="stylesheet" href="assets/home.css?v=1.6.0">
+    <link rel="stylesheet" href="assets/home.css?v=1.7.1">
   <?php endif; ?>
   <?php if (function_exists('wp_head')) { wp_head(); } ?>
 </head>
@@ -39,7 +39,6 @@ $nj_search_action = nj_home_url();
             <?php endif; ?>
           </div>
         <?php endforeach; ?>
-        <a class="nav-link nav-link--sale" href="<?php echo esc_url($nj_menu['sale']['href']); ?>"><?php nj_e($nj_menu['sale']['label']); ?></a>
       </nav>
       <?php require __DIR__ . '/template-parts/marca.php'; ?>
       <div class="header-tools">
@@ -81,7 +80,6 @@ $nj_search_action = nj_home_url();
           <a class="nav-drawer__child" href="<?php echo esc_url($child['href']); ?>"><?php nj_e($child['label']); ?></a>
         <?php endforeach; ?>
       <?php endforeach; ?>
-      <a class="nav-link--sale" href="<?php echo esc_url($nj_menu['sale']['href']); ?>"><?php nj_e($nj_menu['sale']['label']); ?></a>
       <a href="<?php echo esc_url($nj_menu['collections']['href']); ?>"><?php nj_e($nj_menu['collections']['label']); ?></a>
       <?php foreach ($nj_menu['collections']['children'] as $child) : ?>
         <a class="nav-drawer__child" href="<?php echo esc_url($child['href']); ?>"><?php nj_e($child['label']); ?></a>

@@ -12,14 +12,16 @@ if (!function_exists('nj_pages_mail')) {
 if (!function_exists('nj_pages_copy')) {
     function nj_pages_copy() {
         $mail = nj_pages_mail();
-        $threshold = function_exists('nj_slots_data') ? (int) nj_slots_data()['bag']['free_shipping'] : 180000;
+        $threshold = function_exists('nj_slots_data') ? (int) nj_slots_data()['bag']['free_shipping'] : 250000;
+        $fee_amount = function_exists('nj_slots_data') && isset(nj_slots_data()['bag']['shipping_cost']) ? (int) nj_slots_data()['bag']['shipping_cost'] : 15000;
         $free = '$' . number_format($threshold, 0, ',', '.');
+        $fee = '$' . number_format($fee_amount, 0, ',', '.');
         return array(
             'preguntas-frecuentes' => array(
                 'option' => 'nj_page_preguntas',
                 'title' => 'Preguntas frecuentes',
                 'html' => '<p>Elige la talla en la ficha y pulsa Agregar a mi bolsa. La bolsa es el carrito de la tienda. Desde ahí pasas a pagar.</p>'
-                    . '<p>Enviamos a Colombia. A partir de ' . $free . ' el envío es gratis.</p>'
+                    . '<p>Enviamos a Colombia. El domicilio es ' . $fee . '. A partir de ' . $free . ' el envío es gratis.</p>'
                     . '<p>Si la talla no ajusta, escribe a <a href="mailto:' . $mail . '">' . $mail . '</a> con el número de pedido.</p>'
                     . '<p>Las tallas de ropa son 2T, 3T, 4T, 5T y 6. Los accesorios van en talla única.</p>',
             ),
@@ -27,7 +29,7 @@ if (!function_exists('nj_pages_copy')) {
                 'option' => 'nj_page_envios',
                 'title' => 'Envíos',
                 'html' => '<p>Enviamos a Colombia. El pedido sale después de confirmar el pago.</p>'
-                    . '<p>A partir de ' . $free . ' el envío es gratis. Por debajo de ese valor, el costo aparece en el checkout antes de pagar.</p>'
+                    . '<p>A partir de ' . $free . ' el envío es gratis. Por debajo de ese valor, el domicilio es ' . $fee . '.</p>'
                     . '<p>El correo de confirmación llega a la dirección que escribes al pedir.</p>',
             ),
             'cambios' => array(
@@ -137,11 +139,17 @@ if (!function_exists('nj_pages_store_titles')) {
 
 if (!function_exists('nj_pages_shipping_rule')) {
     function nj_pages_shipping_rule() {
-        if (get_option('nj_shipping_rule') === '1' || !class_exists('WC_Shipping_Zones') || !function_exists('nj_slots_data')) {
+        if (!class_exists('WC_Shipping_Zones') || !function_exists('nj_slots_data')) {
             return;
         }
-        $threshold = (string) (int) nj_slots_data()['bag']['free_shipping'];
+        $bag = nj_slots_data()['bag'];
+        $threshold = (string) (int) $bag['free_shipping'];
+        $cost = (string) (int) (isset($bag['shipping_cost']) ? $bag['shipping_cost'] : 15000);
+        if (get_option('nj_shipping_min') === $threshold && get_option('nj_shipping_cost') === $cost && get_option('nj_shipping_rule') === '1') {
+            return;
+        }
         $done = false;
+        $has_flat = false;
         foreach (WC_Shipping_Zones::get_zones() as $zone_data) {
             $matches = false;
             foreach ($zone_data['zone_locations'] as $location) {
@@ -156,12 +164,14 @@ if (!function_exists('nj_pages_shipping_rule')) {
             }
             $zone = new WC_Shipping_Zone($zone_data['zone_id']);
             $has_flat = false;
+            $has_free = false;
             foreach ($zone->get_shipping_methods() as $method) {
                 $live = WC_Shipping_Zones::get_shipping_method($method->get_instance_id());
                 if (!$live) {
                     continue;
                 }
                 if ($live->id === 'free_shipping') {
+                    $has_free = true;
                     $key = $live->get_instance_option_key();
                     $settings = get_option($key, array());
                     if (!is_array($settings)) {
@@ -180,14 +190,28 @@ if (!function_exists('nj_pages_shipping_rule')) {
                     $has_flat = true;
                     $key = $live->get_instance_option_key();
                     $settings = get_option($key, array());
-                    if (!is_array($settings) || !isset($settings['title'])) {
-                        update_option($key, array(
-                            'title' => 'Envio a Colombia',
-                            'tax_status' => 'none',
-                            'cost' => '0',
-                            'type' => 'class',
-                        ));
+                    if (!is_array($settings)) {
+                        $settings = array();
                     }
+                    $settings['title'] = 'Envio a Colombia';
+                    $settings['tax_status'] = isset($settings['tax_status']) ? $settings['tax_status'] : 'none';
+                    $settings['cost'] = $cost;
+                    $settings['type'] = isset($settings['type']) ? $settings['type'] : 'class';
+                    update_option($key, $settings);
+                    $done = true;
+                }
+            }
+            if (!$has_free) {
+                $instance = $zone->add_shipping_method('free_shipping');
+                $free = WC_Shipping_Zones::get_shipping_method($instance);
+                if ($free) {
+                    update_option($free->get_instance_option_key(), array(
+                        'title' => 'Envio gratis',
+                        'requires' => 'min_amount',
+                        'min_amount' => $threshold,
+                        'ignore_discounts' => 'no',
+                    ));
+                    $done = true;
                 }
             }
             if (!$has_flat) {
@@ -197,14 +221,33 @@ if (!function_exists('nj_pages_shipping_rule')) {
                     update_option($flat->get_instance_option_key(), array(
                         'title' => 'Envio a Colombia',
                         'tax_status' => 'none',
-                        'cost' => '0',
+                        'cost' => $cost,
                         'type' => 'class',
                     ));
                 }
             }
         }
-        if ($done) {
+        if ($done || $has_flat) {
             update_option('nj_shipping_rule', '1');
+            update_option('nj_shipping_min', $threshold);
+            update_option('nj_shipping_cost', $cost);
+            if (function_exists('nj_pages_copy') && function_exists('wp_update_post')) {
+                foreach (nj_pages_copy() as $page) {
+                    if (!in_array($page['option'], array('nj_page_preguntas', 'nj_page_envios'), true)) {
+                        continue;
+                    }
+                    $page_id = (int) get_option($page['option']);
+                    if ($page_id) {
+                        wp_update_post(array(
+                            'ID' => $page_id,
+                            'post_content' => $page['html'],
+                        ));
+                    }
+                }
+            }
+            if (class_exists('WC_Cache_Helper')) {
+                WC_Cache_Helper::get_transient_version('shipping', true);
+            }
         }
     }
 }
@@ -214,7 +257,7 @@ if (!function_exists('nj_pages_shipping')) {
         if (!class_exists('WC_Shipping_Zones')) {
             return;
         }
-        $threshold = function_exists('nj_slots_data') ? (string) (int) nj_slots_data()['bag']['free_shipping'] : '180000';
+        $threshold = function_exists('nj_slots_data') ? (string) (int) nj_slots_data()['bag']['free_shipping'] : '250000';
         foreach (WC_Shipping_Zones::get_zones() as $zone) {
             foreach ($zone['zone_locations'] as $location) {
                 if ($location->type === 'country' && $location->code === 'CO') {
@@ -288,6 +331,31 @@ if (!function_exists('nj_shipping_label')) {
         return $label;
     }
 }
+if (!function_exists('nj_shipping_threshold_rates')) {
+    function nj_shipping_threshold_rates($rates, $package) {
+        if (!function_exists('nj_slots_data') || !function_exists('WC') || !WC()->cart) {
+            return $rates;
+        }
+        $threshold = (int) nj_slots_data()['bag']['free_shipping'];
+        $total = (float) WC()->cart->get_displayed_subtotal();
+        if ($total >= $threshold) {
+            $free = array();
+            foreach ($rates as $id => $rate) {
+                if ($rate->get_method_id() === 'free_shipping') {
+                    $free[$id] = $rate;
+                }
+            }
+            return $free ? $free : $rates;
+        }
+        foreach ($rates as $id => $rate) {
+            if ($rate->get_method_id() === 'free_shipping') {
+                unset($rates[$id]);
+            }
+        }
+        return $rates;
+    }
+}
 if (function_exists('add_filter')) {
     add_filter('woocommerce_shipping_rate_label', 'nj_shipping_label');
+    add_filter('woocommerce_package_rates', 'nj_shipping_threshold_rates', 20, 2);
 }

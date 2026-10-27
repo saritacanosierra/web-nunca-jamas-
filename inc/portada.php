@@ -8,7 +8,7 @@ require_once __DIR__ . '/cards.php';
 if (!function_exists('nj_hero_link')) {
     function nj_hero_link($index) {
         if ($index === 0) {
-            return nj_shop_link('sale');
+            return nj_shop_link('shop');
         }
         if ($index === 2) {
             return nj_shop_link('newest');
@@ -49,7 +49,6 @@ if (!function_exists('nj_home_tabs')) {
             return array(
                 array('id' => 'nuevo', 'label' => 'Lo nuevo', 'items' => $cards, 'url' => $url),
                 array('id' => 'coleccion', 'label' => 'Colección', 'items' => $cards, 'url' => $url),
-                array('id' => 'sale', 'label' => 'Sale', 'items' => $cards, 'url' => $url),
             );
         }
         $newest = nj_home_wc_products(array(
@@ -58,12 +57,6 @@ if (!function_exists('nj_home_tabs')) {
             'orderby' => 'date',
             'order' => 'DESC',
         ));
-        $sale_ids = function_exists('wc_get_product_ids_on_sale') ? wc_get_product_ids_on_sale() : array();
-        $sale = $sale_ids ? nj_home_wc_products(array(
-            'status' => 'publish',
-            'limit' => 8,
-            'include' => $sale_ids,
-        )) : array();
         $collection = nj_home_wc_products(array(
             'status' => 'publish',
             'limit' => 8,
@@ -75,7 +68,6 @@ if (!function_exists('nj_home_tabs')) {
         return array(
             nj_tab('nuevo', 'Lo nuevo', $newest, nj_shop_link('newest'), true),
             nj_tab('coleccion', 'Colección', $collection, nj_shop_link('shop'), true),
-            nj_tab('sale', 'Sale', $sale, nj_shop_link('sale'), true),
         );
     }
 }

@@ -31,7 +31,6 @@ $nj_quick = array(
     </a>
     <?php if (!empty($item['badge'])) : ?>
       <span class="badge-sale"><?php echo esc_html($item['badge']); ?></span>
-      <a class="product-card__chip" href="<?php echo esc_url($item['url']); ?>">Sale</a>
     <?php endif; ?>
     <div class="product-card__tools">
       <button class="product-card__icon" type="button" data-save aria-pressed="false" aria-label="Guardar">

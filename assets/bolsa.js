@@ -64,7 +64,11 @@
     drawer.querySelector("[data-bag-subtotal]").textContent = money(sum.subtotal);
     drawer.querySelector("[data-bag-discount]").textContent = (sum.discount ? "-" : "") + money(sum.discount);
     drawer.querySelector("[data-bag-total]").textContent = money(sum.total);
-    var missing = freeShipping - sum.total;
+    var merchandise = 0;
+    lines.forEach(function (line) {
+      merchandise += (Number(line.price) || 0) * (Number(line.qty) || 0);
+    });
+    var missing = freeShipping - merchandise;
     var shipping = drawer.querySelector("[data-bag-shipping]");
     var meter = drawer.querySelector("[data-bag-meter]");
     if (!lines.length) {
@@ -72,7 +76,7 @@
       meter.style.width = "0%";
     } else if (missing > 0) {
       shipping.textContent = "¡Te hacen falta " + money(missing) + " para obtener envío gratis!";
-      meter.style.width = Math.min(100, (sum.total / freeShipping) * 100) + "%";
+      meter.style.width = Math.min(100, (merchandise / freeShipping) * 100) + "%";
     } else {
       shipping.textContent = "¡Ya tienes envío gratis!";
       meter.style.width = "100%";

@@ -6,21 +6,11 @@ $nj_tabs = nj_home_tabs();
 $nj_styles = nj_style_items();
 ?>
 <main>
-  <section class="hero" data-hero>
+  <section class="hero hero--banners" data-hero>
     <?php foreach ($nj['hero'] as $i => $slide) : ?>
-      <article class="hero__slide<?php echo $i === 0 ? ' is-active' : ''; ?>" style="--slide-image: url('<?php echo esc_url(nj_img($slide['src'])); ?>')">
-        <div class="hero__card">
-          <small><?php nj_e($slide['kicker']); ?></small>
-          <h1><?php echo esc_html($slide['title']); ?></h1>
-          <p><?php nj_e($slide['text']); ?></p>
-          <a class="btn btn-red" href="<?php echo esc_url(nj_hero_link($i)); ?>"><?php nj_e($slide['button']); ?></a>
-        </div>
-        <div class="hero__sale" aria-hidden="true">
-          <span class="sale-top"><?php nj_e($slide['sale_top']); ?></span>
-          <span class="sale-big"><?php nj_e($slide['sale_big']); ?></span>
-          <span class="sale-bottom"><?php nj_e($slide['sale_bottom']); ?></span>
-        </div>
-      </article>
+      <a class="hero__slide<?php echo $i === 0 ? ' is-active' : ''; ?>" href="<?php echo esc_url(nj_section_link('Colecciones')); ?>">
+        <img src="<?php echo esc_url(nj_img($slide['src'])); ?>" alt="<?php echo esc_attr($slide['alt']); ?>">
+      </a>
     <?php endforeach; ?>
     <button class="hero__arrow hero__arrow--prev" type="button" data-prev aria-label="Anterior">
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5 L8 12 L15 19"/></svg>
@@ -50,7 +40,7 @@ $nj_styles = nj_style_items();
       <?php foreach ($nj_tabs as $index => $tab) : ?>
         <div class="catalog-panel<?php echo $index === 0 ? ' is-active' : ''; ?>" data-panel="<?php echo esc_attr($tab['id']); ?>" role="tabpanel">
           <?php if (!$tab['items']) : ?>
-            <p class="empty-shop">Todavía no hay prendas en esta vista. En WooCommerce, las ofertas aparecen al ponerles precio de sale.</p>
+            <p class="empty-shop">Todavía no hay prendas en esta vista.</p>
           <?php else : ?>
             <div class="product-grid">
               <?php foreach ($tab['items'] as $item) : ?>

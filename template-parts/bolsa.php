@@ -1,5 +1,5 @@
 <?php
-$nj_bag = function_exists('nj_slots_data') ? nj_slots_data()['bag'] : array('free_shipping' => 180000, 'whatsapp' => '');
+$nj_bag = function_exists('nj_slots_data') ? nj_slots_data()['bag'] : array('free_shipping' => 250000, 'shipping_cost' => 15000, 'whatsapp' => '');
 $nj_checkout = function_exists('nj_shop_link') ? nj_shop_link('checkout') : '#';
 ?>
 <?php

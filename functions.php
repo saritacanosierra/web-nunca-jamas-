@@ -7,6 +7,8 @@ require_once get_template_directory() . '/inc/catalog.php';
 require_once get_template_directory() . '/inc/portada.php';
 require_once get_template_directory() . '/inc/ficha.php';
 require_once get_template_directory() . '/inc/paginas.php';
+require_once get_template_directory() . '/inc/whatsapp.php';
+require_once get_template_directory() . '/inc/avisos.php';
 
 function nj_setup() {
     add_theme_support('title-tag');
@@ -33,9 +35,9 @@ function nj_assets() {
         array(),
         null
     );
-    wp_enqueue_style('nj-home', get_template_directory_uri() . '/assets/home.css', array('nj-fonts'), '1.6.0');
-    wp_enqueue_script('nj-bolsa', get_template_directory_uri() . '/assets/bolsa.js', array(), '1.1.1', true);
-    wp_enqueue_script('nj-tienda', get_template_directory_uri() . '/assets/tienda.js', array('nj-bolsa'), '1.3.2', true);
+    wp_enqueue_style('nj-home', get_template_directory_uri() . '/assets/home.css', array('nj-fonts'), '1.7.1');
+    wp_enqueue_script('nj-bolsa', get_template_directory_uri() . '/assets/bolsa.js', array(), '1.1.2', true);
+    wp_enqueue_script('nj-tienda', get_template_directory_uri() . '/assets/tienda.js', array('nj-bolsa'), '1.3.3', true);
     if (function_exists('WC') && WC() && function_exists('home_url') && function_exists('add_query_arg')) {
         wp_localize_script('nj-bolsa', 'njShop', array(
             'ajax' => add_query_arg('wc-ajax', 'add_to_cart', home_url('/')),
@@ -50,24 +52,36 @@ function nj_assets() {
 }
 add_action('wp_enqueue_scripts', 'nj_assets');
 
+function nj_order_footer_fallback() {
+    if (!empty($GLOBALS['nj_theme_footer'])) {
+        return;
+    }
+    $received = function_exists('is_order_received_page') && is_order_received_page();
+    $pay = function_exists('is_checkout_pay_page') && is_checkout_pay_page();
+    if (!$received && !$pay) {
+        return;
+    }
+    require get_template_directory() . '/template-parts/pie.php';
+}
+add_action('wp_footer', 'nj_order_footer_fallback', 4);
+
+function nj_store_chrome() {
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+    require get_template_directory() . '/template-parts/vista-rapida.php';
+    require get_template_directory() . '/template-parts/bolsa.php';
+}
+add_action('wp_footer', 'nj_store_chrome', 5);
+
 function nj_woocommerce_layout() {
     remove_action('woocommerce_before_main_content', 'woocommerce_output_content_wrapper', 10);
     remove_action('woocommerce_after_main_content', 'woocommerce_output_content_wrapper_end', 10);
     remove_action('woocommerce_sidebar', 'woocommerce_get_sidebar', 10);
 }
 add_action('init', 'nj_woocommerce_layout');
-
-function nj_sale_query($query) {
-    if (is_admin() || !$query->is_main_query()) {
-        return;
-    }
-    if (!isset($_GET['on_sale']) || $_GET['on_sale'] !== '1') {
-        return;
-    }
-    $ids = wc_get_product_ids_on_sale();
-    $query->set('post__in', $ids ? $ids : array(0));
-}
-add_action('woocommerce_product_query', 'nj_sale_query');
 
 function nj_cart_fragments($fragments) {
     $fragments['span.bag-count'] = '<span class="bag-count">' . esc_html((string) nj_cart_count()) . '</span>';

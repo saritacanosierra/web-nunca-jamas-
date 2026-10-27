@@ -7,7 +7,8 @@
 
 return array(
     'bag' => array(
-        'free_shipping' => 180000,
+        'free_shipping' => 250000,
+        'shipping_cost' => 15000,
         'whatsapp' => 'https://nuncajamasropa.com/',
     ),
     'menu' => array(
@@ -57,10 +58,6 @@ return array(
                 ),
             ),
         ),
-        'sale' => array(
-            'label' => 'Sale',
-            'href' => '',
-        ),
         'collections' => array(
             'label' => 'Colecciones',
             'href' => 'https://nuncajamasropa.com/categoria-producto/colecciones/',
@@ -78,40 +75,12 @@ return array(
     ),
     'hero' => array(
         array(
-            'src' => 'cover-spring.jpg',
-            'alt' => 'Foto de biblioteca para el hero',
-            'kicker' => 'Hot days',
-            'title' => "Días\nde magia",
-            'text' => 'Nuevos precios especiales para ti',
-            'button' => 'Comprar ahora',
-            'href' => 'https://nuncajamasropa.com/categoria-producto/colecciones/',
-            'sale_top' => 'Hasta',
-            'sale_big' => '60%',
-            'sale_bottom' => 'Off',
+            'src' => 'banner-nueva-coleccion.jpg',
+            'alt' => 'Nueva colección. La magia de crecer. Prendas llenas de encanto para acompañar cada historia de la infancia.',
         ),
         array(
-            'src' => 'cover-resort.jpg',
-            'alt' => 'Foto de biblioteca para la segunda diapositiva',
-            'kicker' => 'Colección',
-            'title' => "Looks\nde cuento",
-            'text' => 'Prendas listas para estrenar',
-            'button' => 'Ver colección',
-            'href' => 'https://nuncajamasropa.com/categoria-producto/colecciones/',
-            'sale_top' => 'Nueva',
-            'sale_big' => 'Drop',
-            'sale_bottom' => '2026',
-        ),
-        array(
-            'src' => 'hero.jpg',
-            'alt' => 'Ropero de la biblioteca de medios',
-            'kicker' => 'Línea',
-            'title' => "Para\ncada día",
-            'text' => 'Colegio, parque y juego con la misma magia',
-            'button' => 'Ver línea',
-            'href' => 'https://nuncajamasropa.com/categoria-producto/linea/',
-            'sale_top' => 'Desde',
-            'sale_big' => '32',
-            'sale_bottom' => 'mil',
+            'src' => 'banner-felices.png',
+            'alt' => 'Colección Felices por siempre. Pequeñas princesas, grandes sueños y cuentos que nunca terminan.',
         ),
     ),
     'products' => array(

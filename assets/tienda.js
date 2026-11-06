@@ -1,11 +1,16 @@
 (function () {
-  function shopSizeMatch(data, size) {
+  function shopSizeMatch(data, size, color) {
     var rows = data.variations || [];
     var wanted = String(size).toLowerCase();
+    var wantedColor = color ? String(color).toLowerCase() : "";
     for (var i = 0; i < rows.length; i++) {
-      if (String(rows[i].size).toLowerCase() === wanted) {
-        return rows[i];
+      if (String(rows[i].size).toLowerCase() !== wanted) {
+        continue;
       }
+      if (wantedColor && String(rows[i].color || "").toLowerCase() !== wantedColor) {
+        continue;
+      }
+      return rows[i];
     }
     return null;
   }
@@ -30,12 +35,12 @@
     });
   }
 
-  function shopAdd(data, size) {
+  function shopAdd(data, size, color) {
     syncCartForm(size);
     if (window.njShop && window.njShop.ajax && data.id) {
       var body = new FormData();
       body.append("quantity", "1");
-      var variation = shopSizeMatch(data, size);
+      var variation = shopSizeMatch(data, size, color);
       if (variation && variation.id) {
         body.append("product_id", String(variation.id));
         body.append("variation_id", String(variation.id));
@@ -237,6 +242,7 @@
     var fichaData = JSON.parse(ficha.querySelector("[data-ficha-data]").textContent);
     var fichaTrack = ficha.querySelector("[data-ficha-track]");
     var fichaSize = "";
+    var fichaColor = "";
     var fichaAlert = ficha.querySelector("[data-ficha-alert]");
     var fichaSelect = ficha.querySelector("[data-ficha-size]");
 
@@ -259,15 +265,27 @@
       syncCartForm(fichaSize);
     }
 
+    function chooseFichaColor(color) {
+      fichaColor = color || "";
+      Array.prototype.forEach.call(ficha.querySelectorAll("[data-ficha-color-button]"), function (button) {
+        button.classList.toggle("is-selected", button.getAttribute("data-color") === fichaColor);
+      });
+      if (fichaAlert) {
+        fichaAlert.hidden = true;
+      }
+    }
+
     function addFicha() {
-      if (!fichaSize) {
+      var needsColor = ficha.querySelector("[data-ficha-color-button]");
+      if (!fichaSize || (needsColor && !fichaColor)) {
         if (fichaAlert) {
           fichaAlert.hidden = false;
+          fichaAlert.textContent = needsColor && !fichaColor ? "Elige un color y una talla para agregarla a la bolsa." : "Elige una talla para agregarla a la bolsa.";
         }
         return;
       }
       if (window.njBag) {
-        shopAdd(fichaData, fichaSize);
+        shopAdd(fichaData, fichaSize, fichaColor);
       }
     }
 
@@ -278,6 +296,11 @@
       fichaTrack.scrollBy({ left: fichaStep(), behavior: "smooth" });
     });
     ficha.addEventListener("click", function (event) {
+      var colorButton = event.target.closest("[data-ficha-color-button]");
+      if (colorButton) {
+        chooseFichaColor(colorButton.getAttribute("data-color"));
+        return;
+      }
       var sizeButton = event.target.closest("[data-ficha-size-button]");
       if (sizeButton) {
         chooseFichaSize(sizeButton.getAttribute("data-size"));

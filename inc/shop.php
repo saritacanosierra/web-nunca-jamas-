@@ -227,6 +227,12 @@ if (!function_exists('nj_menu_links')) {
 
 if (!function_exists('nj_menu')) {
     function nj_menu() {
+        if (!defined('NJ_PREVIEW') && function_exists('nj_tema_menu_live')) {
+            $saved = nj_tema_menu_live();
+            if (is_array($saved)) {
+                return $saved;
+            }
+        }
         $menu = nj_slots_data()['menu'];
         $menu['newest']['href'] = nj_shop_link('newest');
         foreach ($menu['departments'] as $i => $department) {

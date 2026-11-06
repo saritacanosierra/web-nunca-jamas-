@@ -5,23 +5,26 @@
 
 require_once __DIR__ . '/shop.php';
 
-if (!function_exists('nj_card_sizes')) {
-    function nj_card_sizes($product) {
-        if (!is_object($product) || !method_exists($product, 'is_type') || !$product->is_type('variable')) {
-            return array();
-        }
-        $attributes = $product->get_variation_attributes();
-        $options = array();
-        foreach ($attributes as $name => $values) {
-            $key = nj_menu_key(str_replace('pa_', '', $name));
-            if (strpos($key, 'talla') !== false || strpos($key, 'size') !== false) {
-                $options = $values;
-                break;
+if (!function_exists('nj_card_size_label')) {
+    function nj_card_size_label($attribute, $value) {
+        $taxonomy = str_replace('attribute_', '', (string) $attribute);
+        if (strpos($taxonomy, 'pa_') === 0 && function_exists('get_term_by')) {
+            $term = get_term_by('slug', (string) $value, $taxonomy);
+            if ($term && !is_wp_error($term)) {
+                return $term->name;
             }
         }
+        return (string) $value;
+    }
+}
+
+if (!function_exists('nj_card_sizes')) {
+    function nj_card_sizes($product) {
         $labels = array();
-        foreach ($options as $value) {
-            $labels[] = (string) $value;
+        foreach (nj_card_variations($product) as $row) {
+            if ($row['size'] !== '' && !in_array($row['size'], $labels, true)) {
+                $labels[] = $row['size'];
+            }
         }
         return $labels;
     }
@@ -138,13 +141,17 @@ if (!function_exists('nj_card_variations')) {
         }
         foreach ($product->get_available_variations() as $variation) {
             $size = '';
+            $color = '';
             $attributes = array();
             if (!empty($variation['attributes']) && is_array($variation['attributes'])) {
                 foreach ($variation['attributes'] as $key => $value) {
                     $attributes[$key] = $value;
                     $name = nj_menu_key(str_replace('attribute_pa_', '', (string) $key));
                     if ($size === '' && (strpos($name, 'talla') !== false || strpos($name, 'size') !== false)) {
-                        $size = (string) $value;
+                        $size = nj_card_size_label($key, $value);
+                    }
+                    if ($color === '' && (strpos($name, 'color') !== false || strpos($name, 'colour') !== false)) {
+                        $color = nj_card_size_label($key, $value);
                     }
                 }
                 if ($size === '' && count($attributes) === 1) {
@@ -154,6 +161,7 @@ if (!function_exists('nj_card_variations')) {
             $rows[] = array(
                 'id' => isset($variation['variation_id']) ? (int) $variation['variation_id'] : 0,
                 'size' => $size,
+                'color' => $color,
                 'attributes' => $attributes,
             );
         }

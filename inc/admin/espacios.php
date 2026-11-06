@@ -86,22 +86,30 @@ if (!function_exists('nj_espacios_panel_styles')) {
     function nj_espacios_panel_styles() {
         ?>
         <h2>Categorías</h2>
-        <p>Son los círculos de “Compra por categorías”. Sube una foto cuadrada para cada una.</p>
+        <p>Son los círculos de “Compra por categorías”. Cambia el nombre y la foto, agrega una nueva o elimina la que ya no quieres. Al guardar, la categoría también se crea o se borra en la tienda.</p>
         <?php nj_espacios_form_open('styles'); ?>
-        <div class="nj-photo-grid nj-photo-grid--small">
+        <div class="nj-photo-grid nj-photo-grid--small" data-nj-style-list>
           <?php foreach (nj_espacios_rows('styles') as $index => $row) :
               $src = nj_espacio_url(isset($row['image']) ? $row['image'] : 0, isset($row['src']) ? $row['src'] : '');
               ?>
-            <div class="nj-photo nj-photo--square" data-nj-photo>
-              <img alt="" src="<?php echo esc_url($src); ?>">
+            <div class="nj-photo nj-photo--square" data-nj-photo data-nj-style>
+              <img alt=""<?php echo $src === '' ? ' hidden' : ' src="' . esc_url($src) . '"'; ?>>
               <div class="nj-photo-body">
-                <strong><?php echo esc_html(isset($row['label']) ? $row['label'] : ''); ?></strong>
                 <input data-nj-id type="hidden" name="espacios[<?php echo (int) $index; ?>][image]" value="<?php echo esc_attr((string) (isset($row['image']) ? (int) $row['image'] : 0)); ?>">
-                <button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button>
+                <input type="hidden" name="espacios[<?php echo (int) $index; ?>][src]" value="<?php echo esc_attr(isset($row['src']) ? $row['src'] : ''); ?>">
+                <input type="hidden" name="espacios[<?php echo (int) $index; ?>][term]" value="<?php echo esc_attr((string) (isset($row['term']) ? (int) $row['term'] : 0)); ?>">
+                <label>Nombre
+                  <input type="text" name="espacios[<?php echo (int) $index; ?>][label]" value="<?php echo esc_attr(isset($row['label']) ? $row['label'] : ''); ?>">
+                </label>
+                <p class="nj-prenda-actions">
+                  <button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button>
+                  <button type="button" class="button" data-nj-style-remove>Eliminar</button>
+                </p>
               </div>
             </div>
           <?php endforeach; ?>
         </div>
+        <p><button type="button" class="button" data-nj-style-add>Agregar categoría</button></p>
         <?php nj_espacios_form_close('Guardar categorías');
     }
 }

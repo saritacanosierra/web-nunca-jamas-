@@ -284,6 +284,43 @@ if (!function_exists('nj_catalog_queried_term')) {
     }
 }
 
+if (!function_exists('nj_catalog_category_pills')) {
+    function nj_catalog_category_pills($current_id) {
+        $shop = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : nj_home_url();
+        $pills = array(array(
+            'label' => 'Todas',
+            'href' => $shop,
+            'active' => $current_id < 1,
+        ));
+        if (!function_exists('get_terms')) {
+            return $pills;
+        }
+        $terms = get_terms(array(
+            'taxonomy' => 'product_cat',
+            'hide_empty' => false,
+            'orderby' => 'name',
+        ));
+        if (is_wp_error($terms) || !is_array($terms)) {
+            return $pills;
+        }
+        foreach ($terms as $term) {
+            if (in_array($term->slug, array('uncategorized', 'sin-categorizar'), true)) {
+                continue;
+            }
+            $link = get_term_link($term);
+            if (is_wp_error($link)) {
+                continue;
+            }
+            $pills[] = array(
+                'label' => $term->name,
+                'href' => $link,
+                'active' => (int) $term->term_id === (int) $current_id,
+            );
+        }
+        return $pills;
+    }
+}
+
 if (!function_exists('nj_catalog_from_shop')) {
     function nj_catalog_from_shop() {
         $order = nj_catalog_request_order();
@@ -292,7 +329,6 @@ if (!function_exists('nj_catalog_from_shop')) {
         $lead = 'Prendas disponibles para estrenar.';
         $action = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : nj_home_url();
         $crumbs = array(array('label' => 'Inicio', 'href' => nj_home_url()));
-        $pills = array();
         if ($term && isset($term->term_id)) {
             $text = nj_plain_text(nj_term_description($term->term_id));
             if ($text !== '') {
@@ -304,8 +340,8 @@ if (!function_exists('nj_catalog_from_shop')) {
             }
             $crumbs = array_merge($crumbs, nj_catalog_ancestor_crumbs($term));
             $crumbs[] = array('label' => $term->name, 'href' => '');
-            $pills = nj_catalog_child_pills($term);
         }
+        $pills = nj_catalog_category_pills($term && isset($term->term_id) ? (int) $term->term_id : 0);
         return array(
             'title' => $title,
             'lead' => $lead,

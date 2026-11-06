@@ -11,8 +11,10 @@
       }
     });
     if (!found) {
-      id = "banner";
-      show(id);
+      var fallback = screens.length ? screens[0].getAttribute("data-screen") : "";
+      if (fallback && fallback !== id) {
+        show(fallback);
+      }
       return;
     }
     Array.prototype.forEach.call(nav, function (button) {
@@ -21,6 +23,69 @@
     if (window.history && window.history.replaceState) {
       window.history.replaceState(null, "", "#" + id);
     }
+    var section = document.querySelector("[name=nj_tema_section]");
+    if (section) {
+      section.value = id;
+    }
+  }
+
+  function reindexStyles(list) {
+    if (!list) {
+      return;
+    }
+    var cards = list.querySelectorAll("[data-nj-style]");
+    Array.prototype.forEach.call(cards, function (card, index) {
+      card.querySelectorAll("[name]").forEach(function (input) {
+        input.name = input.name.replace(/espacios\[\d+\]/, "espacios[" + index + "]");
+      });
+    });
+    var add = document.querySelector("[data-nj-style-add]");
+    if (add) {
+      add.disabled = cards.length >= 12;
+    }
+  }
+
+  function addStyleCard(list) {
+    if (!list || list.querySelectorAll("[data-nj-style]").length >= 12) {
+      return;
+    }
+    var index = list.querySelectorAll("[data-nj-style]").length;
+    var card = document.createElement("div");
+    card.className = "nj-photo nj-photo--square";
+    card.setAttribute("data-nj-photo", "");
+    card.setAttribute("data-nj-style", "");
+    card.innerHTML = ''
+      + '<img alt="" hidden>'
+      + '<div class="nj-photo-body">'
+      + '<input data-nj-id type="hidden" name="espacios[' + index + '][image]" value="0">'
+      + '<input type="hidden" name="espacios[' + index + '][src]" value="">'
+      + '<input type="hidden" name="espacios[' + index + '][term]" value="0">'
+      + '<label>Nombre <input type="text" name="espacios[' + index + '][label]" value="" placeholder="Nombre de la categoría"></label>'
+      + '<p class="nj-prenda-actions"><button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button><button type="button" class="button" data-nj-style-remove>Eliminar</button></p>'
+      + '</div>';
+    list.appendChild(card);
+    reindexStyles(list);
+    var field = card.querySelector("input[type=text]");
+    if (field) {
+      field.focus();
+    }
+  }
+
+  function reindexMenu(group) {
+    if (!group) {
+      return;
+    }
+    var prefix = group.getAttribute("data-nj-menu-name") || "";
+    var rows = group.querySelectorAll("[data-nj-menu-children] .nj-menu-row");
+    Array.prototype.forEach.call(rows, function (row, index) {
+      var inputs = row.querySelectorAll("input");
+      if (inputs[0]) {
+        inputs[0].name = prefix + "[children][" + index + "][label]";
+      }
+      if (inputs[1]) {
+        inputs[1].name = prefix + "[children][" + index + "][href]";
+      }
+    });
   }
 
   function reindexLooks(card) {
@@ -80,6 +145,146 @@
     reindexLooks(card);
   }
 
+  function attrBox(node) {
+    return node ? node.closest("[data-nj-attrs]") : null;
+  }
+
+  function colorNames(box) {
+    var names = [];
+    if (!box) {
+      return names;
+    }
+    Array.prototype.forEach.call(box.querySelectorAll("[data-nj-attr=color] [data-nj-attr-row] input[type=text]"), function (input) {
+      if (input.value.trim() !== "") {
+        names.push(input.value.trim());
+      }
+    });
+    return names;
+  }
+
+  function stockCell(color) {
+    var label = document.createElement("label");
+    label.className = "nj-celda";
+    label.setAttribute("data-nj-stock", "");
+    if (color) {
+      var span = document.createElement("span");
+      span.textContent = color;
+      label.appendChild(span);
+    }
+    var input = document.createElement("input");
+    input.type = "number";
+    input.min = "0";
+    input.max = "999";
+    input.name = "talla_celda[]";
+    input.value = "1";
+    input.setAttribute("aria-label", "Existencias");
+    label.appendChild(input);
+    return label;
+  }
+
+  function rebuildStocks(box) {
+    if (!box) {
+      return;
+    }
+    var colors = colorNames(box);
+    var labels = colors.length ? colors : [""];
+    Array.prototype.forEach.call(box.querySelectorAll("[data-nj-attr=talla] [data-nj-attr-row]"), function (row) {
+      var holder = row.querySelector("[data-nj-stocks]");
+      if (!holder) {
+        return;
+      }
+      var previous = [];
+      Array.prototype.forEach.call(holder.querySelectorAll("input"), function (input) {
+        previous.push(input.value);
+      });
+      holder.innerHTML = "";
+      labels.forEach(function (color, index) {
+        var cell = stockCell(color);
+        var input = cell.querySelector("input");
+        if (previous[index] !== undefined) {
+          input.value = previous[index];
+        }
+        holder.appendChild(cell);
+      });
+    });
+  }
+
+  function addAttrRow(box, kind) {
+    if (!box) {
+      return;
+    }
+    var list = box.querySelector("[data-nj-attr=" + kind + "] [data-nj-attr-list]");
+    if (!list || list.querySelectorAll("[data-nj-attr-row]").length >= 12) {
+      return;
+    }
+    var row = document.createElement("div");
+    row.className = "nj-attr-row";
+    row.setAttribute("data-nj-attr-row", "");
+    var input = document.createElement("input");
+    input.type = "text";
+    input.name = kind === "color" ? "color_nombre[]" : "talla_nombre[]";
+    input.placeholder = kind === "color" ? "Color" : "Talla";
+    row.appendChild(input);
+    if (kind === "talla") {
+      var stocks = document.createElement("div");
+      stocks.setAttribute("data-nj-stocks", "");
+      row.appendChild(stocks);
+    }
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "button";
+    button.setAttribute("data-nj-attr-remove", "");
+    button.textContent = "Quitar";
+    row.appendChild(button);
+    list.appendChild(row);
+    rebuildStocks(box);
+    input.focus();
+  }
+
+  function appendGallery(list, id, url) {
+    if (!list || list.querySelectorAll("[data-nj-gallery-item]").length >= 8) {
+      return;
+    }
+    var item = document.createElement("span");
+    item.className = "nj-gallery-item";
+    item.setAttribute("data-nj-gallery-item", "");
+    var img = document.createElement("img");
+    img.alt = "";
+    img.src = url || "";
+    var input = document.createElement("input");
+    input.type = "hidden";
+    input.name = "galeria[]";
+    input.value = String(id || 0);
+    var button = document.createElement("button");
+    button.type = "button";
+    button.setAttribute("data-nj-gallery-remove", "");
+    button.setAttribute("aria-label", "Quitar foto");
+    button.textContent = "×";
+    item.appendChild(img);
+    item.appendChild(input);
+    item.appendChild(button);
+    list.appendChild(item);
+  }
+
+  function addGallery(list) {
+    if (!list || !window.wp || !window.wp.media) {
+      return;
+    }
+    var frame = window.wp.media({
+      title: "Fotos de la prenda",
+      button: { text: "Usar estas fotos" },
+      library: { type: "image" },
+      multiple: true
+    });
+    frame.on("select", function () {
+      frame.state().get("selection").each(function (attachment) {
+        var file = attachment.toJSON();
+        appendGallery(list, file.id, file.sizes && file.sizes.thumbnail ? file.sizes.thumbnail.url : file.url);
+      });
+    });
+    frame.open();
+  }
+
   function pick(box) {
     if (!window.wp || !wp.media) {
       return;
@@ -106,6 +311,12 @@
   }
 
   $(function () {
+    document.addEventListener("input", function (event) {
+      var colorInput = event.target.closest("[data-nj-attr=color] input[type=text]");
+      if (colorInput) {
+        rebuildStocks(attrBox(colorInput));
+      }
+    });
     document.addEventListener("click", function (event) {
       var pickButton = event.target.closest("[data-nj-pick]");
       if (pickButton) {
@@ -137,6 +348,70 @@
       var addPoint = event.target.closest("[data-nj-point-add]");
       if (addPoint) {
         addLookPoint(addPoint.closest("[data-nj-look]"));
+      }
+      var addAttr = event.target.closest("[data-nj-attr-add]");
+      if (addAttr) {
+        addAttrRow(attrBox(addAttr), addAttr.getAttribute("data-nj-attr-add"));
+      }
+      var removeAttr = event.target.closest("[data-nj-attr-remove]");
+      if (removeAttr) {
+        var attrRow = removeAttr.closest("[data-nj-attr-row]");
+        var attrs = attrBox(removeAttr);
+        if (attrRow) {
+          attrRow.remove();
+        }
+        rebuildStocks(attrs);
+      }
+      var addGalleryButton = event.target.closest("[data-nj-gallery-add]");
+      if (addGalleryButton) {
+        var block = addGalleryButton.closest(".nj-gallery-block");
+        addGallery(block ? block.querySelector("[data-nj-gallery]") : null);
+      }
+      var removeGallery = event.target.closest("[data-nj-gallery-remove]");
+      if (removeGallery) {
+        var photoItem = removeGallery.closest("[data-nj-gallery-item]");
+        if (photoItem) {
+          photoItem.remove();
+        }
+      }
+      var addStyle = event.target.closest("[data-nj-style-add]");
+      if (addStyle) {
+        addStyleCard(document.querySelector("[data-nj-style-list]"));
+      }
+      var removeStyle = event.target.closest("[data-nj-style-remove]");
+      if (removeStyle) {
+        var card = removeStyle.closest("[data-nj-style]");
+        var name = "";
+        if (card) {
+          var nameInput = card.querySelector("input[type=text]");
+          name = nameInput ? nameInput.value.trim() : "";
+        }
+        var message = name ? "¿Eliminar la categoría " + name + "? También se borra de la tienda al guardar." : "¿Eliminar esta categoría? También se borra de la tienda al guardar.";
+        if (card && window.confirm(message)) {
+          card.remove();
+          reindexStyles(document.querySelector("[data-nj-style-list]"));
+        }
+      }
+      var addMenu = event.target.closest("[data-nj-menu-add]");
+      if (addMenu) {
+        var group = addMenu.closest("[data-nj-menu-group]");
+        var list = group ? group.querySelector("[data-nj-menu-children]") : null;
+        if (list && list.children.length < 8) {
+          var row = document.createElement("div");
+          row.className = "nj-menu-row";
+          row.innerHTML = '<input type="text" placeholder="Nombre"><input type="url" placeholder="https://"><button type="button" class="button" data-nj-menu-remove>Quitar</button>';
+          list.appendChild(row);
+          reindexMenu(group);
+        }
+      }
+      var removeMenu = event.target.closest("[data-nj-menu-remove]");
+      if (removeMenu) {
+        var menuGroup = removeMenu.closest("[data-nj-menu-group]");
+        var menuRow = removeMenu.closest(".nj-menu-row");
+        if (menuRow) {
+          menuRow.remove();
+        }
+        reindexMenu(menuGroup);
       }
       var removePoint = event.target.closest("[data-nj-point-remove]");
       if (removePoint) {
@@ -213,7 +488,11 @@
         event.preventDefault();
       }
     });
-    var initial = (window.location.hash || "#banner").replace("#", "");
+    var initial = (window.location.hash || "").replace("#", "");
+    if (!initial) {
+      var first = root.querySelector("[data-screen]");
+      initial = first ? first.getAttribute("data-screen") : "banner";
+    }
     show(initial);
   });
 })(jQuery);

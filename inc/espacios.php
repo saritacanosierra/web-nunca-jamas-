@@ -49,6 +49,15 @@ if (!function_exists('nj_espacios_merge_row')) {
         if (!empty($over['image'])) {
             $row['image'] = (int) $over['image'];
         }
+        if (!empty($over['term'])) {
+            $row['term'] = (int) $over['term'];
+        }
+        if (!empty($over['src'])) {
+            $file = nj_espacios_file($over['src']);
+            if ($file !== '') {
+                $row['src'] = $file;
+            }
+        }
         foreach (array('alt', 'kicker', 'title', 'label') as $key) {
             if (isset($over[$key]) && trim((string) $over[$key]) !== '') {
                 $row[$key] = (string) $over[$key];
@@ -70,6 +79,18 @@ if (!function_exists('nj_espacios_rows')) {
         if ($group === 'promo') {
             foreach ($defaults as $key => $base) {
                 $rows[$key] = nj_espacios_merge_row($base, isset($over[$key]) ? $over[$key] : array());
+            }
+            return $rows;
+        }
+        if ($group === 'styles' && nj_espacios_styles_custom($over)) {
+            foreach ($over as $row) {
+                if (!is_array($row) || trim((string) (isset($row['label']) ? $row['label'] : '')) === '') {
+                    continue;
+                }
+                $rows[] = nj_espacios_merge_row(array(
+                    'src' => isset($row['src']) ? $row['src'] : '',
+                    'label' => $row['label'],
+                ), $row);
             }
             return $rows;
         }
@@ -194,6 +215,73 @@ if (!function_exists('nj_espacios_clean_points')) {
     }
 }
 
+if (!function_exists('nj_espacios_file')) {
+    function nj_espacios_file($file) {
+        $file = basename((string) $file);
+        if (preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]*\.(jpe?g|png|webp)$/', $file)) {
+            return $file;
+        }
+        return '';
+    }
+}
+
+if (!function_exists('nj_espacios_styles_custom')) {
+    function nj_espacios_styles_custom($rows) {
+        if (!is_array($rows)) {
+            return false;
+        }
+        foreach ($rows as $row) {
+            if (is_array($row) && trim((string) (isset($row['label']) ? $row['label'] : '')) !== '') {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+if (!function_exists('nj_espacios_category_id')) {
+    function nj_espacios_category_id($label, $term_id) {
+        $term_id = (int) $term_id;
+        if ($term_id && function_exists('get_term')) {
+            $term = get_term($term_id, 'product_cat');
+            if ($term && !is_wp_error($term)) {
+                return (int) $term->term_id;
+            }
+        }
+        if (!function_exists('nj_category_index') || !function_exists('nj_menu_key')) {
+            return 0;
+        }
+        $index = nj_category_index();
+        $key = nj_menu_key($label);
+        if ($key !== '' && isset($index[$key])) {
+            return (int) $index[$key]->term_id;
+        }
+        return 0;
+    }
+}
+
+if (!function_exists('nj_espacios_category_keep')) {
+    function nj_espacios_category_keep($label, $term_id) {
+        if (!function_exists('taxonomy_exists') || !taxonomy_exists('product_cat')) {
+            return 0;
+        }
+        $found = nj_espacios_category_id($label, $term_id);
+        if ($found && function_exists('wp_update_term')) {
+            wp_update_term($found, 'product_cat', array('name' => $label));
+            return $found;
+        }
+        if (!function_exists('wp_insert_term')) {
+            return 0;
+        }
+        $created = wp_insert_term($label, 'product_cat');
+        if (is_wp_error($created)) {
+            $data = $created->get_error_data();
+            return is_numeric($data) ? (int) $data : (isset($data['term_exists']) ? (int) $data['term_exists'] : 0);
+        }
+        return isset($created['term_id']) ? (int) $created['term_id'] : 0;
+    }
+}
+
 if (!function_exists('nj_espacios_text')) {
     function nj_espacios_text($value) {
         if (function_exists('sanitize_text_field')) {
@@ -222,6 +310,15 @@ if (!function_exists('nj_espacios_admin_save')) {
             exit;
         }
         $raw = isset($_POST['espacios']) && is_array($_POST['espacios']) ? wp_unslash($_POST['espacios']) : array();
+        $previous_terms = array();
+        if ($group === 'styles') {
+            foreach (nj_espacios_rows('styles') as $row) {
+                $found = nj_espacios_category_id(isset($row['label']) ? $row['label'] : '', isset($row['term']) ? $row['term'] : 0);
+                if ($found) {
+                    $previous_terms[] = $found;
+                }
+            }
+        }
         $clean = array();
         foreach ($raw as $key => $row) {
             if (!is_array($row)) {
@@ -237,7 +334,32 @@ if (!function_exists('nj_espacios_admin_save')) {
             if ($group === 'looks') {
                 $item['points'] = nj_espacios_clean_points(isset($row['points']) ? $row['points'] : array());
             }
+            if ($group === 'styles') {
+                $item['label'] = nj_espacios_text(isset($row['label']) ? $row['label'] : '');
+                $item['src'] = nj_espacios_file(isset($row['src']) ? $row['src'] : '');
+                if ($item['label'] === '') {
+                    continue;
+                }
+                if (count($clean) >= 12) {
+                    continue;
+                }
+                $item['term'] = nj_espacios_category_keep($item['label'], isset($row['term']) ? $row['term'] : 0);
+            }
             $clean[$key] = $item;
+        }
+        if ($group === 'styles' && function_exists('wp_delete_term')) {
+            $kept = array();
+            foreach ($clean as $item) {
+                if (!empty($item['term'])) {
+                    $kept[] = (int) $item['term'];
+                }
+            }
+            foreach ($previous_terms as $term_id) {
+                if (!in_array((int) $term_id, $kept, true)) {
+                    wp_delete_term((int) $term_id, 'product_cat');
+                }
+            }
+            $clean = array_values($clean);
         }
         $saved = nj_espacios_saved();
         $saved[$group] = $clean;

@@ -13,6 +13,12 @@ $nj_payload = array(
     'id' => isset($nj_ficha['id']) ? (int) $nj_ficha['id'] : 0,
     'variations' => isset($nj_ficha['variations']) ? $nj_ficha['variations'] : array(),
 );
+$nj_colors = array();
+foreach ($nj_payload['variations'] as $nj_variation) {
+    if (!empty($nj_variation['color']) && !in_array($nj_variation['color'], $nj_colors, true)) {
+        $nj_colors[] = $nj_variation['color'];
+    }
+}
 ?>
 <article class="ficha" data-ficha>
   <script type="application/json" data-ficha-data><?php echo json_encode($nj_payload, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
@@ -45,6 +51,14 @@ $nj_payload = array(
               echo '<p class="stock in-stock">Disponible</p>';
           }
           ?>
+        </div>
+      <?php endif; ?>
+      <?php if (count($nj_colors) > 1) : ?>
+        <p class="ficha__label">Selecciona un color</p>
+        <div class="ficha__sizes" data-ficha-colors>
+          <?php foreach ($nj_colors as $nj_color) : ?>
+            <button type="button" data-ficha-color-button data-color="<?php echo esc_attr($nj_color); ?>"><?php echo esc_html($nj_color); ?></button>
+          <?php endforeach; ?>
         </div>
       <?php endif; ?>
       <?php if ($nj_sizes) : ?>

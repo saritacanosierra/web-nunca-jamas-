@@ -39,8 +39,8 @@ if (!function_exists('nj_tienda_admin_assets')) {
             wp_enqueue_media();
         }
         $uri = get_template_directory_uri();
-        wp_enqueue_style('nj-tienda', $uri . '/assets/mitienda.css', array('nj-hero-admin'), '1.0.2');
-        wp_enqueue_script('nj-tienda', $uri . '/assets/mitienda.js', array('jquery', 'nj-hero-admin'), '1.0.2', true);
+        wp_enqueue_style('nj-tienda', $uri . '/assets/mitienda.css', array('nj-hero-admin'), '1.0.6');
+        wp_enqueue_script('nj-tienda', $uri . '/assets/mitienda.js', array('jquery', 'nj-hero-admin'), '1.0.6', true);
     }
 }
 add_action('admin_enqueue_scripts', 'nj_tienda_admin_assets', 20);
@@ -55,13 +55,14 @@ if (!function_exists('nj_tienda_notice')) {
             'looks' => 'Los looks quedaron guardados.',
             'prenda' => 'La prenda quedó guardada.',
             'oculta' => 'La prenda ya no se muestra en la tienda.',
-            'prenda-falta' => 'Para publicar una prenda hacen falta la foto, el nombre y el precio.',
+            'prenda-falta' => 'Para publicar una prenda hacen falta la foto, el nombre, el precio y al menos una talla.',
+            'prenda-talla' => 'Marca al menos una talla y cuántas hay, para que se pueda comprar.',
             'prenda-off' => 'La tienda todavía no puede recibir prendas.',
         );
         if (!isset($messages[$code])) {
             return;
         }
-        $error = $code === 'prenda-falta' || $code === 'prenda-off';
+        $error = $code === 'prenda-falta' || $code === 'prenda-off' || $code === 'prenda-talla';
         echo '<div class="notice notice-' . ($error ? 'error' : 'success') . ' is-dismissible"><p>' . esc_html($messages[$code]) . '</p></div>';
     }
 }

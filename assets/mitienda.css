@@ -120,8 +120,100 @@
 }
 .nj-prenda-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: 1fr;
   gap: 16px;
+}
+.nj-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.nj-cats legend,
+.nj-attr-row {
+  font-weight: 700;
+}
+.nj-cats legend {
+  width: 100%;
+}
+.nj-attr-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.nj-celda {
+  display: grid !important;
+  gap: 4px;
+  min-width: 90px;
+}
+[data-nj-stocks] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.nj-prenda-new__fields textarea,
+.nj-prenda-card textarea {
+  width: 100%;
+}
+.nj-sizes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.nj-sizes legend {
+  grid-column: 1 / -1;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.nj-size {
+  display: grid !important;
+  grid-template-columns: auto 1fr;
+  gap: 4px 8px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid #dcdcde;
+  border-radius: 8px;
+}
+.nj-size input[type="checkbox"] {
+  width: auto;
+}
+.nj-size input[type="number"] {
+  grid-column: 1 / -1;
+}
+.nj-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.nj-gallery-item {
+  position: relative;
+  width: 72px;
+}
+.nj-gallery-item img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+.nj-gallery-item button {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: #111;
+  color: #fff;
+  cursor: pointer;
 }
 .nj-check {
   display: flex !important;
@@ -192,6 +284,41 @@
   display: grid;
   gap: 4px;
   font-weight: 600;
+}
+.nj-tema-fields {
+  display: grid;
+  gap: 12px;
+  max-width: 640px;
+  margin: 12px 0;
+}
+.nj-tema-fields input,
+.nj-tema-fields select,
+.nj-tema-css {
+  width: 100%;
+  max-width: 640px;
+}
+.nj-tema-photos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 220px));
+  gap: 16px;
+}
+.nj-tema-choice {
+  display: grid;
+  gap: 8px;
+}
+.nj-menu-group {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #dcdcde;
+  border-radius: 12px;
+}
+.nj-menu-row {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr auto;
+  gap: 8px;
 }
 .nj-tema-form {
   display: grid;

@@ -284,6 +284,60 @@ if (!function_exists('nj_catalog_queried_term')) {
     }
 }
 
+if (!function_exists('nj_catalog_pill_saved')) {
+    function nj_catalog_pill_saved() {
+        if (!function_exists('nj_espacios_saved')) {
+            return null;
+        }
+        $saved = nj_espacios_saved();
+        if (!is_array($saved) || !array_key_exists('pills', $saved) || !is_array($saved['pills'])) {
+            return null;
+        }
+        return $saved['pills'];
+    }
+}
+
+if (!function_exists('nj_catalog_pill_editor_rows')) {
+    function nj_catalog_pill_editor_rows() {
+        $saved = nj_catalog_pill_saved();
+        if (is_array($saved)) {
+            $rows = array();
+            foreach ($saved as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $rows[] = array(
+                    'label' => isset($row['label']) ? (string) $row['label'] : '',
+                    'term' => isset($row['term']) ? (int) $row['term'] : 0,
+                );
+            }
+            return $rows;
+        }
+        if (!function_exists('get_terms')) {
+            return array();
+        }
+        $terms = get_terms(array(
+            'taxonomy' => 'product_cat',
+            'hide_empty' => false,
+            'orderby' => 'name',
+        ));
+        if (is_wp_error($terms) || !is_array($terms)) {
+            return array();
+        }
+        $rows = array();
+        foreach ($terms as $term) {
+            if (in_array($term->slug, array('uncategorized', 'sin-categorizar'), true)) {
+                continue;
+            }
+            $rows[] = array(
+                'label' => $term->name,
+                'term' => (int) $term->term_id,
+            );
+        }
+        return $rows;
+    }
+}
+
 if (!function_exists('nj_catalog_category_pills')) {
     function nj_catalog_category_pills($current_id) {
         $shop = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : nj_home_url();
@@ -292,6 +346,28 @@ if (!function_exists('nj_catalog_category_pills')) {
             'href' => $shop,
             'active' => $current_id < 1,
         ));
+        $saved = nj_catalog_pill_saved();
+        if (is_array($saved)) {
+            foreach ($saved as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $term = nj_category_term(isset($row['term']) ? (int) $row['term'] : 0);
+                if (!$term || is_wp_error($term)) {
+                    continue;
+                }
+                $link = get_term_link($term);
+                if (is_wp_error($link)) {
+                    continue;
+                }
+                $pills[] = array(
+                    'label' => $term->name,
+                    'href' => $link,
+                    'active' => (int) $term->term_id === (int) $current_id,
+                );
+            }
+            return $pills;
+        }
         if (!function_exists('get_terms')) {
             return $pills;
         }
@@ -321,6 +397,124 @@ if (!function_exists('nj_catalog_category_pills')) {
     }
 }
 
+if (!function_exists('nj_catalog_banner_id')) {
+    function nj_catalog_banner_id($term_id) {
+        if (!$term_id || !function_exists('get_term_meta')) {
+            return 0;
+        }
+        return (int) get_term_meta((int) $term_id, 'nj_banner', true);
+    }
+}
+
+if (!function_exists('nj_catalog_banner_label')) {
+    function nj_catalog_banner_label($term) {
+        $names = array($term->name);
+        if (function_exists('get_ancestors')) {
+            foreach (get_ancestors($term->term_id, 'product_cat') as $ancestor_id) {
+                $parent = nj_category_term($ancestor_id);
+                if ($parent && !is_wp_error($parent)) {
+                    array_unshift($names, $parent->name);
+                }
+            }
+        }
+        return implode(' / ', $names);
+    }
+}
+
+if (!function_exists('nj_catalog_banner')) {
+    function nj_catalog_banner($term) {
+        $banner = nj_slots_data()['gift_banner'];
+        if (!$term || !isset($term->term_id)) {
+            return $banner;
+        }
+        $ids = array((int) $term->term_id);
+        if (function_exists('get_ancestors')) {
+            $ids = array_merge($ids, array_map('intval', get_ancestors($term->term_id, 'product_cat')));
+        }
+        foreach ($ids as $id) {
+            $image = nj_catalog_banner_id($id);
+            if (!$image || !function_exists('wp_get_attachment_image_url')) {
+                continue;
+            }
+            $url = wp_get_attachment_image_url($image, 'large');
+            if (!is_string($url) || $url === '') {
+                continue;
+            }
+            $banner['image'] = $url;
+            $banner['alt'] = $term->name;
+            return $banner;
+        }
+        return $banner;
+    }
+}
+
+if (!function_exists('nj_catalog_banner_rows')) {
+    function nj_catalog_banner_rows() {
+        if (!function_exists('get_terms')) {
+            return array();
+        }
+        $terms = get_terms(array(
+            'taxonomy' => 'product_cat',
+            'hide_empty' => false,
+        ));
+        if (is_wp_error($terms) || !is_array($terms)) {
+            return array();
+        }
+        $rows = array();
+        foreach ($terms as $term) {
+            if (in_array($term->slug, array('uncategorized', 'sin-categorizar'), true)) {
+                continue;
+            }
+            $image = nj_catalog_banner_id($term->term_id);
+            $src = '';
+            if ($image && function_exists('wp_get_attachment_image_url')) {
+                $url = wp_get_attachment_image_url($image, 'medium');
+                $src = is_string($url) ? $url : '';
+            }
+            $rows[] = array(
+                'id' => (int) $term->term_id,
+                'label' => nj_catalog_banner_label($term),
+                'image' => $image,
+                'src' => $src,
+            );
+        }
+        usort($rows, function ($left, $right) {
+            return strcasecmp($left['label'], $right['label']);
+        });
+        return $rows;
+    }
+}
+
+if (!function_exists('nj_catalog_banner_save')) {
+    function nj_catalog_banner_save() {
+        $allowed = function_exists('nj_tienda_can') ? nj_tienda_can() : (function_exists('current_user_can') && current_user_can('edit_theme_options'));
+        if (!$allowed) {
+            wp_die('No tienes permiso para cambiar estas fotos.');
+        }
+        check_admin_referer('nj_catalog_banner', 'nj_catalog_banner_nonce');
+        $raw = isset($_POST['banners']) && is_array($_POST['banners']) ? wp_unslash($_POST['banners']) : array();
+        foreach ($raw as $term_id => $image) {
+            $term_id = (int) $term_id;
+            $image = function_exists('absint') ? absint($image) : abs((int) $image);
+            $term = nj_category_term($term_id);
+            if (!$term || is_wp_error($term) || $term->taxonomy !== 'product_cat') {
+                continue;
+            }
+            if ($image && function_exists('wp_attachment_is_image') && !wp_attachment_is_image($image)) {
+                $image = 0;
+            }
+            if ($image && function_exists('update_term_meta')) {
+                update_term_meta($term_id, 'nj_banner', $image);
+            } elseif (function_exists('delete_term_meta')) {
+                delete_term_meta($term_id, 'nj_banner');
+            }
+        }
+        wp_safe_redirect(admin_url('admin.php?page=nj-tienda&updated=banners#categorias'));
+        exit;
+    }
+}
+add_action('admin_post_nj_catalog_banner', 'nj_catalog_banner_save');
+
 if (!function_exists('nj_catalog_from_shop')) {
     function nj_catalog_from_shop() {
         $order = nj_catalog_request_order();
@@ -348,7 +542,7 @@ if (!function_exists('nj_catalog_from_shop')) {
             'crumbs' => $crumbs,
             'pills' => $pills,
             'items' => nj_catalog_shop_items(),
-            'banner' => nj_slots_data()['gift_banner'],
+            'banner' => nj_catalog_banner($term),
             'order' => $order,
             'orders' => nj_catalog_orders(),
             'order_name' => 'orderby',

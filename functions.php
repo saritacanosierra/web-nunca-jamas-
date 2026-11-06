@@ -14,6 +14,8 @@ require_once get_template_directory() . '/inc/mitienda.php';
 require_once get_template_directory() . '/inc/tema.php';
 require_once get_template_directory() . '/inc/ficha.php';
 require_once get_template_directory() . '/inc/paginas.php';
+require_once get_template_directory() . '/inc/blog.php';
+require_once get_template_directory() . '/inc/seo.php';
 require_once get_template_directory() . '/inc/whatsapp.php';
 require_once get_template_directory() . '/inc/avisos.php';
 
@@ -43,6 +45,10 @@ function nj_assets() {
         null
     );
     wp_enqueue_style('nj-home', get_template_directory_uri() . '/assets/home.css', array('nj-fonts'), NJ_VERSION);
+    $nj_blog_screen = function_exists('is_page') && (is_page('blog') || is_singular('post') || is_home() || is_category());
+    if ($nj_blog_screen) {
+        wp_enqueue_style('nj-blog', get_template_directory_uri() . '/assets/css/blog.css', array('nj-home'), NJ_VERSION);
+    }
     wp_enqueue_script('nj-bolsa', get_template_directory_uri() . '/assets/bolsa.js', array(), NJ_VERSION, true);
     wp_enqueue_script('nj-tienda', get_template_directory_uri() . '/assets/tienda.js', array('nj-bolsa'), NJ_VERSION, true);
     if (function_exists('wp_localize_script') && function_exists('wp_create_nonce') && function_exists('WC') && WC() && function_exists('home_url') && function_exists('add_query_arg')) {
@@ -92,7 +98,8 @@ add_action('init', 'nj_woocommerce_layout');
 
 function nj_cart_fragments($fragments) {
     $fragments['span.bag-count'] = '<span class="bag-count">' . esc_html((string) nj_cart_count()) . '</span>';
-    $fragments['script[data-bag-state]'] = '<script type="application/json" data-bag-state>' . wp_json_encode(nj_bag_state()) . '</script>';
+    $bag = function_exists('wp_json_encode') ? wp_json_encode(nj_bag_state()) : json_encode(nj_bag_state());
+    $fragments['script[data-bag-state]'] = '<script type="application/json" data-bag-state>' . $bag . '</script>';
     return $fragments;
 }
 add_filter('woocommerce_add_to_cart_fragments', 'nj_cart_fragments');

@@ -33,6 +33,24 @@ a { color: inherit; text-decoration: none; }
 button, input { font-family: inherit; }
 button { cursor: pointer; }
 
+.seo-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.page-title {
+  margin: 28px 0 12px;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(40px, 5vw, 64px);
+  line-height: 0.95;
+}
 .wrap {
   width: min(var(--wrap), calc(100% - 48px));
   margin: 0 auto;
@@ -539,9 +557,12 @@ button { cursor: pointer; }
 .promo {
   margin-top: 72px;
   display: grid;
-  grid-template-columns: 1.25fr 0.95fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   min-height: 460px;
   background: #f3f1ee;
+}
+.promo:has(> :nth-child(3):last-child) {
+  grid-template-columns: 1.25fr 0.95fr 1fr;
 }
 .promo-gift {
   display: grid;
@@ -634,6 +655,37 @@ button { cursor: pointer; }
   max-width: 230px;
 }
 .promo-gift__photo img { object-fit: contain; background: #fff; }
+.promo-extra {
+  position: relative;
+  min-height: 320px;
+  overflow: hidden;
+  background: #e7e2dc;
+}
+.promo-extra a {
+  display: block;
+  height: 100%;
+  min-height: 320px;
+  color: inherit;
+  text-decoration: none;
+}
+.promo-extra img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  inset: 0;
+}
+.promo-extra span {
+  position: absolute;
+  z-index: 2;
+  left: 18px;
+  bottom: 18px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-family: var(--display);
+  font-size: 28px;
+}
 .promo-3d__copy p {
   margin: 0 0 6px;
   font-size: 12px;
@@ -774,9 +826,12 @@ button { cursor: pointer; }
 }
 .look-grid {
   display: grid;
-  grid-template-columns: 0.85fr 1.3fr 0.85fr;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 14px;
   min-height: 520px;
+}
+.look-grid:has(> :nth-child(3):last-child) {
+  grid-template-columns: 0.85fr 1.3fr 0.85fr;
 }
 .look-card {
   position: relative;
@@ -931,8 +986,10 @@ button { cursor: pointer; }
 
 @media (max-width: 1100px) {
   .style-row { grid-template-columns: repeat(4, 1fr); }
-  .promo { grid-template-columns: 1fr; }
-  .look-grid { grid-template-columns: 1fr; }
+  .promo,
+  .promo:has(> :nth-child(3):last-child),
+  .look-grid,
+  .look-grid:has(> :nth-child(3):last-child) { grid-template-columns: 1fr; }
   .look-card { min-height: 420px; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
   .hero__card { left: 24px; width: min(260px, 70vw); }

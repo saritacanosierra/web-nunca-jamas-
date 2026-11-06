@@ -12,6 +12,7 @@ while (have_posts()) {
         continue;
     }
     echo '<main class="section"><div class="wrap">';
+    echo '<h1 class="page-title">' . esc_html(get_the_title()) . '</h1>';
     the_content();
     echo '</div></main>';
 }

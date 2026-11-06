@@ -4,7 +4,7 @@
  */
 
 if (!defined('NJ_VERSION')) {
-    define('NJ_VERSION', '1.8.2');
+    define('NJ_VERSION', '1.8.6');
 }
 
 if (!defined('ABSPATH')) {

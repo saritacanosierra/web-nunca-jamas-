@@ -4,6 +4,9 @@
  */
 $nj_cuentos = nj_home_cuentos();
 $nj_cuentos_url = nj_cuentos_url();
+if (!$nj_cuentos) {
+    return;
+}
 ?>
 <section class="cuentos-banner" data-cuentos aria-label="Cuentos">
   <?php foreach ($nj_cuentos as $i => $cuento) : ?>

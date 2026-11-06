@@ -27,16 +27,21 @@ if (!function_exists('nj_espacios_panel_cuentos')) {
     function nj_espacios_panel_cuentos() {
         ?>
         <h2>Carrusel de cuentos</h2>
-        <p>Son las fotos anchas que giran en Cuentos. Cambia la foto y el texto, y guarda.</p>
+        <p>Son las fotos anchas que giran en Cuentos. Agrega otra, quita la que sobre, cambia la foto y el texto, y guarda.</p>
         <?php nj_espacios_form_open('cuentos'); ?>
-        <div class="nj-photo-grid">
+        <div class="nj-photo-grid" data-nj-cuento-list>
           <?php foreach (nj_espacios_rows('cuentos') as $index => $row) : ?>
-            <div class="nj-photo nj-photo--wide" data-nj-photo>
+            <div class="nj-photo nj-photo--wide" data-nj-photo data-nj-cuento>
               <?php $src = nj_espacio_url(isset($row['image']) ? $row['image'] : 0, isset($row['src']) ? $row['src'] : ''); ?>
-              <img alt="" src="<?php echo esc_url($src); ?>">
+              <img alt=""<?php echo $src === '' ? ' hidden' : ' src="' . esc_url($src) . '"'; ?>>
               <div class="nj-photo-body">
                 <input data-nj-id type="hidden" name="espacios[<?php echo (int) $index; ?>][image]" value="<?php echo esc_attr((string) (isset($row['image']) ? (int) $row['image'] : 0)); ?>">
-                <button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button>
+                <input type="hidden" name="espacios[<?php echo (int) $index; ?>][src]" value="<?php echo esc_attr(isset($row['src']) ? $row['src'] : ''); ?>">
+                <input type="hidden" name="espacios[<?php echo (int) $index; ?>][alt]" value="<?php echo esc_attr(isset($row['alt']) ? $row['alt'] : ''); ?>">
+                <p class="nj-prenda-actions">
+                  <button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button>
+                  <button type="button" class="button" data-nj-cuento-remove>Quitar</button>
+                </p>
                 <label>Texto pequeño
                   <input type="text" name="espacios[<?php echo (int) $index; ?>][kicker]" value="<?php echo esc_attr(isset($row['kicker']) ? $row['kicker'] : ''); ?>">
                 </label>
@@ -47,6 +52,7 @@ if (!function_exists('nj_espacios_panel_cuentos')) {
             </div>
           <?php endforeach; ?>
         </div>
+        <p><button type="button" class="button" data-nj-cuento-add>Agregar cuento</button></p>
         <?php nj_espacios_form_close('Guardar cuentos');
     }
 }
@@ -60,24 +66,36 @@ if (!function_exists('nj_espacios_panel_promo')) {
         );
         ?>
         <h2>Campañas</h2>
-        <p>Son las tres fotos grandes del medio de la portada.</p>
+        <p>Son las fotos grandes del medio de la portada. Agrega otra o quita la que sobre, y guarda.</p>
         <?php nj_espacios_form_open('promo'); ?>
-        <div class="nj-photo-grid">
-          <?php foreach ($names as $key => $label) :
-              $rows = nj_espacios_rows('promo');
-              $row = isset($rows[$key]) ? $rows[$key] : array();
-              $src = nj_espacio_url(isset($row['image']) ? $row['image'] : 0, isset($row['src']) ? $row['src'] : '');
+        <div class="nj-photo-grid" data-nj-promo-list>
+          <?php foreach (nj_espacios_promos() as $index => $row) :
+              $kind = isset($row['kind']) ? $row['kind'] : 'photo';
+              $label = isset($names[$kind]) ? $names[$kind] : (isset($row['label']) && $row['label'] !== '' ? $row['label'] : 'Campaña');
+              $file = isset($row['file']) ? $row['file'] : '';
               ?>
-            <div class="nj-photo" data-nj-photo>
-              <img alt="" src="<?php echo esc_url($src); ?>">
+            <div class="nj-photo" data-nj-photo data-nj-promo>
+              <img alt=""<?php echo $row['src'] === '' ? ' hidden' : ' src="' . esc_url($row['src']) . '"'; ?>>
               <div class="nj-photo-body">
                 <strong><?php echo esc_html($label); ?></strong>
-                <input data-nj-id type="hidden" name="espacios[<?php echo esc_attr($key); ?>][image]" value="<?php echo esc_attr((string) (isset($row['image']) ? (int) $row['image'] : 0)); ?>">
-                <button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button>
+                <input type="hidden" name="espacios[<?php echo (int) $index; ?>][kind]" value="<?php echo esc_attr($kind); ?>">
+                <input data-nj-id type="hidden" name="espacios[<?php echo (int) $index; ?>][image]" value="<?php echo esc_attr((string) (isset($row['image']) ? (int) $row['image'] : 0)); ?>">
+                <input type="hidden" name="espacios[<?php echo (int) $index; ?>][src]" value="<?php echo esc_attr($file); ?>">
+                <input type="hidden" name="espacios[<?php echo (int) $index; ?>][alt]" value="<?php echo esc_attr(isset($row['alt']) ? $row['alt'] : ''); ?>">
+                <?php if ($kind === 'photo') : ?>
+                  <label>Nombre
+                    <input type="text" name="espacios[<?php echo (int) $index; ?>][label]" value="<?php echo esc_attr(isset($row['label']) ? $row['label'] : ''); ?>" placeholder="Nombre de la campaña">
+                  </label>
+                <?php endif; ?>
+                <p class="nj-prenda-actions">
+                  <button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button>
+                  <button type="button" class="button" data-nj-promo-remove>Quitar</button>
+                </p>
               </div>
             </div>
           <?php endforeach; ?>
         </div>
+        <p><button type="button" class="button" data-nj-promo-add>Agregar campaña</button></p>
         <?php nj_espacios_form_close('Guardar campañas');
     }
 }
@@ -86,6 +104,27 @@ if (!function_exists('nj_espacios_panel_styles')) {
     function nj_espacios_panel_styles() {
         ?>
         <h2>Categorías</h2>
+        <h3>Fila de la tienda</h3>
+        <p>Son las pastillas de la tienda: Accesorios, Blusas y las demás. Cambia el nombre, súbelas o bájalas, agrega una o quita la que sobre. Al quitarla deja de salir en esa fila; los productos siguen en su categoría.</p>
+        <?php nj_espacios_form_open('pills'); ?>
+        <div class="nj-pill-list" data-nj-pill-list>
+          <?php foreach (nj_catalog_pill_editor_rows() as $index => $row) : ?>
+            <div class="nj-pill-row" data-nj-pill>
+              <label>Nombre
+                <input type="text" name="espacios[<?php echo (int) $index; ?>][label]" value="<?php echo esc_attr($row['label']); ?>">
+              </label>
+              <input type="hidden" name="espacios[<?php echo (int) $index; ?>][term]" value="<?php echo esc_attr((string) (int) $row['term']); ?>">
+              <p class="nj-prenda-actions">
+                <button type="button" class="button" data-nj-pill-up>Subir</button>
+                <button type="button" class="button" data-nj-pill-down>Bajar</button>
+                <button type="button" class="button" data-nj-pill-remove>Quitar</button>
+              </p>
+            </div>
+          <?php endforeach; ?>
+        </div>
+        <p><button type="button" class="button" data-nj-pill-add>Agregar categoría</button></p>
+        <?php nj_espacios_form_close('Guardar fila'); ?>
+        <h3>Círculos de la portada</h3>
         <p>Son los círculos de “Compra por categorías”. Cambia el nombre y la foto, agrega una nueva o elimina la que ya no quieres. Al guardar, la categoría también se crea o se borra en la tienda.</p>
         <?php nj_espacios_form_open('styles'); ?>
         <div class="nj-style-grid" data-nj-style-list>
@@ -112,7 +151,35 @@ if (!function_exists('nj_espacios_panel_styles')) {
           <?php endforeach; ?>
         </div>
         <p><button type="button" class="button" data-nj-style-add>Agregar categoría</button></p>
-        <?php nj_espacios_form_close('Guardar categorías');
+        <?php nj_espacios_form_close('Guardar categorías'); ?>
+        <h3>Foto del listado</h3>
+        <p>Esta es la foto ancha de “El regalo perfecto”. Cada categoría tiene la suya: pijamas muestra una y blusas otra. Si una categoría no tiene foto, se usa la de su categoría padre.</p>
+        <?php $nj_banner_rows = function_exists('nj_catalog_banner_rows') ? nj_catalog_banner_rows() : array(); ?>
+        <?php if (!$nj_banner_rows) : ?>
+          <p>Todavía no hay categorías en la tienda.</p>
+        <?php else : ?>
+          <form method="post" action="<?php echo esc_url(function_exists('admin_url') ? admin_url('admin-post.php') : 'admin-post.php'); ?>">
+            <input type="hidden" name="action" value="nj_catalog_banner">
+            <?php if (function_exists('wp_nonce_field')) { wp_nonce_field('nj_catalog_banner', 'nj_catalog_banner_nonce'); } ?>
+            <div class="nj-banner-list">
+              <?php foreach ($nj_banner_rows as $row) : ?>
+                <div class="nj-banner-card" data-nj-photo>
+                  <img alt=""<?php echo $row['src'] === '' ? ' hidden' : ' src="' . esc_url($row['src']) . '"'; ?>>
+                  <div>
+                    <strong><?php echo esc_html($row['label']); ?></strong>
+                    <input data-nj-id type="hidden" name="banners[<?php echo (int) $row['id']; ?>]" value="<?php echo esc_attr((string) $row['image']); ?>">
+                    <p class="nj-prenda-actions">
+                      <button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button>
+                      <button type="button" class="button" data-nj-clear>Quitar</button>
+                    </p>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            </div>
+            <p class="nj-studio-save"><button type="submit" class="button button-primary">Guardar fotos del listado</button></p>
+          </form>
+        <?php endif; ?>
+        <?php
     }
 }
 
@@ -120,23 +187,28 @@ if (!function_exists('nj_espacios_panel_looks')) {
     function nj_espacios_panel_looks() {
         ?>
         <h2>Looks</h2>
-        <p>Sube la foto y arrastra cada punto hasta la prenda. Al pulsarlo se ven el nombre, el precio y el enlace.</p>
+        <p>Sube la foto y arrastra cada punto hasta la prenda. Puedes agregar o quitar un look completo.</p>
         <?php nj_espacios_form_open('looks'); ?>
-        <div class="nj-look-grid">
+        <div class="nj-look-grid" data-nj-look-list>
           <?php foreach (nj_espacios_rows('looks') as $index => $row) :
               $src = nj_espacio_url(isset($row['image']) ? $row['image'] : 0, isset($row['src']) ? $row['src'] : '');
               $points = isset($row['points']) && is_array($row['points']) ? $row['points'] : array();
               ?>
             <div class="nj-look" data-nj-look>
-              <strong>Look <?php echo (int) $index + 1; ?></strong>
-              <div class="nj-look-stage<?php echo (int) $index === 1 ? ' is-wide' : ''; ?>" data-nj-stage data-nj-photo>
-                <img alt="" src="<?php echo esc_url($src); ?>">
+              <strong data-nj-look-title>Look <?php echo (int) $index + 1; ?></strong>
+              <div class="nj-look-stage" data-nj-stage data-nj-photo>
+                <img alt=""<?php echo $src === '' ? ' hidden' : ' src="' . esc_url($src) . '"'; ?>>
                 <input data-nj-id type="hidden" name="espacios[<?php echo (int) $index; ?>][image]" value="<?php echo esc_attr((string) (isset($row['image']) ? (int) $row['image'] : 0)); ?>">
+                <input type="hidden" name="espacios[<?php echo (int) $index; ?>][src]" value="<?php echo esc_attr(isset($row['src']) && strpos((string) $row['src'], '://') === false ? $row['src'] : ''); ?>">
+                <input type="hidden" name="espacios[<?php echo (int) $index; ?>][alt]" value="<?php echo esc_attr(isset($row['alt']) ? $row['alt'] : ''); ?>">
                 <?php foreach ($points as $point_index => $point) : ?>
                   <button class="nj-look-dot" type="button" data-nj-point="<?php echo (int) $point_index; ?>" style="top: <?php echo esc_attr($point['top']); ?>; left: <?php echo esc_attr($point['left']); ?>"><?php echo (int) $point_index + 1; ?></button>
                 <?php endforeach; ?>
               </div>
-              <p class="nj-prenda-actions"><button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button></p>
+              <p class="nj-prenda-actions">
+                <button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button>
+                <button type="button" class="button" data-nj-look-remove>Quitar</button>
+              </p>
               <div data-nj-point-list>
                 <?php foreach ($points as $point_index => $point) : ?>
                   <div class="nj-look-fields" data-nj-point-fields="<?php echo (int) $point_index; ?>">
@@ -164,6 +236,7 @@ if (!function_exists('nj_espacios_panel_looks')) {
             </div>
           <?php endforeach; ?>
         </div>
+        <p><button type="button" class="button" data-nj-look-add>Agregar look</button></p>
         <?php nj_espacios_form_close('Guardar looks');
     }
 }

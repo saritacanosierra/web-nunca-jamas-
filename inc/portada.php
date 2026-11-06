@@ -80,6 +80,9 @@ if (!function_exists('nj_home_tabs')) {
 
 if (!function_exists('nj_cuentos_url')) {
     function nj_cuentos_url() {
+        if (function_exists('nj_blog_url') && !defined('NJ_PREVIEW')) {
+            return nj_blog_url();
+        }
         if (defined('NJ_PREVIEW')) {
             return 'galeria.php?seccion=cuentos';
         }
@@ -111,11 +114,7 @@ if (!function_exists('nj_portada_vista')) {
     function nj_portada_vista() {
         nj_portada_espacios();
         return array(
-            'promo' => array(
-                'gift' => nj_espacios_promo('gift'),
-                'collect' => nj_espacios_promo('collect'),
-                'three_d' => nj_espacios_promo('three_d'),
-            ),
+            'promos' => nj_espacios_promos(),
             'looks' => nj_espacios_looks(),
             'tabs' => nj_home_tabs(),
             'styles' => nj_style_items(),

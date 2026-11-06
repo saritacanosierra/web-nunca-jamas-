@@ -5,6 +5,7 @@
     let dots = Array.prototype.slice.call(cuentos.querySelectorAll("[data-cuentos-dot]"));
     let index = 0;
     let timer;
+    if (slides.length) {
 
     function showCuento(next) {
       index = (next + slides.length) % slides.length;
@@ -36,6 +37,7 @@
       });
     });
     playCuentos();
+    }
   }
 
   var header = document.querySelector(".site-header");

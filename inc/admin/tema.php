@@ -12,33 +12,53 @@ if (!function_exists('nj_tema_page_select')) {
         echo '<select name="' . esc_attr($name) . '">';
         echo '<option value="0">Elige una página</option>';
         foreach ($pages as $page) {
-            echo '<option value="' . (int) $page->ID . '"' . selected((int) $selected, (int) $page->ID, false) . '>' . esc_html($page->post_title) . '</option>';
+            $mark = function_exists('selected') ? selected((int) $selected, (int) $page->ID, false) : ((int) $selected === (int) $page->ID ? " selected='selected'" : '');
+            echo '<option value="' . (int) $page->ID . '"' . $mark . '>' . esc_html($page->post_title) . '</option>';
         }
         echo '</select>';
     }
 }
 
+if (!function_exists('nj_tema_menu_count')) {
+    function nj_tema_menu_count($total) {
+        $total = (int) $total;
+        return $total === 1 ? '1 enlace' : $total . ' enlaces';
+    }
+}
+
 if (!function_exists('nj_tema_menu_fields')) {
-    function nj_tema_menu_fields($name, $item) {
+    function nj_tema_menu_fields($name, $item, $key, $with_children = true) {
         $children = isset($item['children']) && is_array($item['children']) ? $item['children'] : array();
+        $label = isset($item['label']) ? $item['label'] : '';
         ?>
-        <div class="nj-menu-group" data-nj-menu-group data-nj-menu-name="<?php echo esc_attr($name); ?>">
-          <label>Nombre
-            <input type="text" name="<?php echo esc_attr($name); ?>[label]" value="<?php echo esc_attr(isset($item['label']) ? $item['label'] : ''); ?>">
-          </label>
-          <label>Enlace
-            <input type="url" name="<?php echo esc_attr($name); ?>[href]" value="<?php echo esc_attr(isset($item['href']) ? $item['href'] : ''); ?>" placeholder="https://">
-          </label>
-          <div data-nj-menu-children>
-            <?php foreach ($children as $index => $child) : ?>
-              <div class="nj-menu-row">
-                <input type="text" name="<?php echo esc_attr($name); ?>[children][<?php echo (int) $index; ?>][label]" value="<?php echo esc_attr(isset($child['label']) ? $child['label'] : ''); ?>" placeholder="Nombre">
-                <input type="url" name="<?php echo esc_attr($name); ?>[children][<?php echo (int) $index; ?>][href]" value="<?php echo esc_attr(isset($child['href']) ? $child['href'] : ''); ?>" placeholder="https://">
-                <button type="button" class="button" data-nj-menu-remove>Quitar</button>
+        <div class="nj-menu-group" data-nj-menu-group data-nj-menu-key="<?php echo esc_attr($key); ?>" data-nj-menu-name="<?php echo esc_attr($name); ?>">
+          <button type="button" class="nj-menu-summary" data-nj-menu-toggle aria-expanded="false">
+            <span data-nj-menu-title><?php echo esc_html($label !== '' ? $label : 'Menú'); ?></span>
+            <span class="nj-menu-count" data-nj-menu-count><?php echo esc_html($with_children ? nj_tema_menu_count(count($children)) : 'Enlace de la barra'); ?></span>
+          </button>
+          <div class="nj-menu-body">
+            <div class="nj-menu-parent">
+              <label>Nombre en la barra
+                <input type="text" data-nj-menu-label name="<?php echo esc_attr($name); ?>[label]" value="<?php echo esc_attr($label); ?>">
+              </label>
+              <label>Enlace
+                <input type="url" name="<?php echo esc_attr($name); ?>[href]" value="<?php echo esc_attr(isset($item['href']) ? $item['href'] : ''); ?>" placeholder="https://">
+              </label>
+            </div>
+            <?php if ($with_children) : ?>
+              <p class="nj-menu-subhead">Enlaces que se abren al tocarlo</p>
+              <div data-nj-menu-children>
+                <?php foreach ($children as $index => $child) : ?>
+                  <div class="nj-menu-row">
+                    <input type="text" name="<?php echo esc_attr($name); ?>[children][<?php echo (int) $index; ?>][label]" value="<?php echo esc_attr(isset($child['label']) ? $child['label'] : ''); ?>" placeholder="Nombre">
+                    <input type="url" name="<?php echo esc_attr($name); ?>[children][<?php echo (int) $index; ?>][href]" value="<?php echo esc_attr(isset($child['href']) ? $child['href'] : ''); ?>" placeholder="https://">
+                    <button type="button" class="button" data-nj-menu-remove>Quitar</button>
+                  </div>
+                <?php endforeach; ?>
               </div>
-            <?php endforeach; ?>
+              <p><button type="button" class="button" data-nj-menu-add>Agregar enlace</button></p>
+            <?php endif; ?>
           </div>
-          <p><button type="button" class="button" data-nj-menu-add>Agregar enlace</button></p>
         </div>
         <?php
     }
@@ -72,8 +92,8 @@ if (!function_exists('nj_tema_admin_page')) {
             <div class="notice notice-success is-dismissible"><p>El tema quedó guardado. Recarga la tienda para verlo.</p></div>
           <?php endif; ?>
           <p class="nj-studio-lead">Aquí está la identidad, los menús, la portada, WooCommerce, los pagos y el CSS. Las fotos y las prendas siguen en Mi tienda.</p>
-          <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-            <?php wp_nonce_field('nj_tema_save', 'nj_tema_nonce'); ?>
+          <form method="post" action="<?php echo esc_url(function_exists('admin_url') ? admin_url('admin-post.php') : 'admin-post.php'); ?>">
+            <?php if (function_exists('wp_nonce_field')) { wp_nonce_field('nj_tema_save', 'nj_tema_nonce'); } ?>
             <input type="hidden" name="action" value="nj_tema_save">
             <input type="hidden" name="nj_tema_section" value="identidad">
             <div class="nj-studio">
@@ -131,20 +151,21 @@ if (!function_exists('nj_tema_admin_page')) {
                 </section>
                 <section class="nj-screen" data-screen="menus" id="menus">
                   <h2>Menús</h2>
-                  <p>Estos son los enlaces de la barra de arriba. El nombre es lo que se lee. El enlace es a dónde lleva.</p>
-                  <?php foreach ($menu['departments'] as $index => $item) : ?>
-                    <?php nj_tema_menu_fields('menu[departments][' . (int) $index . ']', $item); ?>
-                  <?php endforeach; ?>
-                  <h3>Colecciones</h3>
-                  <?php nj_tema_menu_fields('menu[collections]', isset($menu['collections']) ? $menu['collections'] : array()); ?>
-                  <h3>Nuevo</h3>
-                  <div class="nj-tema-fields">
-                    <label>Nombre
-                      <input type="text" name="menu[newest][label]" value="<?php echo esc_attr(isset($menu['newest']['label']) ? $menu['newest']['label'] : 'Nuevo'); ?>">
-                    </label>
-                    <label>Enlace
-                      <input type="url" name="menu[newest][href]" value="<?php echo esc_attr(isset($menu['newest']['href']) ? $menu['newest']['href'] : ''); ?>" placeholder="Vacío abre lo nuevo de la tienda">
-                    </label>
+                  <p>Es la misma barra de la tienda. Toca un nombre para ver y editar los enlaces que se abren debajo.</p>
+                  <div class="nj-menu-bar" aria-label="Menú de la tienda">
+                    <?php foreach ($menu['departments'] as $index => $item) : ?>
+                      <button type="button" data-nj-menu-jump="d-<?php echo (int) $index; ?>" aria-expanded="false"><?php echo esc_html($item['label']); ?></button>
+                    <?php endforeach; ?>
+                    <span class="nj-menu-bar-gap"></span>
+                    <button type="button" data-nj-menu-jump="collections" aria-expanded="false"><?php echo esc_html(isset($menu['collections']['label']) ? $menu['collections']['label'] : 'Colecciones'); ?></button>
+                    <button type="button" data-nj-menu-jump="newest" aria-expanded="false"><?php echo esc_html(isset($menu['newest']['label']) ? $menu['newest']['label'] : 'Nuevo'); ?></button>
+                  </div>
+                  <div class="nj-menu-list">
+                    <?php foreach ($menu['departments'] as $index => $item) : ?>
+                      <?php nj_tema_menu_fields('menu[departments][' . (int) $index . ']', $item, 'd-' . (int) $index, true); ?>
+                    <?php endforeach; ?>
+                    <?php nj_tema_menu_fields('menu[collections]', isset($menu['collections']) ? $menu['collections'] : array(), 'collections', true); ?>
+                    <?php nj_tema_menu_fields('menu[newest]', isset($menu['newest']) ? $menu['newest'] : array(), 'newest', false); ?>
                   </div>
                 </section>
                 <section class="nj-screen" data-screen="portada" id="portada">

@@ -76,9 +76,45 @@ if (!function_exists('nj_espacios_rows')) {
         $saved = nj_espacios_saved();
         $over = isset($saved[$group]) && is_array($saved[$group]) ? $saved[$group] : array();
         $rows = array();
+        if ($group === 'promo' && array_key_exists('promo', $saved) && $saved['promo'] === array()) {
+            return array();
+        }
+        if ($group === 'promo' && array_key_exists('promo', $saved) && nj_espacios_is_list($saved['promo'])) {
+            foreach ($saved['promo'] as $index => $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $kind = isset($row['kind']) ? (string) $row['kind'] : 'photo';
+                $base = isset($defaults[$kind]) && is_array($defaults[$kind]) ? $defaults[$kind] : array();
+                $item = nj_espacios_merge_row($base, $row);
+                $item['kind'] = $kind;
+                $rows[] = $item;
+            }
+            return $rows;
+        }
         if ($group === 'promo') {
             foreach ($defaults as $key => $base) {
                 $rows[$key] = nj_espacios_merge_row($base, isset($over[$key]) ? $over[$key] : array());
+            }
+            return $rows;
+        }
+        if ($group === 'looks' && array_key_exists('looks', $saved) && is_array($saved['looks'])) {
+            foreach ($saved['looks'] as $index => $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $base = isset($defaults[$index]) && is_array($defaults[$index]) ? $defaults[$index] : array();
+                $rows[] = nj_espacios_merge_row($base, $row);
+            }
+            return $rows;
+        }
+        if ($group === 'cuentos' && array_key_exists('cuentos', $saved) && is_array($saved['cuentos'])) {
+            foreach ($saved['cuentos'] as $index => $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $base = isset($defaults[$index]) && is_array($defaults[$index]) ? $defaults[$index] : array();
+                $rows[] = nj_espacios_merge_row($base, $row);
             }
             return $rows;
         }
@@ -107,6 +143,32 @@ if (!function_exists('nj_espacios_promo')) {
         $row = isset($rows[$key]) ? $rows[$key] : array('src' => '', 'alt' => '');
         $row['src'] = nj_espacio_url(isset($row['image']) ? $row['image'] : 0, isset($row['src']) ? $row['src'] : '');
         return $row;
+    }
+}
+
+if (!function_exists('nj_espacios_promos')) {
+    function nj_espacios_promos() {
+        $saved = nj_espacios_saved();
+        $rows = nj_espacios_rows('promo');
+        $items = array();
+        if (array_key_exists('promo', $saved) && ($saved['promo'] === array() || nj_espacios_is_list($saved['promo']))) {
+            foreach ($rows as $row) {
+                $row['file'] = isset($row['src']) ? $row['src'] : '';
+                $row['src'] = nj_espacio_url(isset($row['image']) ? $row['image'] : 0, $row['file']);
+                if ($row['src'] === '') {
+                    continue;
+                }
+                $items[] = $row;
+            }
+            return $items;
+        }
+        foreach ($rows as $kind => $row) {
+            $row['kind'] = $kind;
+            $row['file'] = isset($row['src']) ? $row['src'] : '';
+            $row['src'] = nj_espacio_url(isset($row['image']) ? $row['image'] : 0, $row['file']);
+            $items[] = $row;
+        }
+        return $items;
     }
 }
 
@@ -215,6 +277,15 @@ if (!function_exists('nj_espacios_clean_points')) {
     }
 }
 
+if (!function_exists('nj_espacios_is_list')) {
+    function nj_espacios_is_list($rows) {
+        if (!is_array($rows) || $rows === array()) {
+            return false;
+        }
+        return array_keys($rows) === range(0, count($rows) - 1);
+    }
+}
+
 if (!function_exists('nj_espacios_file')) {
     function nj_espacios_file($file) {
         $file = basename((string) $file);
@@ -242,11 +313,12 @@ if (!function_exists('nj_espacios_styles_custom')) {
 if (!function_exists('nj_espacios_category_id')) {
     function nj_espacios_category_id($label, $term_id) {
         $term_id = (int) $term_id;
-        if ($term_id && function_exists('get_term')) {
+        $term = null;
+        if ($term_id > 0 && function_exists('get_term')) {
             $term = get_term($term_id, 'product_cat');
-            if ($term && !is_wp_error($term)) {
-                return (int) $term->term_id;
-            }
+        }
+        if (is_object($term) && !is_wp_error($term) && isset($term->term_id)) {
+            return (int) $term->term_id;
         }
         if (!function_exists('nj_category_index') || !function_exists('nj_menu_key')) {
             return 0;
@@ -303,6 +375,7 @@ if (!function_exists('nj_espacios_admin_save')) {
             'cuentos' => 'cuentos',
             'promo' => 'campanas',
             'styles' => 'categorias',
+            'pills' => 'pills',
             'looks' => 'looks',
         );
         if (!isset($map[$group])) {
@@ -330,9 +403,53 @@ if (!function_exists('nj_espacios_admin_save')) {
             if ($group === 'cuentos') {
                 $item['kicker'] = nj_espacios_text(isset($row['kicker']) ? $row['kicker'] : '');
                 $item['title'] = function_exists('sanitize_textarea_field') ? sanitize_textarea_field(isset($row['title']) ? $row['title'] : '') : nj_espacios_text(isset($row['title']) ? $row['title'] : '');
+                $item['src'] = nj_espacios_file(isset($row['src']) ? $row['src'] : '');
+                $item['alt'] = nj_espacios_text(isset($row['alt']) ? $row['alt'] : '');
+                if ($item['image'] < 1 && $item['src'] === '' && $item['kicker'] === '' && $item['title'] === '') {
+                    continue;
+                }
+                if (count($clean) >= 8) {
+                    continue;
+                }
             }
             if ($group === 'looks') {
                 $item['points'] = nj_espacios_clean_points(isset($row['points']) ? $row['points'] : array());
+                $item['src'] = nj_espacios_file(isset($row['src']) ? $row['src'] : '');
+                $item['alt'] = nj_espacios_text(isset($row['alt']) ? $row['alt'] : '');
+                if ($item['image'] < 1 && $item['src'] === '') {
+                    continue;
+                }
+                if (count($clean) >= 8) {
+                    continue;
+                }
+            }
+            if ($group === 'promo') {
+                $kind = isset($row['kind']) ? (string) $row['kind'] : 'photo';
+                $item['kind'] = in_array($kind, array('gift', 'collect', 'three_d', 'photo'), true) ? $kind : 'photo';
+                $item['src'] = nj_espacios_file(isset($row['src']) ? $row['src'] : '');
+                $item['alt'] = nj_espacios_text(isset($row['alt']) ? $row['alt'] : '');
+                $item['label'] = nj_espacios_text(isset($row['label']) ? $row['label'] : '');
+                if ($item['image'] < 1 && $item['src'] === '') {
+                    continue;
+                }
+                if (count($clean) >= 6) {
+                    continue;
+                }
+            }
+            if ($group === 'pills') {
+                $label = nj_espacios_text(isset($row['label']) ? $row['label'] : '');
+                if ($label === '' || count($clean) >= 24) {
+                    continue;
+                }
+                $term = nj_espacios_category_keep($label, isset($row['term']) ? $row['term'] : 0);
+                if ($term < 1) {
+                    continue;
+                }
+                $clean[] = array(
+                    'label' => $label,
+                    'term' => $term,
+                );
+                continue;
             }
             if ($group === 'styles') {
                 $item['label'] = nj_espacios_text(isset($row['label']) ? $row['label'] : '');
@@ -359,6 +476,9 @@ if (!function_exists('nj_espacios_admin_save')) {
                     wp_delete_term((int) $term_id, 'product_cat');
                 }
             }
+            $clean = array_values($clean);
+        }
+        if ($group === 'cuentos' || $group === 'looks' || $group === 'promo' || $group === 'pills') {
             $clean = array_values($clean);
         }
         $saved = nj_espacios_saved();

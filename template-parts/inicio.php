@@ -2,14 +2,13 @@
 require dirname(__DIR__) . '/inc/helpers.php';
 require_once dirname(__DIR__) . '/inc/portada.php';
 $nj_portada = nj_portada_vista();
-$nj_promo_gift = $nj_portada['promo']['gift'];
-$nj_promo_collect = $nj_portada['promo']['collect'];
-$nj_promo_3d = $nj_portada['promo']['three_d'];
+$nj_promos = isset($nj_portada['promos']) ? $nj_portada['promos'] : array();
 $nj_looks = $nj_portada['looks'];
 $nj_tabs = $nj_portada['tabs'];
 $nj_styles = $nj_portada['styles'];
 ?>
 <main>
+  <h1 class="seo-title">Nunca Jamás, ropa de cuento para niñas</h1>
   <?php require __DIR__ . '/hero.php'; ?>
 
   <section class="section" id="prendas">
@@ -41,39 +40,56 @@ $nj_styles = $nj_portada['styles'];
     </div>
   </section>
 
+  <?php if ($nj_promos) : ?>
   <section class="promo" aria-label="Campañas">
-    <article class="promo-gift">
-      <div class="promo-gift__copy">
-        <span class="gift-ico" aria-hidden="true">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#161616" stroke-width="1.7"><rect x="3" y="10" width="18" height="10" rx="1.5"/><path d="M3 14h18M12 10v10M12 10c-2.5 0-4-2.2-2.2-3.8S12 8 12 10zm0 0c2.5 0 4-2.2 2.2-3.8S12 8 12 10z"/></svg>
-        </span>
-        <h2>REGALO<br>PERFECTO</h2>
-        <a class="btn btn-yellow" href="<?php echo esc_url(nj_shop_link('shop')); ?>">Comprar ahora</a>
-        <p class="fine">Elige talla al comprar. Envío a Colombia sobre las prendas disponibles.</p>
-      </div>
-      <a class="promo-gift__photo" href="<?php echo esc_url(nj_section_link('Colecciones')); ?>">
-        <img data-slot="promo-gift" src="<?php echo esc_url($nj_promo_gift['src']); ?>" alt="<?php echo esc_attr($nj_promo_gift['alt']); ?>">
-      </a>
-    </article>
-
-    <article class="promo-collect">
-      <img data-slot="promo-collect" src="<?php echo esc_url($nj_promo_collect['src']); ?>" alt="<?php echo esc_attr($nj_promo_collect['alt']); ?>">
-      <div class="promo-collect__card">
-        <p class="eyebrow">Nunca</p>
-        <h3>COLLECT</h3>
-        <a class="btn btn-yellow" href="<?php echo esc_url(nj_shop_link('shop')); ?>">Ver colección</a>
-      </div>
-    </article>
-
-    <article class="promo-3d">
-      <img data-slot="promo-3d" src="<?php echo esc_url($nj_promo_3d['src']); ?>" alt="<?php echo esc_attr($nj_promo_3d['alt']); ?>">
-      <div class="promo-3d__copy">
-        <p>Gira la prenda</p>
-        <h2>EXPERIENCIA<br>3D</h2>
-      </div>
-      <span class="badge-3d">3D</span>
-    </article>
+    <?php foreach ($nj_promos as $nj_promo) :
+        $nj_kind = isset($nj_promo['kind']) ? $nj_promo['kind'] : 'photo';
+        ?>
+      <?php if ($nj_kind === 'gift') : ?>
+        <article class="promo-gift">
+          <div class="promo-gift__copy">
+            <span class="gift-ico" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#161616" stroke-width="1.7"><rect x="3" y="10" width="18" height="10" rx="1.5"/><path d="M3 14h18M12 10v10M12 10c-2.5 0-4-2.2-2.2-3.8S12 8 12 10zm0 0c2.5 0 4-2.2 2.2-3.8S12 8 12 10z"/></svg>
+            </span>
+            <h2>REGALO<br>PERFECTO</h2>
+            <a class="btn btn-yellow" href="<?php echo esc_url(nj_shop_link('shop')); ?>">Comprar ahora</a>
+            <p class="fine">Elige talla al comprar. Envío a Colombia sobre las prendas disponibles.</p>
+          </div>
+          <a class="promo-gift__photo" href="<?php echo esc_url(nj_section_link('Colecciones')); ?>">
+            <img data-slot="promo-gift" src="<?php echo esc_url($nj_promo['src']); ?>" alt="<?php echo esc_attr($nj_promo['alt']); ?>">
+          </a>
+        </article>
+      <?php elseif ($nj_kind === 'collect') : ?>
+        <article class="promo-collect">
+          <img data-slot="promo-collect" src="<?php echo esc_url($nj_promo['src']); ?>" alt="<?php echo esc_attr($nj_promo['alt']); ?>">
+          <div class="promo-collect__card">
+            <p class="eyebrow">Nunca</p>
+            <h3>COLLECT</h3>
+            <a class="btn btn-yellow" href="<?php echo esc_url(nj_shop_link('shop')); ?>">Ver colección</a>
+          </div>
+        </article>
+      <?php elseif ($nj_kind === 'three_d') : ?>
+        <article class="promo-3d">
+          <img data-slot="promo-3d" src="<?php echo esc_url($nj_promo['src']); ?>" alt="<?php echo esc_attr($nj_promo['alt']); ?>">
+          <div class="promo-3d__copy">
+            <p>Gira la prenda</p>
+            <h2>EXPERIENCIA<br>3D</h2>
+          </div>
+          <span class="badge-3d">3D</span>
+        </article>
+      <?php else : ?>
+        <article class="promo-extra">
+          <a href="<?php echo esc_url(nj_shop_link('shop')); ?>">
+            <img src="<?php echo esc_url($nj_promo['src']); ?>" alt="<?php echo esc_attr(isset($nj_promo['alt']) ? $nj_promo['alt'] : ''); ?>">
+            <?php if (!empty($nj_promo['label'])) : ?>
+              <span><?php echo esc_html($nj_promo['label']); ?></span>
+            <?php endif; ?>
+          </a>
+        </article>
+      <?php endif; ?>
+    <?php endforeach; ?>
   </section>
+  <?php endif; ?>
 
   <section class="section styles">
     <div class="wrap">
@@ -95,6 +111,7 @@ $nj_styles = $nj_portada['styles'];
 
   <?php require __DIR__ . '/cuentos.php'; ?>
 
+  <?php if ($nj_looks) : ?>
   <section class="section looks">
     <div class="wrap">
       <div class="look-head">
@@ -107,7 +124,11 @@ $nj_styles = $nj_portada['styles'];
         </button>
       </div>
       <div class="look-grid">
-        <?php foreach ($nj_looks as $n => $look) : ?>
+        <?php foreach ($nj_looks as $n => $look) :
+            if (!isset($look['src']) || $look['src'] === '') {
+                continue;
+            }
+            ?>
           <article class="look-card">
             <img data-slot="look-<?php echo (int) $n + 1; ?>" src="<?php echo esc_url(nj_img($look['src'])); ?>" alt="<?php echo esc_attr($look['alt']); ?>">
             <?php foreach ($look['points'] as $point) :
@@ -141,6 +162,7 @@ $nj_styles = $nj_portada['styles'];
       </p>
     </div>
   </section>
+  <?php endif; ?>
 
   <?php require __DIR__ . '/beneficios.php'; ?>
 </main>

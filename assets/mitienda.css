@@ -48,6 +48,30 @@
 .nj-photo-grid--small {
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
 }
+.nj-pill-list {
+  display: grid;
+  gap: 10px;
+  max-width: 560px;
+}
+.nj-pill-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  align-items: end;
+  background: #fff;
+  border: 1px solid #dcdcde;
+  border-radius: 12px;
+  padding: 12px;
+}
+.nj-pill-row label {
+  display: grid;
+  gap: 4px;
+}
+.nj-pill-row .nj-prenda-actions {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+}
 .nj-style-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -515,25 +539,50 @@ dialog.nj-modal::backdrop {
   gap: 8px;
   margin: 0;
 }
+.nj-banner-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.nj-banner-card {
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid #dcdcde;
+  border-radius: 12px;
+}
+.nj-banner-card img {
+  width: 168px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #eee;
+}
+.nj-banner-card strong {
+  display: block;
+  margin-bottom: 8px;
+}
 .nj-look-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, 200px);
   gap: 16px;
   align-items: start;
 }
 .nj-look {
   display: grid;
   gap: 10px;
+  width: 200px;
 }
 .nj-look-stage {
   position: relative;
+  width: 200px;
   aspect-ratio: 3 / 4;
   overflow: hidden;
   border-radius: 12px;
   background: #eee;
-}
-.nj-look-stage.is-wide {
-  aspect-ratio: 5 / 4;
 }
 .nj-look-stage img {
   width: 100%;
@@ -617,19 +666,105 @@ dialog.nj-modal::backdrop {
   display: grid;
   gap: 8px;
 }
-.nj-menu-group {
-  display: grid;
-  gap: 8px;
-  margin: 0 0 16px;
-  padding: 12px;
+.nj-menu-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 18px;
+  margin: 0 0 12px;
+  padding: 8px 16px;
   background: #fff;
   border: 1px solid #dcdcde;
   border-radius: 12px;
 }
+.nj-menu-bar button {
+  border: 0;
+  background: transparent;
+  padding: 10px 0;
+  color: #1d2327;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.nj-menu-bar button.is-on {
+  box-shadow: inset 0 -2px 0 #1d2327;
+}
+.nj-menu-bar-gap {
+  flex: 1 1 16px;
+}
+.nj-menu-list {
+  display: grid;
+  gap: 8px;
+}
+.nj-menu-group {
+  margin: 0;
+  background: #fff;
+  border: 1px solid #dcdcde;
+  border-radius: 12px;
+}
+.nj-menu-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  background: transparent;
+  color: #1d2327;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.nj-menu-summary::after {
+  content: "▾";
+  color: #646970;
+}
+.nj-menu-group.is-open .nj-menu-summary::after {
+  content: "▴";
+}
+.nj-menu-count {
+  margin-left: auto;
+  color: #646970;
+  font-size: 12px;
+  font-weight: 500;
+}
+.nj-menu-body,
+.nj-menu-parent {
+  display: none;
+}
+.nj-menu-group.is-open .nj-menu-body {
+  display: grid;
+  gap: 10px;
+  padding: 0 14px 14px;
+}
+.nj-menu-group.is-open .nj-menu-parent {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
+  gap: 10px;
+}
+.nj-menu-body label,
+.nj-menu-subhead {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  font-weight: 600;
+}
+.nj-menu-subhead {
+  color: #646970;
+  font-size: 12px;
+  font-weight: 600;
+}
+.nj-menu-body input {
+  width: 100%;
+}
 .nj-menu-row {
   display: grid;
-  grid-template-columns: 1fr 1.4fr auto;
+  grid-template-columns: minmax(140px, 220px) minmax(0, 1fr) auto;
   gap: 8px;
+  align-items: center;
 }
 .nj-tema-form {
   display: grid;
@@ -658,11 +793,18 @@ dialog.nj-modal::backdrop {
   .nj-prenda-new,
   .nj-modal-top,
   .nj-modal-pair,
-  .nj-modal-texts,
-  .nj-look-grid {
+  .nj-modal-texts {
     grid-template-columns: 1fr;
   }
   .nj-studio-nav {
     position: static;
+  }
+  .nj-menu-group.is-open .nj-menu-parent,
+  .nj-menu-row,
+  .nj-banner-card {
+    grid-template-columns: 1fr;
+  }
+  .nj-banner-card img {
+    width: 100%;
   }
 }

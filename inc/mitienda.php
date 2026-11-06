@@ -39,8 +39,8 @@ if (!function_exists('nj_tienda_admin_assets')) {
             wp_enqueue_media();
         }
         $uri = get_template_directory_uri();
-        wp_enqueue_style('nj-tienda', $uri . '/assets/mitienda.css', array('nj-hero-admin'), '1.1.1');
-        wp_enqueue_script('nj-tienda', $uri . '/assets/mitienda.js', array('jquery', 'nj-hero-admin'), '1.1.1', true);
+        wp_enqueue_style('nj-tienda', $uri . '/assets/mitienda.css', array('nj-hero-admin'), '1.1.7');
+        wp_enqueue_script('nj-tienda', $uri . '/assets/mitienda.js', array('jquery', 'nj-hero-admin'), '1.1.7', true);
     }
 }
 add_action('admin_enqueue_scripts', 'nj_tienda_admin_assets', 20);
@@ -52,12 +52,16 @@ if (!function_exists('nj_tienda_notice')) {
             'campanas' => 'Las campañas quedaron guardadas.',
             'cuentos' => 'El carrusel de cuentos quedó guardado.',
             'categorias' => 'Las categorías quedaron guardadas.',
+            'pills' => 'La fila de la tienda quedó guardada.',
+            'banners' => 'La foto de cada categoría quedó guardada.',
             'looks' => 'Los looks quedaron guardados.',
             'prenda' => 'La prenda quedó guardada.',
             'oculta' => 'La prenda ya no se muestra en la tienda.',
             'prenda-falta' => 'Para publicar una prenda hacen falta la foto, el nombre, el precio y al menos una talla.',
             'prenda-talla' => 'Marca al menos una talla y cuántas hay, para que se pueda comprar.',
             'prenda-off' => 'La tienda todavía no puede recibir prendas.',
+            'whatsapp' => 'WhatsApp quedó guardado. El comprobante sale cuando un pedido se paga.',
+            'whatsapp-plantillas' => 'Las plantillas se enviaron a Meta. Meta tiene que aprobarlas.',
         );
         if (!isset($messages[$code])) {
             return;
@@ -85,6 +89,7 @@ if (!function_exists('nj_tienda_admin_page')) {
               <button type="button" data-panel="categorias">Categorías</button>
               <button type="button" data-panel="looks">Looks</button>
               <button type="button" data-panel="prendas">Prendas</button>
+              <button type="button" data-panel="whatsapp">WhatsApp</button>
             </nav>
             <div class="nj-studio-main">
               <section class="nj-screen is-on" data-screen="banner" id="banner">
@@ -105,6 +110,9 @@ if (!function_exists('nj_tienda_admin_page')) {
               </section>
               <section class="nj-screen" data-screen="prendas" id="prendas">
                 <?php nj_prendas_admin_panel(); ?>
+              </section>
+              <section class="nj-screen" data-screen="whatsapp" id="whatsapp">
+                <?php if (function_exists('nj_whatsapp_panel')) { nj_whatsapp_panel(); } ?>
               </section>
             </div>
           </div>

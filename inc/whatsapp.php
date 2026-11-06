@@ -21,7 +21,7 @@ if (!function_exists('nj_whatsapp_config')) {
 
 if (!function_exists('nj_whatsapp_param')) {
     function nj_whatsapp_param($text) {
-        $text = wp_strip_all_tags((string) $text);
+        $text = function_exists('wp_strip_all_tags') ? wp_strip_all_tags((string) $text) : trim(strip_tags((string) $text));
         $text = preg_replace('/\s+/u', ' ', $text);
         $text = trim((string) $text);
         if ($text === '') {
@@ -93,6 +93,9 @@ if (!function_exists('nj_whatsapp_request')) {
         );
         if ($payload !== null) {
             $args['body'] = wp_json_encode($payload);
+        }
+        if (!function_exists('wp_remote_request')) {
+            return new WP_Error('nj_wa', 'WhatsApp no está disponible.');
         }
         $response = wp_remote_request($url, $args);
         if (is_wp_error($response)) {
@@ -304,6 +307,36 @@ if (!function_exists('nj_whatsapp_create_templates')) {
     }
 }
 
+if (!function_exists('nj_whatsapp_chat_url')) {
+    function nj_whatsapp_chat_url() {
+        $digits = nj_whatsapp_digits(nj_whatsapp_config()['owner']);
+        if (strlen($digits) < 7) {
+            return '';
+        }
+        return 'https://wa.me/' . $digits;
+    }
+}
+
+if (!function_exists('nj_whatsapp_save_posted')) {
+    function nj_whatsapp_save_posted() {
+        $config = nj_whatsapp_config();
+        $token = isset($_POST['nj_wa_token']) ? trim(sanitize_text_field(wp_unslash($_POST['nj_wa_token']))) : '';
+        $phone = isset($_POST['nj_wa_phone']) ? preg_replace('/\D+/', '', (string) wp_unslash($_POST['nj_wa_phone'])) : '';
+        $waba = isset($_POST['nj_wa_waba']) ? preg_replace('/\D+/', '', (string) wp_unslash($_POST['nj_wa_waba'])) : '';
+        if ($token !== '') {
+            $config['token'] = $token;
+        }
+        if ($phone !== '') {
+            $config['phone_id'] = $phone;
+        }
+        if ($waba !== '') {
+            $config['waba_id'] = $waba;
+        }
+        $config['owner'] = nj_whatsapp_digits(isset($_POST['nj_wa_owner']) ? wp_unslash($_POST['nj_wa_owner']) : '');
+        update_option('nj_whatsapp', $config, false);
+    }
+}
+
 if (!function_exists('nj_whatsapp_admin_menu')) {
     function nj_whatsapp_admin_menu() {
         if (!function_exists('add_submenu_page')) {
@@ -321,47 +354,82 @@ if (!function_exists('nj_whatsapp_admin_menu')) {
 }
 add_action('admin_menu', 'nj_whatsapp_admin_menu');
 
+if (!function_exists('nj_whatsapp_admin_save')) {
+    function nj_whatsapp_admin_save() {
+        if (!function_exists('current_user_can') || !current_user_can('manage_woocommerce')) {
+            wp_die('No tienes permiso para conectar WhatsApp.');
+        }
+        check_admin_referer('nj_whatsapp_save', 'nj_whatsapp_nonce');
+        nj_whatsapp_save_posted();
+        $code = 'whatsapp';
+        if (!empty($_POST['nj_whatsapp_templates'])) {
+            $notes = nj_whatsapp_create_templates();
+            if (function_exists('set_transient')) {
+                set_transient('nj_whatsapp_notice', implode(' ', $notes), 60);
+            }
+            $code = 'whatsapp-plantillas';
+        }
+        wp_safe_redirect(admin_url('admin.php?page=nj-tienda&updated=' . $code . '#whatsapp'));
+        exit;
+    }
+}
+add_action('admin_post_nj_whatsapp_save', 'nj_whatsapp_admin_save');
+
+if (!function_exists('nj_whatsapp_panel')) {
+    function nj_whatsapp_panel() {
+        $config = nj_whatsapp_config();
+        $detail = function_exists('get_transient') ? get_transient('nj_whatsapp_notice') : '';
+        if (is_string($detail) && $detail !== '' && function_exists('delete_transient')) {
+            delete_transient('nj_whatsapp_notice');
+        } else {
+            $detail = '';
+        }
+        $can = function_exists('current_user_can') && current_user_can('manage_woocommerce');
+        ?>
+        <h2>WhatsApp</h2>
+        <p>Cuando un pedido se paga, el cliente recibe el comprobante por WhatsApp y a este número te llega el pedido con el botón Empacando. Al empacar, el cliente recibe otro aviso. El correo sigue saliendo igual.</p>
+        <?php if ($detail !== '') : ?>
+          <div class="notice notice-success"><p><?php echo esc_html($detail); ?></p></div>
+        <?php endif; ?>
+        <?php if (!$can) : ?>
+          <p>Para guardar la conexión hace falta el permiso de administrar la tienda.</p>
+        <?php else : ?>
+          <form method="post" action="<?php echo esc_url(function_exists('admin_url') ? admin_url('admin-post.php') : 'admin-post.php'); ?>">
+            <input type="hidden" name="action" value="nj_whatsapp_save">
+            <?php if (function_exists('wp_nonce_field')) { wp_nonce_field('nj_whatsapp_save', 'nj_whatsapp_nonce'); } ?>
+            <p><?php echo $config['token'] !== '' ? 'Hay un token guardado.' : 'Falta el token de Meta.'; ?> El número que envía tiene que estar en la nube y verificado.</p>
+            <div class="nj-tema-fields">
+              <label>Token permanente
+                <input type="password" name="nj_wa_token" value="" autocomplete="new-password" placeholder="<?php echo $config['token'] !== '' ? 'Hay un token guardado' : 'Pega el token'; ?>">
+              </label>
+              <label>Identificador del número
+                <input type="text" name="nj_wa_phone" value="<?php echo esc_attr($config['phone_id']); ?>">
+              </label>
+              <label>Cuenta de WhatsApp
+                <input type="text" name="nj_wa_waba" value="<?php echo esc_attr($config['waba_id']); ?>">
+              </label>
+              <label>WhatsApp donde llegan los pedidos
+                <input type="text" name="nj_wa_owner" value="<?php echo esc_attr($config['owner']); ?>" placeholder="573001112233">
+              </label>
+            </div>
+            <p class="nj-prenda-note">Si dejas el token vacío, se conserva el que ya estaba. Ese mismo número abre el botón de WhatsApp en la bolsa.</p>
+            <p class="nj-studio-save">
+              <button type="submit" class="button button-primary" name="nj_whatsapp_save" value="1">Guardar WhatsApp</button>
+              <button type="submit" class="button" name="nj_whatsapp_templates" value="1">Crear plantillas</button>
+            </p>
+            <p class="nj-prenda-note">Las plantillas son el comprobante al cliente, el pedido a la tienda y el aviso de empacando. Meta tiene que aprobarlas.</p>
+          </form>
+        <?php endif; ?>
+        <?php
+    }
+}
+
 if (!function_exists('nj_whatsapp_admin_page')) {
     function nj_whatsapp_admin_page() {
-        if (!current_user_can('manage_woocommerce')) {
+        if (!function_exists('current_user_can') || !current_user_can('manage_woocommerce')) {
             return;
         }
-        $config = nj_whatsapp_config();
-        $notice = '';
-        if (isset($_POST['nj_whatsapp_save']) && check_admin_referer('nj_whatsapp_save')) {
-            $token = isset($_POST['nj_wa_token']) ? trim(sanitize_text_field(wp_unslash($_POST['nj_wa_token']))) : '';
-            $config['phone_id'] = isset($_POST['nj_wa_phone']) ? preg_replace('/\D+/', '', wp_unslash($_POST['nj_wa_phone'])) : $config['phone_id'];
-            $config['waba_id'] = isset($_POST['nj_wa_waba']) ? preg_replace('/\D+/', '', wp_unslash($_POST['nj_wa_waba'])) : $config['waba_id'];
-            $config['owner'] = nj_whatsapp_digits(isset($_POST['nj_wa_owner']) ? wp_unslash($_POST['nj_wa_owner']) : '');
-            if ($token !== '') {
-                $config['token'] = $token;
-            }
-            update_option('nj_whatsapp', $config, false);
-            $notice = 'WhatsApp guardado.';
-        }
-        if (isset($_POST['nj_whatsapp_templates']) && check_admin_referer('nj_whatsapp_templates')) {
-            $notice = implode(' ', nj_whatsapp_create_templates());
-        }
-        $config = nj_whatsapp_config();
-        echo '<div class="wrap"><h1>WhatsApp</h1>';
-        if ($notice !== '') {
-            echo '<div class="updated"><p>' . esc_html($notice) . '</p></div>';
-        }
-        echo '<p>El número que envía es el de Nunca Jamás, +57 310 3580161. En Meta tiene que estar en la nube y verificado. El celular de abajo es donde te llegan los pedidos.</p>';
-        echo '<form method="post">';
-        wp_nonce_field('nj_whatsapp_save');
-        echo '<table class="form-table"><tbody>';
-        echo '<tr><th><label for="nj_wa_token">Token permanente</label></th><td><input name="nj_wa_token" id="nj_wa_token" type="password" class="regular-text" autocomplete="off" placeholder="' . ($config['token'] !== '' ? 'Token guardado' : 'Pega el token') . '"><p class="description">Si lo dejas vacío se conserva el que ya está guardado.</p></td></tr>';
-        echo '<tr><th><label for="nj_wa_phone">Identificador del número</label></th><td><input name="nj_wa_phone" id="nj_wa_phone" type="text" class="regular-text" value="' . esc_attr($config['phone_id']) . '"></td></tr>';
-        echo '<tr><th><label for="nj_wa_waba">Cuenta de WhatsApp</label></th><td><input name="nj_wa_waba" id="nj_wa_waba" type="text" class="regular-text" value="' . esc_attr($config['waba_id']) . '"></td></tr>';
-        echo '<tr><th><label for="nj_wa_owner">Tu WhatsApp</label></th><td><input name="nj_wa_owner" id="nj_wa_owner" type="text" class="regular-text" value="' . esc_attr($config['owner']) . '" placeholder="573001112233"></td></tr>';
-        echo '</tbody></table>';
-        echo '<p><button class="button button-primary" name="nj_whatsapp_save" value="1">Guardar</button></p>';
-        echo '</form>';
-        echo '<form method="post" style="margin-top:12px">';
-        wp_nonce_field('nj_whatsapp_templates');
-        echo '<button class="button" name="nj_whatsapp_templates" value="1">Crear plantillas</button>';
-        echo '<p class="description">Crea los tres mensajes: comprobante al cliente, pedido a la tienda con el botón Empacando, y aviso de empacando. Meta tiene que aprobarlos.</p>';
-        echo '</form></div>';
+        wp_safe_redirect(admin_url('admin.php?page=nj-tienda#whatsapp'));
+        exit;
     }
 }

@@ -5,10 +5,10 @@ require_once __DIR__ . '/inc/cards.php';
 require_once __DIR__ . '/inc/catalog.php';
 require_once __DIR__ . '/inc/portada.php';
 require_once __DIR__ . '/inc/ficha.php';
-$nj_menu = nj_menu();
+$nj_menu = function_exists('nj_menu_blog') ? nj_menu_blog(nj_menu()) : nj_menu();
 $nj_search_action = nj_home_url();
 ?><!DOCTYPE html>
-<html lang="es">
+<html lang="es-CO">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">

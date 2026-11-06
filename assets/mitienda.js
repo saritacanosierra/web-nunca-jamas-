@@ -45,6 +45,58 @@
     }
   }
 
+  function reindexPills(list) {
+    if (!list) {
+      return;
+    }
+    var cards = list.querySelectorAll("[data-nj-pill]");
+    Array.prototype.forEach.call(cards, function (card, index) {
+      card.querySelectorAll("[name]").forEach(function (input) {
+        input.name = input.name.replace(/espacios\[\d+\]/, "espacios[" + index + "]");
+      });
+    });
+    var add = document.querySelector("[data-nj-pill-add]");
+    if (add) {
+      add.disabled = cards.length >= 24;
+    }
+  }
+
+  function addPill(list) {
+    if (!list || list.querySelectorAll("[data-nj-pill]").length >= 24) {
+      return;
+    }
+    var index = list.querySelectorAll("[data-nj-pill]").length;
+    var card = document.createElement("div");
+    card.className = "nj-pill-row";
+    card.setAttribute("data-nj-pill", "");
+    card.innerHTML = ''
+      + '<label>Nombre <input type="text" name="espacios[' + index + '][label]" value="" placeholder="Nombre de la categoría"></label>'
+      + '<input type="hidden" name="espacios[' + index + '][term]" value="0">'
+      + '<p class="nj-prenda-actions"><button type="button" class="button" data-nj-pill-up>Subir</button><button type="button" class="button" data-nj-pill-down>Bajar</button><button type="button" class="button" data-nj-pill-remove>Quitar</button></p>';
+    list.appendChild(card);
+    reindexPills(list);
+    var field = card.querySelector("input[type=text]");
+    if (field) {
+      field.focus();
+    }
+  }
+
+  function movePill(card, direction) {
+    if (!card || !card.parentNode) {
+      return;
+    }
+    var sibling = direction < 0 ? card.previousElementSibling : card.nextElementSibling;
+    if (!sibling) {
+      return;
+    }
+    if (direction < 0) {
+      card.parentNode.insertBefore(card, sibling);
+    } else {
+      card.parentNode.insertBefore(sibling, card);
+    }
+    reindexPills(card.parentNode);
+  }
+
   function addStyleCard(list) {
     if (!list || list.querySelectorAll("[data-nj-style]").length >= 12) {
       return;
@@ -71,6 +123,49 @@
     }
   }
 
+  function reindexCuentos(list) {
+    if (!list) {
+      return;
+    }
+    var cards = list.querySelectorAll("[data-nj-cuento]");
+    Array.prototype.forEach.call(cards, function (card, index) {
+      card.querySelectorAll("[name]").forEach(function (input) {
+        input.name = input.name.replace(/espacios\[\d+\]/, "espacios[" + index + "]");
+      });
+    });
+    var add = document.querySelector("[data-nj-cuento-add]");
+    if (add) {
+      add.disabled = cards.length >= 8;
+    }
+  }
+
+  function addCuento(list) {
+    if (!list || list.querySelectorAll("[data-nj-cuento]").length >= 8) {
+      return;
+    }
+    var index = list.querySelectorAll("[data-nj-cuento]").length;
+    var card = document.createElement("div");
+    card.className = "nj-photo nj-photo--wide";
+    card.setAttribute("data-nj-photo", "");
+    card.setAttribute("data-nj-cuento", "");
+    card.innerHTML = ''
+      + '<img alt="" hidden>'
+      + '<div class="nj-photo-body">'
+      + '<input data-nj-id type="hidden" name="espacios[' + index + '][image]" value="0">'
+      + '<input type="hidden" name="espacios[' + index + '][src]" value="">'
+      + '<input type="hidden" name="espacios[' + index + '][alt]" value="">'
+      + '<p class="nj-prenda-actions"><button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button><button type="button" class="button" data-nj-cuento-remove>Quitar</button></p>'
+      + '<label>Texto pequeño <input type="text" name="espacios[' + index + '][kicker]" value="" placeholder="Cuentos"></label>'
+      + '<label>Título <textarea name="espacios[' + index + '][title]" rows="2"></textarea></label>'
+      + '</div>';
+    list.appendChild(card);
+    reindexCuentos(list);
+    var field = card.querySelector("input[type=text]");
+    if (field) {
+      field.focus();
+    }
+  }
+
   function reindexMenu(group) {
     if (!group) {
       return;
@@ -86,6 +181,64 @@
         inputs[1].name = prefix + "[children][" + index + "][href]";
       }
     });
+    syncMenuCount(group);
+  }
+
+  function syncMenuTitle(group) {
+    if (!group) {
+      return;
+    }
+    var input = group.querySelector("[data-nj-menu-label]");
+    var title = group.querySelector("[data-nj-menu-title]");
+    var text = input && input.value.trim() ? input.value.trim() : "Menú";
+    if (title) {
+      title.textContent = text;
+    }
+    var key = group.getAttribute("data-nj-menu-key");
+    var jump = key ? document.querySelector('[data-nj-menu-jump="' + key + '"]') : null;
+    if (jump) {
+      jump.textContent = text;
+    }
+  }
+
+  function syncMenuCount(group) {
+    if (!group) {
+      return;
+    }
+    var list = group.querySelector("[data-nj-menu-children]");
+    var slot = group.querySelector("[data-nj-menu-count]");
+    if (!list || !slot) {
+      return;
+    }
+    var total = list.querySelectorAll(".nj-menu-row").length;
+    slot.textContent = total === 1 ? "1 enlace" : total + " enlaces";
+  }
+
+  function toggleMenu(key) {
+    if (!key) {
+      return;
+    }
+    var current = document.querySelector('[data-nj-menu-group][data-nj-menu-key="' + key + '"].is-open');
+    var next = current ? "" : key;
+    Array.prototype.forEach.call(document.querySelectorAll("[data-nj-menu-group]"), function (group) {
+      var open = group.getAttribute("data-nj-menu-key") === next;
+      group.classList.toggle("is-open", open);
+      var summary = group.querySelector("[data-nj-menu-toggle]");
+      if (summary) {
+        summary.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-nj-menu-jump]"), function (button) {
+      var open = button.getAttribute("data-nj-menu-jump") === next;
+      button.classList.toggle("is-on", open);
+      button.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    if (next) {
+      var opened = document.querySelector('[data-nj-menu-group][data-nj-menu-key="' + next + '"]');
+      if (opened && opened.scrollIntoView) {
+        opened.scrollIntoView({ block: "nearest" });
+      }
+    }
   }
 
   function filterPrendas() {
@@ -193,6 +346,91 @@
     list.appendChild(box);
     reindexLooks(card);
     openLookPoint(card, box.getAttribute("data-nj-point-fields"));
+  }
+
+  function reindexAllLooks() {
+    var cards = document.querySelectorAll("[data-nj-look]");
+    Array.prototype.forEach.call(cards, function (card, lookIndex) {
+      var title = card.querySelector("[data-nj-look-title]");
+      if (title) {
+        title.textContent = "Look " + (lookIndex + 1);
+      }
+      card.querySelectorAll("[name]").forEach(function (input) {
+        input.name = input.name.replace(/espacios\[\d+\]/, "espacios[" + lookIndex + "]");
+      });
+      reindexLooks(card);
+    });
+    var add = document.querySelector("[data-nj-look-add]");
+    if (add) {
+      add.disabled = cards.length >= 8;
+    }
+  }
+
+  function addLook(list) {
+    if (!list || list.querySelectorAll("[data-nj-look]").length >= 8) {
+      return;
+    }
+    var index = list.querySelectorAll("[data-nj-look]").length;
+    var card = document.createElement("div");
+    card.className = "nj-look";
+    card.setAttribute("data-nj-look", "");
+    card.innerHTML = ''
+      + '<strong data-nj-look-title>Look ' + (index + 1) + '</strong>'
+      + '<div class="nj-look-stage" data-nj-stage data-nj-photo>'
+      + '<img alt="" hidden>'
+      + '<input data-nj-id type="hidden" name="espacios[' + index + '][image]" value="0">'
+      + '<input type="hidden" name="espacios[' + index + '][src]" value="">'
+      + '<input type="hidden" name="espacios[' + index + '][alt]" value="">'
+      + '</div>'
+      + '<p class="nj-prenda-actions"><button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button><button type="button" class="button" data-nj-look-remove>Quitar</button></p>'
+      + '<div data-nj-point-list></div>'
+      + '<p><button type="button" class="button" data-nj-point-add>Agregar punto</button></p>';
+    list.appendChild(card);
+    reindexAllLooks();
+  }
+
+  function reindexPromos(list) {
+    if (!list) {
+      return;
+    }
+    var cards = list.querySelectorAll("[data-nj-promo]");
+    Array.prototype.forEach.call(cards, function (card, index) {
+      card.querySelectorAll("[name]").forEach(function (input) {
+        input.name = input.name.replace(/espacios\[\d+\]/, "espacios[" + index + "]");
+      });
+    });
+    var add = document.querySelector("[data-nj-promo-add]");
+    if (add) {
+      add.disabled = cards.length >= 6;
+    }
+  }
+
+  function addPromo(list) {
+    if (!list || list.querySelectorAll("[data-nj-promo]").length >= 6) {
+      return;
+    }
+    var index = list.querySelectorAll("[data-nj-promo]").length;
+    var card = document.createElement("div");
+    card.className = "nj-photo";
+    card.setAttribute("data-nj-photo", "");
+    card.setAttribute("data-nj-promo", "");
+    card.innerHTML = ''
+      + '<img alt="" hidden>'
+      + '<div class="nj-photo-body">'
+      + '<strong>Campaña</strong>'
+      + '<input type="hidden" name="espacios[' + index + '][kind]" value="photo">'
+      + '<input data-nj-id type="hidden" name="espacios[' + index + '][image]" value="0">'
+      + '<input type="hidden" name="espacios[' + index + '][src]" value="">'
+      + '<input type="hidden" name="espacios[' + index + '][alt]" value="">'
+      + '<label>Nombre <input type="text" name="espacios[' + index + '][label]" value="" placeholder="Nombre de la campaña"></label>'
+      + '<p class="nj-prenda-actions"><button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button><button type="button" class="button" data-nj-promo-remove>Quitar</button></p>'
+      + '</div>';
+    list.appendChild(card);
+    reindexPromos(list);
+    var field = card.querySelector("input[type=text]");
+    if (field) {
+      field.focus();
+    }
   }
 
   function attrBox(node) {
@@ -397,6 +635,17 @@
       if (colorInput) {
         rebuildStocks(attrBox(colorInput));
       }
+      var menuLabel = event.target.closest("[data-nj-menu-label]");
+      if (menuLabel) {
+        syncMenuTitle(menuLabel.closest("[data-nj-menu-group]"));
+      }
+      var promoName = event.target.closest("[data-nj-promo] input[type=text]");
+      if (promoName) {
+        var promoTitle = promoName.closest("[data-nj-promo]").querySelector("strong");
+        if (promoTitle) {
+          promoTitle.textContent = promoName.value.trim() || "Campaña";
+        }
+      }
     });
     document.addEventListener("click", function (event) {
       var pickButton = event.target.closest("[data-nj-pick]");
@@ -455,6 +704,63 @@
           photoItem.remove();
         }
       }
+      var addCuentoButton = event.target.closest("[data-nj-cuento-add]");
+      if (addCuentoButton) {
+        addCuento(document.querySelector("[data-nj-cuento-list]"));
+      }
+      var removeCuento = event.target.closest("[data-nj-cuento-remove]");
+      if (removeCuento) {
+        var cuento = removeCuento.closest("[data-nj-cuento]");
+        if (cuento && window.confirm("¿Quitar este cuento del carrusel?")) {
+          cuento.remove();
+          reindexCuentos(document.querySelector("[data-nj-cuento-list]"));
+        }
+      }
+      var addLookButton = event.target.closest("[data-nj-look-add]");
+      if (addLookButton) {
+        addLook(document.querySelector("[data-nj-look-list]"));
+      }
+      var removeLook = event.target.closest("[data-nj-look-remove]");
+      if (removeLook) {
+        var lookCard = removeLook.closest("[data-nj-look]");
+        if (lookCard && window.confirm("¿Quitar este look?")) {
+          lookCard.remove();
+          reindexAllLooks();
+        }
+      }
+      var addPromoButton = event.target.closest("[data-nj-promo-add]");
+      if (addPromoButton) {
+        addPromo(document.querySelector("[data-nj-promo-list]"));
+      }
+      var removePromo = event.target.closest("[data-nj-promo-remove]");
+      if (removePromo) {
+        var promoCard = removePromo.closest("[data-nj-promo]");
+        if (promoCard && window.confirm("¿Quitar esta campaña?")) {
+          promoCard.remove();
+          reindexPromos(document.querySelector("[data-nj-promo-list]"));
+        }
+      }
+      var addPillButton = event.target.closest("[data-nj-pill-add]");
+      if (addPillButton) {
+        addPill(document.querySelector("[data-nj-pill-list]"));
+      }
+      var removePill = event.target.closest("[data-nj-pill-remove]");
+      if (removePill) {
+        var pill = removePill.closest("[data-nj-pill]");
+        if (pill && window.confirm("¿Quitar esta categoría de la fila? Los productos siguen en su categoría.")) {
+          var pillList = pill.parentNode;
+          pill.remove();
+          reindexPills(pillList);
+        }
+      }
+      var pillUp = event.target.closest("[data-nj-pill-up]");
+      if (pillUp) {
+        movePill(pillUp.closest("[data-nj-pill]"), -1);
+      }
+      var pillDown = event.target.closest("[data-nj-pill-down]");
+      if (pillDown) {
+        movePill(pillDown.closest("[data-nj-pill]"), 1);
+      }
       var addStyle = event.target.closest("[data-nj-style-add]");
       if (addStyle) {
         addStyleCard(document.querySelector("[data-nj-style-list]"));
@@ -471,6 +777,17 @@
         if (card && window.confirm(message)) {
           card.remove();
           reindexStyles(document.querySelector("[data-nj-style-list]"));
+        }
+      }
+      var menuJump = event.target.closest("[data-nj-menu-jump]");
+      if (menuJump) {
+        toggleMenu(menuJump.getAttribute("data-nj-menu-jump"));
+      }
+      var menuToggle = event.target.closest("[data-nj-menu-toggle]");
+      if (menuToggle) {
+        var toggled = menuToggle.closest("[data-nj-menu-group]");
+        if (toggled) {
+          toggleMenu(toggled.getAttribute("data-nj-menu-key"));
         }
       }
       var addMenu = event.target.closest("[data-nj-menu-add]");

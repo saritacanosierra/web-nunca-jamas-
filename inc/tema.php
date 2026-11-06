@@ -25,9 +25,9 @@ if (!function_exists('nj_tema_settings')) {
             $saved = array();
         }
         $settings = $defaults;
-        $settings['logo'] = isset($saved['logo']) ? absint($saved['logo']) : 0;
+        $settings['logo'] = isset($saved['logo']) ? (function_exists('absint') ? absint($saved['logo']) : abs((int) $saved['logo'])) : 0;
         foreach (array('coral', 'teal', 'gold', 'ink', 'bg') as $key) {
-            $color = isset($saved[$key]) ? sanitize_hex_color($saved[$key]) : '';
+            $color = isset($saved[$key]) ? (function_exists('sanitize_hex_color') ? sanitize_hex_color($saved[$key]) : '') : '';
             if ($color) {
                 $settings[$key] = $color;
             }
@@ -208,9 +208,9 @@ if (!function_exists('nj_tema_admin_assets')) {
         }
         $uri = get_template_directory_uri();
         wp_enqueue_style('nj-hero-admin', $uri . '/assets/hero-admin.css', array(), '1.0.0');
-        wp_enqueue_style('nj-tienda', $uri . '/assets/mitienda.css', array('nj-hero-admin'), '1.1.1');
+        wp_enqueue_style('nj-tienda', $uri . '/assets/mitienda.css', array('nj-hero-admin'), '1.1.7');
         wp_enqueue_script('nj-hero-admin', $uri . '/assets/hero-admin.js', array('jquery'), '1.0.0', true);
-        wp_enqueue_script('nj-tienda', $uri . '/assets/mitienda.js', array('jquery', 'nj-hero-admin'), '1.1.1', true);
+        wp_enqueue_script('nj-tienda', $uri . '/assets/mitienda.js', array('jquery', 'nj-hero-admin'), '1.1.7', true);
     }
 }
 add_action('admin_enqueue_scripts', 'nj_tema_admin_assets', 20);
@@ -249,7 +249,8 @@ if (!function_exists('nj_tema_admin_save')) {
             'css' => nj_tema_css_clean(isset($_POST['extra_css']) ? wp_unslash($_POST['extra_css']) : ''),
         );
         foreach (array('coral', 'teal', 'gold', 'ink', 'bg') as $key) {
-            $color = isset($_POST[$key]) ? sanitize_hex_color(wp_unslash($_POST[$key])) : '';
+            $posted = isset($_POST[$key]) ? wp_unslash($_POST[$key]) : '';
+            $color = function_exists('sanitize_hex_color') ? sanitize_hex_color($posted) : '';
             $saved[$key] = $color ? $color : $defaults[$key];
         }
         update_option('nj_tema', $saved);

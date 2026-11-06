@@ -24,6 +24,7 @@
         <?php foreach (array_slice(nj_nav_items(), 0, 6) as $item) : ?>
           <li><a href="<?php echo esc_url($item['href']); ?>"><?php nj_e($item['label']); ?></a></li>
         <?php endforeach; ?>
+        <li><a href="<?php echo esc_url(function_exists('nj_blog_url') ? nj_blog_url() : nj_home_url()); ?>">Cuentos</a></li>
         <li><a href="<?php echo esc_url(nj_shop_link('cart')); ?>">Bolsa</a></li>
         <li><a href="<?php echo esc_url(nj_shop_link('account')); ?>">Mi cuenta</a></li>
       </ul>

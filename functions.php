@@ -45,7 +45,7 @@ function nj_assets() {
     wp_enqueue_style('nj-home', get_template_directory_uri() . '/assets/home.css', array('nj-fonts'), NJ_VERSION);
     wp_enqueue_script('nj-bolsa', get_template_directory_uri() . '/assets/bolsa.js', array(), NJ_VERSION, true);
     wp_enqueue_script('nj-tienda', get_template_directory_uri() . '/assets/tienda.js', array('nj-bolsa'), NJ_VERSION, true);
-    if (function_exists('WC') && WC() && function_exists('home_url') && function_exists('add_query_arg')) {
+    if (function_exists('wp_localize_script') && function_exists('wp_create_nonce') && function_exists('WC') && WC() && function_exists('home_url') && function_exists('add_query_arg')) {
         wp_localize_script('nj-bolsa', 'njShop', array(
             'ajax' => add_query_arg('wc-ajax', 'add_to_cart', home_url('/')),
             'bag' => add_query_arg('wc-ajax', 'nj_bag', home_url('/')),

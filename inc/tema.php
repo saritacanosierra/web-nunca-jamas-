@@ -208,9 +208,9 @@ if (!function_exists('nj_tema_admin_assets')) {
         }
         $uri = get_template_directory_uri();
         wp_enqueue_style('nj-hero-admin', $uri . '/assets/hero-admin.css', array(), '1.0.0');
-        wp_enqueue_style('nj-tienda', $uri . '/assets/mitienda.css', array('nj-hero-admin'), '1.0.6');
+        wp_enqueue_style('nj-tienda', $uri . '/assets/mitienda.css', array('nj-hero-admin'), '1.1.1');
         wp_enqueue_script('nj-hero-admin', $uri . '/assets/hero-admin.js', array('jquery'), '1.0.0', true);
-        wp_enqueue_script('nj-tienda', $uri . '/assets/mitienda.js', array('jquery', 'nj-hero-admin'), '1.0.6', true);
+        wp_enqueue_script('nj-tienda', $uri . '/assets/mitienda.js', array('jquery', 'nj-hero-admin'), '1.1.1', true);
     }
 }
 add_action('admin_enqueue_scripts', 'nj_tema_admin_assets', 20);
@@ -278,9 +278,12 @@ if (!function_exists('nj_tema_admin_save')) {
                 $id = isset($_POST['wc_page_' . $page]) ? absint(wp_unslash($_POST['wc_page_' . $page])) : 0;
                 update_option('woocommerce_' . $page . '_page_id', $id);
             }
+            if (function_exists('nj_pagos_save_wompi')) {
+                nj_pagos_save_wompi();
+            }
         }
         $section = isset($_POST['nj_tema_section']) ? sanitize_key(wp_unslash($_POST['nj_tema_section'])) : 'identidad';
-        if (!in_array($section, array('identidad', 'menus', 'portada', 'woocommerce', 'css'), true)) {
+        if (!in_array($section, array('identidad', 'menus', 'portada', 'woocommerce', 'pagos', 'css'), true)) {
             $section = 'identidad';
         }
         wp_safe_redirect(admin_url('admin.php?page=nj-tema&updated=tema#' . $section));

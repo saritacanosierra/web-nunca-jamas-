@@ -71,7 +71,7 @@ if (!function_exists('nj_tema_admin_page')) {
           <?php if ($saved) : ?>
             <div class="notice notice-success is-dismissible"><p>El tema quedó guardado. Recarga la tienda para verlo.</p></div>
           <?php endif; ?>
-          <p class="nj-studio-lead">Aquí está lo mismo que en el personalizador: la identidad, los menús, la portada, WooCommerce y el CSS. Las fotos y las prendas siguen en Mi tienda.</p>
+          <p class="nj-studio-lead">Aquí está la identidad, los menús, la portada, WooCommerce, los pagos y el CSS. Las fotos y las prendas siguen en Mi tienda.</p>
           <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
             <?php wp_nonce_field('nj_tema_save', 'nj_tema_nonce'); ?>
             <input type="hidden" name="action" value="nj_tema_save">
@@ -82,6 +82,7 @@ if (!function_exists('nj_tema_admin_page')) {
                 <button type="button" data-panel="menus">Menús</button>
                 <button type="button" data-panel="portada">Ajustes de portada</button>
                 <button type="button" data-panel="woocommerce">WooCommerce</button>
+                <button type="button" data-panel="pagos">Pagos</button>
                 <button type="button" data-panel="css">CSS adicional</button>
               </nav>
               <div class="nj-studio-main">
@@ -191,6 +192,56 @@ if (!function_exists('nj_tema_admin_page')) {
                         <?php nj_tema_page_select('wc_page_myaccount', (int) get_option('woocommerce_myaccount_page_id')); ?>
                       </label>
                     </div>
+                  <?php endif; ?>
+                </section>
+                <section class="nj-screen" data-screen="pagos" id="pagos">
+                  <h2>Pagos</h2>
+                  <?php
+                    $nj_wompi = function_exists('nj_pagos_wompi') ? nj_pagos_wompi() : array();
+                    $nj_wompi_on = function_exists('nj_pagos_wompi_on') && nj_pagos_wompi_on();
+                    $nj_wompi_test = isset($nj_wompi['testmode']) && $nj_wompi['testmode'] === 'yes';
+                    $nj_wompi_ready = function_exists('nj_pagos_wompi_filled') && nj_pagos_wompi_filled($nj_wompi, $nj_wompi_test);
+                  ?>
+                  <?php if (!$nj_wompi_on) : ?>
+                    <p>Activa el plugin Wompi en Plugins. Con él la tienda cobra en pesos por Nequi, tarjeta o PSE.</p>
+                  <?php else : ?>
+                    <p><?php echo (!empty($nj_wompi['enabled']) && $nj_wompi['enabled'] === 'yes' && $nj_wompi_ready) ? 'Wompi está listo para cobrar.' : 'Falta activar Wompi o completar las cuatro llaves del modo que estás usando.'; ?></p>
+                    <label class="nj-check"><input type="checkbox" name="wompi_enabled" value="1" <?php checked(isset($nj_wompi['enabled']) && $nj_wompi['enabled'] === 'yes'); ?>> Cobrar con Wompi</label>
+                    <label class="nj-check"><input type="checkbox" name="wompi_testmode" value="1" <?php checked($nj_wompi_test); ?>> Modo de pruebas</label>
+                    <p class="nj-prenda-note">Para cobrar de verdad, deja el modo de pruebas apagado y usa las llaves de producción. La llave pública empieza por pub_prod_.</p>
+                    <div class="nj-tema-fields">
+                      <label>Llave pública
+                        <input type="text" name="wompi_public_key" value="<?php echo esc_attr(isset($nj_wompi['public_key']) ? $nj_wompi['public_key'] : ''); ?>" autocomplete="off">
+                      </label>
+                      <label>Llave privada
+                        <input type="password" name="wompi_private_key" value="" placeholder="<?php echo empty($nj_wompi['private_key']) ? '' : 'Hay una llave guardada'; ?>" autocomplete="new-password">
+                      </label>
+                      <label>Llave de eventos
+                        <input type="password" name="wompi_event_key" value="" placeholder="<?php echo empty($nj_wompi['event_secret_key']) ? '' : 'Hay una llave guardada'; ?>" autocomplete="new-password">
+                      </label>
+                      <label>Llave de integridad
+                        <input type="password" name="wompi_integrity_key" value="" placeholder="<?php echo empty($nj_wompi['integrity_key']) ? '' : 'Hay una llave guardada'; ?>" autocomplete="new-password">
+                      </label>
+                    </div>
+                    <h3>Llaves de prueba</h3>
+                    <div class="nj-tema-fields">
+                      <label>Llave pública de prueba
+                        <input type="text" name="wompi_test_public_key" value="<?php echo esc_attr(isset($nj_wompi['test_public_key']) ? $nj_wompi['test_public_key'] : ''); ?>" autocomplete="off">
+                      </label>
+                      <label>Llave privada de prueba
+                        <input type="password" name="wompi_test_private_key" value="" placeholder="<?php echo empty($nj_wompi['test_private_key']) ? '' : 'Hay una llave guardada'; ?>" autocomplete="new-password">
+                      </label>
+                      <label>Eventos de prueba
+                        <input type="password" name="wompi_test_event_key" value="" placeholder="<?php echo empty($nj_wompi['test_event_secret_key']) ? '' : 'Hay una llave guardada'; ?>" autocomplete="new-password">
+                      </label>
+                      <label>Integridad de prueba
+                        <input type="password" name="wompi_test_integrity_key" value="" placeholder="<?php echo empty($nj_wompi['test_integrity_key']) ? '' : 'Hay una llave guardada'; ?>" autocomplete="new-password">
+                      </label>
+                      <label>Dirección de eventos
+                        <input type="text" readonly value="<?php echo esc_attr(home_url('/?wc-api=wc_wompi')); ?>">
+                      </label>
+                    </div>
+                    <p class="nj-prenda-note">Copia esa dirección en el comercio de Wompi, en eventos. Si dejas vacía una llave privada, se conserva la que ya estaba.</p>
                   <?php endif; ?>
                 </section>
                 <section class="nj-screen" data-screen="css" id="css">

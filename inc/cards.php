@@ -103,6 +103,20 @@ if (!function_exists('nj_card_extra_images')) {
                 $extra[] = $found;
             }
         }
+        if (method_exists($product, 'is_type') && $product->is_type('variable')) {
+            $main = (int) $product->get_image_id();
+            foreach ($product->get_children() as $child_id) {
+                $child = function_exists('wc_get_product') ? wc_get_product($child_id) : null;
+                $image_id = $child ? (int) $child->get_image_id() : 0;
+                if ($image_id < 1 || $image_id === $main) {
+                    continue;
+                }
+                $found = wp_get_attachment_image_url($image_id, 'woocommerce_single');
+                if ($found) {
+                    $extra[] = $found;
+                }
+            }
+        }
         return $extra;
     }
 }

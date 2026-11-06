@@ -88,12 +88,14 @@ if (!function_exists('nj_espacios_panel_styles')) {
         <h2>Categorías</h2>
         <p>Son los círculos de “Compra por categorías”. Cambia el nombre y la foto, agrega una nueva o elimina la que ya no quieres. Al guardar, la categoría también se crea o se borra en la tienda.</p>
         <?php nj_espacios_form_open('styles'); ?>
-        <div class="nj-photo-grid nj-photo-grid--small" data-nj-style-list>
+        <div class="nj-style-grid" data-nj-style-list>
           <?php foreach (nj_espacios_rows('styles') as $index => $row) :
               $src = nj_espacio_url(isset($row['image']) ? $row['image'] : 0, isset($row['src']) ? $row['src'] : '');
               ?>
-            <div class="nj-photo nj-photo--square" data-nj-photo data-nj-style>
-              <img alt=""<?php echo $src === '' ? ' hidden' : ' src="' . esc_url($src) . '"'; ?>>
+            <div class="nj-style-card" data-nj-photo data-nj-style>
+              <div class="nj-style-frame">
+                <img alt=""<?php echo $src === '' ? ' hidden' : ' src="' . esc_url($src) . '"'; ?>>
+              </div>
               <div class="nj-photo-body">
                 <input data-nj-id type="hidden" name="espacios[<?php echo (int) $index; ?>][image]" value="<?php echo esc_attr((string) (isset($row['image']) ? (int) $row['image'] : 0)); ?>">
                 <input type="hidden" name="espacios[<?php echo (int) $index; ?>][src]" value="<?php echo esc_attr(isset($row['src']) ? $row['src'] : ''); ?>">
@@ -101,10 +103,10 @@ if (!function_exists('nj_espacios_panel_styles')) {
                 <label>Nombre
                   <input type="text" name="espacios[<?php echo (int) $index; ?>][label]" value="<?php echo esc_attr(isset($row['label']) ? $row['label'] : ''); ?>">
                 </label>
-                <p class="nj-prenda-actions">
+                <div class="nj-style-actions">
                   <button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button>
                   <button type="button" class="button" data-nj-style-remove>Eliminar</button>
-                </p>
+                </div>
               </div>
             </div>
           <?php endforeach; ?>
@@ -138,18 +140,23 @@ if (!function_exists('nj_espacios_panel_looks')) {
               <div data-nj-point-list>
                 <?php foreach ($points as $point_index => $point) : ?>
                   <div class="nj-look-fields" data-nj-point-fields="<?php echo (int) $point_index; ?>">
-                    <input data-top type="hidden" name="espacios[<?php echo (int) $index; ?>][points][<?php echo (int) $point_index; ?>][top]" value="<?php echo esc_attr($point['top']); ?>">
-                    <input data-left type="hidden" name="espacios[<?php echo (int) $index; ?>][points][<?php echo (int) $point_index; ?>][left]" value="<?php echo esc_attr($point['left']); ?>">
-                    <label>Nombre
-                      <input type="text" name="espacios[<?php echo (int) $index; ?>][points][<?php echo (int) $point_index; ?>][label]" value="<?php echo esc_attr(isset($point['label']) ? $point['label'] : ''); ?>">
-                    </label>
-                    <label>Precio
-                      <input type="text" name="espacios[<?php echo (int) $index; ?>][points][<?php echo (int) $point_index; ?>][price]" value="<?php echo esc_attr(isset($point['price']) ? $point['price'] : ''); ?>" placeholder="$ 32.000">
-                    </label>
-                    <label>Enlace
-                      <input type="url" name="espacios[<?php echo (int) $index; ?>][points][<?php echo (int) $point_index; ?>][href]" value="<?php echo esc_attr(isset($point['href']) ? $point['href'] : ''); ?>" placeholder="https://">
-                    </label>
-                    <button type="button" class="button" data-nj-point-remove>Quitar punto</button>
+                    <button type="button" class="nj-look-summary" data-nj-point-toggle>
+                      <span data-nj-point-title><?php echo (int) $point_index + 1; ?>. <?php echo esc_html(isset($point['label']) && $point['label'] !== '' ? $point['label'] : 'Sin nombre'); ?></span>
+                    </button>
+                    <div class="nj-look-body">
+                      <input data-top type="hidden" name="espacios[<?php echo (int) $index; ?>][points][<?php echo (int) $point_index; ?>][top]" value="<?php echo esc_attr($point['top']); ?>">
+                      <input data-left type="hidden" name="espacios[<?php echo (int) $index; ?>][points][<?php echo (int) $point_index; ?>][left]" value="<?php echo esc_attr($point['left']); ?>">
+                      <label>Nombre
+                        <input type="text" name="espacios[<?php echo (int) $index; ?>][points][<?php echo (int) $point_index; ?>][label]" value="<?php echo esc_attr(isset($point['label']) ? $point['label'] : ''); ?>">
+                      </label>
+                      <label>Precio
+                        <input type="text" name="espacios[<?php echo (int) $index; ?>][points][<?php echo (int) $point_index; ?>][price]" value="<?php echo esc_attr(isset($point['price']) ? $point['price'] : ''); ?>" placeholder="$ 32.000">
+                      </label>
+                      <label>Enlace
+                        <input type="url" name="espacios[<?php echo (int) $index; ?>][points][<?php echo (int) $point_index; ?>][href]" value="<?php echo esc_attr(isset($point['href']) ? $point['href'] : ''); ?>" placeholder="https://">
+                      </label>
+                      <button type="button" class="button" data-nj-point-remove>Quitar punto</button>
+                    </div>
                   </div>
                 <?php endforeach; ?>
               </div>

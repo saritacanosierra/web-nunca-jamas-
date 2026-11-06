@@ -51,17 +51,17 @@
     }
     var index = list.querySelectorAll("[data-nj-style]").length;
     var card = document.createElement("div");
-    card.className = "nj-photo nj-photo--square";
+    card.className = "nj-style-card";
     card.setAttribute("data-nj-photo", "");
     card.setAttribute("data-nj-style", "");
     card.innerHTML = ''
-      + '<img alt="" hidden>'
+      + '<div class="nj-style-frame"><img alt="" hidden></div>'
       + '<div class="nj-photo-body">'
       + '<input data-nj-id type="hidden" name="espacios[' + index + '][image]" value="0">'
       + '<input type="hidden" name="espacios[' + index + '][src]" value="">'
       + '<input type="hidden" name="espacios[' + index + '][term]" value="0">'
       + '<label>Nombre <input type="text" name="espacios[' + index + '][label]" value="" placeholder="Nombre de la categoría"></label>'
-      + '<p class="nj-prenda-actions"><button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button><button type="button" class="button" data-nj-style-remove>Eliminar</button></p>'
+      + '<div class="nj-style-actions"><button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button><button type="button" class="button" data-nj-style-remove>Eliminar</button></div>'
       + '</div>';
     list.appendChild(card);
     reindexStyles(list);
@@ -88,6 +88,51 @@
     });
   }
 
+  function filterPrendas() {
+    var current = document.querySelector("[data-nj-cat-filter].is-on");
+    var cat = current ? current.getAttribute("data-nj-cat-filter") : "";
+    var stockButton = document.querySelector("[data-nj-stock-filter]");
+    var onlyShort = stockButton && stockButton.classList.contains("is-on");
+    var visible = 0;
+    Array.prototype.forEach.call(document.querySelectorAll("[data-nj-prenda]"), function (tile) {
+      var cats = (tile.getAttribute("data-nj-cats") || "").split(",");
+      var level = tile.getAttribute("data-nj-level") || "ok";
+      var catOk = cat === "" || cats.indexOf(cat) !== -1;
+      var stockOk = !onlyShort || level === "low" || level === "out";
+      var show = catOk && stockOk;
+      tile.hidden = !show;
+      if (show) {
+        visible += 1;
+      }
+    });
+    var empty = document.querySelector("[data-nj-prenda-empty]");
+    if (empty) {
+      empty.hidden = visible > 0;
+    }
+  }
+
+  function lookTitle(box) {
+    var name = box.querySelector("input[type=text]");
+    var label = name && name.value.trim() ? name.value.trim() : "Sin nombre";
+    var title = box.querySelector("[data-nj-point-title]");
+    if (title) {
+      title.textContent = (Number(box.getAttribute("data-nj-point-fields")) + 1) + ". " + label;
+    }
+  }
+
+  function openLookPoint(card, id) {
+    if (!card) {
+      return;
+    }
+    Array.prototype.forEach.call(card.querySelectorAll("[data-nj-point-fields]"), function (box) {
+      box.classList.toggle("is-open", box.getAttribute("data-nj-point-fields") === String(id));
+      lookTitle(box);
+    });
+    Array.prototype.forEach.call(card.querySelectorAll("[data-nj-point]"), function (dot) {
+      dot.classList.toggle("is-on", dot.getAttribute("data-nj-point") === String(id));
+    });
+  }
+
   function reindexLooks(card) {
     if (!card) {
       return;
@@ -99,6 +144,7 @@
       box.querySelectorAll("[name]").forEach(function (input) {
         input.name = input.name.replace(/espacios\[\d+\]\[points\]\[\d+\]/, "espacios[" + lookIndex + "][points][" + index + "]");
       });
+      lookTitle(box);
     });
     var dots = card.querySelectorAll("[data-nj-point]");
     Array.prototype.forEach.call(dots, function (dot, index) {
@@ -135,14 +181,18 @@
     box.setAttribute("data-nj-point-fields", String(index));
     var base = "espacios[" + lookIndex + "][points][" + index + "]";
     box.innerHTML = ''
+      + '<button type="button" class="nj-look-summary" data-nj-point-toggle><span data-nj-point-title>Punto</span></button>'
+      + '<div class="nj-look-body">'
       + '<input data-top type="hidden" name="' + base + '[top]" value="50%">'
       + '<input data-left type="hidden" name="' + base + '[left]" value="50%">'
       + '<label>Nombre <input type="text" name="' + base + '[label]" value=""></label>'
       + '<label>Precio <input type="text" name="' + base + '[price]" value="" placeholder="$ 32.000"></label>'
       + '<label>Enlace <input type="url" name="' + base + '[href]" value="" placeholder="https://"></label>'
-      + '<button type="button" class="button" data-nj-point-remove>Quitar punto</button>';
+      + '<button type="button" class="button" data-nj-point-remove>Quitar punto</button>'
+      + '</div>';
     list.appendChild(box);
     reindexLooks(card);
+    openLookPoint(card, box.getAttribute("data-nj-point-fields"));
   }
 
   function attrBox(node) {
@@ -311,6 +361,37 @@
   }
 
   $(function () {
+    document.addEventListener("click", function (event) {
+      var catFilter = event.target.closest("[data-nj-cat-filter]");
+      if (catFilter) {
+        Array.prototype.forEach.call(document.querySelectorAll("[data-nj-cat-filter]"), function (button) {
+          button.classList.toggle("is-on", button === catFilter);
+        });
+        filterPrendas();
+      }
+      var stockFilter = event.target.closest("[data-nj-stock-filter]");
+      if (stockFilter) {
+        stockFilter.classList.toggle("is-on");
+        filterPrendas();
+      }
+      var opener = event.target.closest("[data-nj-open]");
+      if (opener) {
+        var dialog = document.getElementById(opener.getAttribute("data-nj-open"));
+        if (dialog && dialog.showModal) {
+          dialog.showModal();
+        }
+      }
+      var closer = event.target.closest("[data-nj-close]");
+      if (closer) {
+        var openDialog = closer.closest("dialog");
+        if (openDialog) {
+          openDialog.close();
+        }
+      }
+      if (event.target.matches && event.target.matches("dialog.nj-modal")) {
+        event.target.close();
+      }
+    });
     document.addEventListener("input", function (event) {
       var colorInput = event.target.closest("[data-nj-attr=color] input[type=text]");
       if (colorInput) {
@@ -413,6 +494,21 @@
         }
         reindexMenu(menuGroup);
       }
+      var pointToggle = event.target.closest("[data-nj-point-toggle]");
+      if (pointToggle) {
+        var pointBox = pointToggle.closest("[data-nj-point-fields]");
+        var pointCard = pointToggle.closest("[data-nj-look]");
+        if (pointBox && pointCard) {
+          if (pointBox.classList.contains("is-open")) {
+            pointBox.classList.remove("is-open");
+            Array.prototype.forEach.call(pointCard.querySelectorAll("[data-nj-point]"), function (dot) {
+              dot.classList.remove("is-on");
+            });
+          } else {
+            openLookPoint(pointCard, pointBox.getAttribute("data-nj-point-fields"));
+          }
+        }
+      }
       var removePoint = event.target.closest("[data-nj-point-remove]");
       if (removePoint) {
         var card = removePoint.closest("[data-nj-look]");
@@ -441,7 +537,13 @@
         return;
       }
       event.preventDefault();
+      var startX = event.clientX;
+      var startY = event.clientY;
+      var moved = false;
       function move(ev) {
+        if (Math.abs(ev.clientX - startX) > 3 || Math.abs(ev.clientY - startY) > 3) {
+          moved = true;
+        }
         var rect = stage.getBoundingClientRect();
         if (!rect.width || !rect.height) {
           return;
@@ -470,6 +572,9 @@
       function stop() {
         document.removeEventListener("pointermove", move);
         document.removeEventListener("pointerup", stop);
+        if (!moved) {
+          openLookPoint(card, dot.getAttribute("data-nj-point"));
+        }
       }
       document.addEventListener("pointermove", move);
       document.addEventListener("pointerup", stop);

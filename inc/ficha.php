@@ -8,16 +8,17 @@ require_once __DIR__ . '/cards.php';
 if (!function_exists('nj_ficha_frames')) {
     function nj_ficha_frames($gallery) {
         $positions = array('center top', 'center', 'center 35%', 'center bottom');
-        $gallery = array_values(array_filter((array) $gallery));
         $frames = array();
-        if (!$gallery) {
-            return $frames;
-        }
-        $total = max(4, count($gallery));
-        for ($index = 0; $index < $total; $index++) {
+        $seen = array();
+        foreach ((array) $gallery as $src) {
+            $src = (string) $src;
+            if ($src === '' || isset($seen[$src])) {
+                continue;
+            }
+            $seen[$src] = true;
             $frames[] = array(
-                'src' => $gallery[$index % count($gallery)],
-                'position' => $positions[$index % count($positions)],
+                'src' => $src,
+                'position' => $positions[count($frames) % count($positions)],
             );
         }
         return $frames;

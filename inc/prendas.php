@@ -353,6 +353,39 @@ if (!function_exists('nj_prendas_plain')) {
     }
 }
 
+if (!function_exists('nj_prendas_stock_level')) {
+    function nj_prendas_stock_level($product) {
+        $map = nj_prendas_stock_lookup($product);
+        if ($map) {
+            $total = 0;
+            foreach ($map as $qty) {
+                $total += (int) $qty;
+            }
+            if ($total < 1) {
+                return 'out';
+            }
+            if ($total <= 3) {
+                return 'low';
+            }
+            return 'ok';
+        }
+        if (is_object($product) && method_exists($product, 'managing_stock') && $product->managing_stock()) {
+            $qty = (int) $product->get_stock_quantity();
+            if ($qty < 1) {
+                return 'out';
+            }
+            if ($qty <= 3) {
+                return 'low';
+            }
+            return 'ok';
+        }
+        if (is_object($product) && method_exists($product, 'is_in_stock') && !$product->is_in_stock()) {
+            return 'out';
+        }
+        return 'ok';
+    }
+}
+
 if (!function_exists('nj_prendas_prices')) {
     function nj_prendas_prices($product) {
         $price = (int) round((float) $product->get_price());

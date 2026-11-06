@@ -101,6 +101,18 @@ if (!function_exists('wp_enqueue_script')) {
     }
 }
 
+if (!function_exists('wp_localize_script')) {
+    function wp_localize_script($handle, $object_name, $l10n) {
+        return null;
+    }
+}
+
+if (!function_exists('wp_create_nonce')) {
+    function wp_create_nonce($action = -1) {
+        return '';
+    }
+}
+
 if (!function_exists('wp_head')) {
     function wp_head() {
         return null;

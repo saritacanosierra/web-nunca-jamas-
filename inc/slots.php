@@ -1,8 +1,7 @@
 <?php
 /**
- * Imágenes y textos de la portada.
- * Cambia "src" por otro archivo de assets/img o por una URL de la biblioteca.
- * La distribución de la página no depende de estos nombres.
+ * Respaldo de la portada cuando Mi tienda todavía no tiene fotos guardadas.
+ * La portada lee inc/portada.php, no este archivo.
  */
 
 return array(
@@ -75,11 +74,11 @@ return array(
     ),
     'hero' => array(
         array(
-            'src' => 'banner-nueva-coleccion.png',
+            'src' => 'banner-nueva-coleccion.jpg',
             'alt' => 'Nueva colección. La magia de crecer. Prendas llenas de encanto para acompañar cada historia de la infancia.',
         ),
         array(
-            'src' => 'banner-felices.png',
+            'src' => 'banner-felices.jpg',
             'alt' => 'Colección Felices por siempre. Pequeñas princesas, grandes sueños y cuentos que nunca terminan.',
         ),
     ),

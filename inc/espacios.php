@@ -1,0 +1,251 @@
+<?php
+/**
+ * Fotos de la portada que se cambian desde Mi tienda.
+ */
+
+if (!function_exists('nj_espacios_defaults')) {
+    function nj_espacios_defaults($group) {
+        $data = function_exists('nj_slots_data') ? nj_slots_data() : array();
+        if ($group === 'promo') {
+            return isset($data['promo']) && is_array($data['promo']) ? $data['promo'] : array();
+        }
+        return isset($data[$group]) && is_array($data[$group]) ? $data[$group] : array();
+    }
+}
+
+if (!function_exists('nj_espacios_saved')) {
+    function nj_espacios_saved() {
+        if (!function_exists('get_option')) {
+            return array();
+        }
+        $saved = get_option('nj_espacios', null);
+        return is_array($saved) ? $saved : array();
+    }
+}
+
+if (!function_exists('nj_espacio_url')) {
+    function nj_espacio_url($image_id, $file) {
+        $image_id = (int) $image_id;
+        if ($image_id > 0 && function_exists('wp_get_attachment_image_url')) {
+            $url = wp_get_attachment_image_url($image_id, 'full');
+            if (is_string($url) && $url !== '') {
+                return $url;
+            }
+        }
+        $file = (string) $file;
+        if ($file === '') {
+            return '';
+        }
+        return function_exists('nj_img') ? nj_img($file) : $file;
+    }
+}
+
+if (!function_exists('nj_espacios_merge_row')) {
+    function nj_espacios_merge_row($base, $over) {
+        $row = is_array($base) ? $base : array();
+        if (!is_array($over)) {
+            return $row;
+        }
+        if (!empty($over['image'])) {
+            $row['image'] = (int) $over['image'];
+        }
+        foreach (array('alt', 'kicker', 'title', 'label') as $key) {
+            if (isset($over[$key]) && trim((string) $over[$key]) !== '') {
+                $row[$key] = (string) $over[$key];
+            }
+        }
+        if (array_key_exists('points', $over) && is_array($over['points'])) {
+            $row['points'] = nj_espacios_clean_points($over['points']);
+        }
+        return $row;
+    }
+}
+
+if (!function_exists('nj_espacios_rows')) {
+    function nj_espacios_rows($group) {
+        $defaults = nj_espacios_defaults($group);
+        $saved = nj_espacios_saved();
+        $over = isset($saved[$group]) && is_array($saved[$group]) ? $saved[$group] : array();
+        $rows = array();
+        if ($group === 'promo') {
+            foreach ($defaults as $key => $base) {
+                $rows[$key] = nj_espacios_merge_row($base, isset($over[$key]) ? $over[$key] : array());
+            }
+            return $rows;
+        }
+        foreach ($defaults as $index => $base) {
+            $rows[] = nj_espacios_merge_row($base, isset($over[$index]) ? $over[$index] : array());
+        }
+        return $rows;
+    }
+}
+
+if (!function_exists('nj_espacios_promo')) {
+    function nj_espacios_promo($key) {
+        $rows = nj_espacios_rows('promo');
+        $row = isset($rows[$key]) ? $rows[$key] : array('src' => '', 'alt' => '');
+        $row['src'] = nj_espacio_url(isset($row['image']) ? $row['image'] : 0, isset($row['src']) ? $row['src'] : '');
+        return $row;
+    }
+}
+
+if (!function_exists('nj_espacios_cuentos')) {
+    function nj_espacios_cuentos() {
+        $items = array();
+        foreach (nj_espacios_rows('cuentos') as $row) {
+            $items[] = array(
+                'image' => nj_espacio_url(isset($row['image']) ? $row['image'] : 0, isset($row['src']) ? $row['src'] : ''),
+                'alt' => isset($row['alt']) ? $row['alt'] : '',
+                'kicker' => isset($row['kicker']) ? $row['kicker'] : '',
+                'title' => isset($row['title']) ? $row['title'] : '',
+            );
+        }
+        return $items;
+    }
+}
+
+if (!function_exists('nj_espacios_styles')) {
+    function nj_espacios_styles() {
+        $items = array();
+        foreach (nj_espacios_rows('styles') as $row) {
+            $label = isset($row['label']) ? $row['label'] : '';
+            $items[] = array(
+                'label' => $label,
+                'href' => function_exists('nj_section_link') ? nj_section_link($label) : '',
+                'image' => nj_espacio_url(isset($row['image']) ? $row['image'] : 0, isset($row['src']) ? $row['src'] : ''),
+            );
+        }
+        return $items;
+    }
+}
+
+if (!function_exists('nj_espacios_looks')) {
+    function nj_espacios_looks() {
+        $items = array();
+        foreach (nj_espacios_rows('looks') as $row) {
+            $row['src'] = nj_espacio_url(isset($row['image']) ? $row['image'] : 0, isset($row['src']) ? $row['src'] : '');
+            if (!isset($row['points']) || !is_array($row['points'])) {
+                $row['points'] = array();
+            }
+            $items[] = $row;
+        }
+        return $items;
+    }
+}
+
+if (!function_exists('nj_espacios_clean_image')) {
+    function nj_espacios_clean_image($id) {
+        $id = (int) $id;
+        if ($id < 1) {
+            return 0;
+        }
+        if (function_exists('wp_attachment_is_image') && !wp_attachment_is_image($id)) {
+            return 0;
+        }
+        return $id;
+    }
+}
+
+if (!function_exists('nj_espacios_percent')) {
+    function nj_espacios_percent($value) {
+        $value = trim((string) $value);
+        if (!preg_match('/^(\d{1,3}(?:\.\d+)?)%$/', $value, $match)) {
+            return '';
+        }
+        $number = (float) $match[1];
+        if ($number < 0 || $number > 100) {
+            return '';
+        }
+        return rtrim(rtrim(number_format($number, 1, '.', ''), '0'), '.') . '%';
+    }
+}
+
+if (!function_exists('nj_espacios_clean_points')) {
+    function nj_espacios_clean_points($points) {
+        $clean = array();
+        if (!is_array($points)) {
+            return $clean;
+        }
+        foreach ($points as $point) {
+            if (!is_array($point)) {
+                continue;
+            }
+            $top = nj_espacios_percent(isset($point['top']) ? $point['top'] : '');
+            $left = nj_espacios_percent(isset($point['left']) ? $point['left'] : '');
+            if ($top === '' || $left === '') {
+                continue;
+            }
+            $href = isset($point['href']) ? trim((string) $point['href']) : '';
+            if (function_exists('esc_url_raw')) {
+                $href = esc_url_raw($href);
+            }
+            $clean[] = array(
+                'top' => $top,
+                'left' => $left,
+                'label' => nj_espacios_text(isset($point['label']) ? $point['label'] : ''),
+                'price' => nj_espacios_text(isset($point['price']) ? $point['price'] : ''),
+                'href' => $href,
+            );
+            if (count($clean) >= 4) {
+                break;
+            }
+        }
+        return $clean;
+    }
+}
+
+if (!function_exists('nj_espacios_text')) {
+    function nj_espacios_text($value) {
+        if (function_exists('sanitize_text_field')) {
+            return sanitize_text_field($value);
+        }
+        return trim(strip_tags((string) $value));
+    }
+}
+
+if (!function_exists('nj_espacios_admin_save')) {
+    function nj_espacios_admin_save() {
+        $allowed = function_exists('nj_tienda_can') ? nj_tienda_can() : (function_exists('current_user_can') && current_user_can('edit_theme_options'));
+        if (!$allowed) {
+            wp_die('No tienes permiso para cambiar estas fotos.');
+        }
+        check_admin_referer('nj_espacios_save', 'nj_espacios_nonce');
+        $group = isset($_POST['grupo']) ? sanitize_key(wp_unslash($_POST['grupo'])) : '';
+        $map = array(
+            'cuentos' => 'cuentos',
+            'promo' => 'campanas',
+            'styles' => 'categorias',
+            'looks' => 'looks',
+        );
+        if (!isset($map[$group])) {
+            wp_safe_redirect(admin_url('admin.php?page=nj-tienda'));
+            exit;
+        }
+        $raw = isset($_POST['espacios']) && is_array($_POST['espacios']) ? wp_unslash($_POST['espacios']) : array();
+        $clean = array();
+        foreach ($raw as $key => $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $item = array(
+                'image' => nj_espacios_clean_image(isset($row['image']) ? $row['image'] : 0),
+            );
+            if ($group === 'cuentos') {
+                $item['kicker'] = nj_espacios_text(isset($row['kicker']) ? $row['kicker'] : '');
+                $item['title'] = function_exists('sanitize_textarea_field') ? sanitize_textarea_field(isset($row['title']) ? $row['title'] : '') : nj_espacios_text(isset($row['title']) ? $row['title'] : '');
+            }
+            if ($group === 'looks') {
+                $item['points'] = nj_espacios_clean_points(isset($row['points']) ? $row['points'] : array());
+            }
+            $clean[$key] = $item;
+        }
+        $saved = nj_espacios_saved();
+        $saved[$group] = $clean;
+        update_option('nj_espacios', $saved, true);
+        wp_safe_redirect(admin_url('admin.php?page=nj-tienda&updated=' . $map[$group] . '#' . $map[$group]));
+        exit;
+    }
+}
+add_action('admin_post_nj_espacios_save', 'nj_espacios_admin_save');
+
+require_once __DIR__ . '/admin/espacios.php';

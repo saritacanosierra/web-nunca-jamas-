@@ -1,7 +1,7 @@
 <?php
 /**
- * Declaraciones mínimas para el editor cuando el archivo se abre fuera de WordPress.
- * Dentro del sitio estas funciones ya existen y aquí no se vuelven a crear.
+ * Solo la vista previa, cuando WordPress no está cargado.
+ * El tema en el sitio no incluye este archivo.
  */
 
 if (defined('ABSPATH')) {

@@ -105,6 +105,7 @@
       slides.forEach(function (slide, i) {
         slide.classList.toggle("is-active", i === index);
       });
+      hero.classList.toggle("is-build", slides[index].classList.contains("hero__slide--build"));
       dots.forEach(function (dot, i) {
         dot.classList.toggle("is-active", i === index);
       });

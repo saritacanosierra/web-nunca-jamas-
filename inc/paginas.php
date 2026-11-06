@@ -331,6 +331,12 @@ if (!function_exists('nj_shipping_label')) {
         return $label;
     }
 }
+if (!function_exists('nj_shipping_is_free')) {
+    function nj_shipping_is_free($merchandise, $threshold) {
+        return (float) $merchandise >= (int) $threshold;
+    }
+}
+
 if (!function_exists('nj_shipping_threshold_rates')) {
     function nj_shipping_threshold_rates($rates, $package) {
         if (!function_exists('nj_slots_data') || !function_exists('WC') || !WC()->cart) {
@@ -338,7 +344,7 @@ if (!function_exists('nj_shipping_threshold_rates')) {
         }
         $threshold = (int) nj_slots_data()['bag']['free_shipping'];
         $total = (float) WC()->cart->get_displayed_subtotal();
-        if ($total >= $threshold) {
+        if (nj_shipping_is_free($total, $threshold)) {
             $free = array();
             foreach ($rates as $id => $rate) {
                 if ($rate->get_method_id() === 'free_shipping') {

@@ -3,7 +3,13 @@
  * Rutas de la portada. En la vista previa no hace falta WordPress.
  */
 
-require_once __DIR__ . '/wp-stubs.php';
+if (!defined('NJ_VERSION')) {
+    define('NJ_VERSION', '1.8.1');
+}
+
+if (!defined('ABSPATH')) {
+    require_once __DIR__ . '/wp-stubs.php';
+}
 
 if (!function_exists('nj_img')) {
     function nj_img($file) {

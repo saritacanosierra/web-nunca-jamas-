@@ -1,5 +1,7 @@
 <?php
-require_once dirname(__DIR__) . '/inc/wp-stubs.php';
+if (!defined('ABSPATH')) {
+    require_once dirname(__DIR__) . '/inc/wp-stubs.php';
+}
 defined('ABSPATH') || exit;
 get_header();
 $nj_catalog = nj_catalog_from_shop();

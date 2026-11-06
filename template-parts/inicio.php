@@ -1,29 +1,16 @@
 <?php
 require dirname(__DIR__) . '/inc/helpers.php';
 require_once dirname(__DIR__) . '/inc/portada.php';
-$nj = nj_slots_data();
-$nj_tabs = nj_home_tabs();
-$nj_styles = nj_style_items();
+$nj_portada = nj_portada_vista();
+$nj_promo_gift = $nj_portada['promo']['gift'];
+$nj_promo_collect = $nj_portada['promo']['collect'];
+$nj_promo_3d = $nj_portada['promo']['three_d'];
+$nj_looks = $nj_portada['looks'];
+$nj_tabs = $nj_portada['tabs'];
+$nj_styles = $nj_portada['styles'];
 ?>
 <main>
-  <section class="hero hero--banners" data-hero>
-    <?php foreach ($nj['hero'] as $i => $slide) : ?>
-      <a class="hero__slide<?php echo $i === 0 ? ' is-active' : ''; ?>" href="<?php echo esc_url(nj_section_link('Colecciones')); ?>">
-        <img src="<?php echo esc_url(nj_img($slide['src'])); ?>" alt="<?php echo esc_attr($slide['alt']); ?>">
-      </a>
-    <?php endforeach; ?>
-    <button class="hero__arrow hero__arrow--prev" type="button" data-prev aria-label="Anterior">
-      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5 L8 12 L15 19"/></svg>
-    </button>
-    <button class="hero__arrow hero__arrow--next" type="button" data-next aria-label="Siguiente">
-      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5 L16 12 L9 19"/></svg>
-    </button>
-    <div class="hero__dots">
-      <?php foreach ($nj['hero'] as $i => $slide) : ?>
-        <button type="button" data-dot="<?php echo (int) $i; ?>" class="<?php echo $i === 0 ? 'is-active' : ''; ?>" aria-label="Diapositiva <?php echo (int) $i + 1; ?>"></button>
-      <?php endforeach; ?>
-    </div>
-  </section>
+  <?php require __DIR__ . '/hero.php'; ?>
 
   <section class="section" id="prendas">
     <div class="wrap" data-tabs>
@@ -65,12 +52,12 @@ $nj_styles = nj_style_items();
         <p class="fine">Elige talla al comprar. Envío a Colombia sobre las prendas disponibles.</p>
       </div>
       <a class="promo-gift__photo" href="<?php echo esc_url(nj_section_link('Colecciones')); ?>">
-        <img data-slot="promo-gift" src="<?php echo esc_url(nj_img($nj['promo']['gift']['src'])); ?>" alt="<?php echo esc_attr($nj['promo']['gift']['alt']); ?>">
+        <img data-slot="promo-gift" src="<?php echo esc_url($nj_promo_gift['src']); ?>" alt="<?php echo esc_attr($nj_promo_gift['alt']); ?>">
       </a>
     </article>
 
     <article class="promo-collect">
-      <img data-slot="promo-collect" src="<?php echo esc_url(nj_img($nj['promo']['collect']['src'])); ?>" alt="<?php echo esc_attr($nj['promo']['collect']['alt']); ?>">
+      <img data-slot="promo-collect" src="<?php echo esc_url($nj_promo_collect['src']); ?>" alt="<?php echo esc_attr($nj_promo_collect['alt']); ?>">
       <div class="promo-collect__card">
         <p class="eyebrow">Nunca</p>
         <h3>COLLECT</h3>
@@ -79,7 +66,7 @@ $nj_styles = nj_style_items();
     </article>
 
     <article class="promo-3d">
-      <img data-slot="promo-3d" src="<?php echo esc_url(nj_img($nj['promo']['three_d']['src'])); ?>" alt="<?php echo esc_attr($nj['promo']['three_d']['alt']); ?>">
+      <img data-slot="promo-3d" src="<?php echo esc_url($nj_promo_3d['src']); ?>" alt="<?php echo esc_attr($nj_promo_3d['alt']); ?>">
       <div class="promo-3d__copy">
         <p>Gira la prenda</p>
         <h2>EXPERIENCIA<br>3D</h2>
@@ -120,17 +107,30 @@ $nj_styles = nj_style_items();
         </button>
       </div>
       <div class="look-grid">
-        <?php foreach ($nj['looks'] as $n => $look) : ?>
+        <?php foreach ($nj_looks as $n => $look) : ?>
           <article class="look-card">
             <img data-slot="look-<?php echo (int) $n + 1; ?>" src="<?php echo esc_url(nj_img($look['src'])); ?>" alt="<?php echo esc_attr($look['alt']); ?>">
-            <?php foreach ($look['points'] as $point) : ?>
-              <button class="hotspot" type="button" style="--point-top: <?php echo esc_attr($point['top']); ?>; --point-left: <?php echo esc_attr($point['left']); ?>" aria-label="<?php echo esc_attr($point['label']); ?>">
+            <?php foreach ($look['points'] as $point) :
+                $nj_point_href = isset($point['href']) ? $point['href'] : '';
+                ?>
+              <?php if ($nj_point_href !== '') : ?>
+                <a class="hotspot" href="<?php echo esc_url($nj_point_href); ?>" style="--point-top: <?php echo esc_attr($point['top']); ?>; --point-left: <?php echo esc_attr($point['left']); ?>" aria-label="<?php echo esc_attr($point['label']); ?>">
+              <?php else : ?>
+                <button class="hotspot" type="button" style="--point-top: <?php echo esc_attr($point['top']); ?>; --point-left: <?php echo esc_attr($point['left']); ?>" aria-label="<?php echo esc_attr($point['label']); ?>">
+              <?php endif; ?>
                 +
                 <span class="tip">
                   <strong><?php nj_e($point['label']); ?></strong>
                   <em><?php nj_e($point['price']); ?></em>
+                  <?php if ($nj_point_href !== '') : ?>
+                    <span><?php echo esc_html(preg_replace('#^https?://#', '', $nj_point_href)); ?></span>
+                  <?php endif; ?>
                 </span>
-              </button>
+              <?php if ($nj_point_href !== '') : ?>
+                </a>
+              <?php else : ?>
+                </button>
+              <?php endif; ?>
             <?php endforeach; ?>
           </article>
         <?php endforeach; ?>

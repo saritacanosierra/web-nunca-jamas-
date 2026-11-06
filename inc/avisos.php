@@ -141,6 +141,18 @@ if (!function_exists('nj_empacar_token')) {
     }
 }
 
+if (!function_exists('nj_empacar_token_matches')) {
+    function nj_empacar_token_matches($order_id, $token) {
+        $token = (string) $token;
+        $order_id = (int) $order_id;
+        if ($order_id < 1 || $token === '') {
+            return false;
+        }
+        $expected = nj_empacar_token($order_id);
+        return strlen($expected) === strlen($token) && hash_equals($expected, $token);
+    }
+}
+
 if (!function_exists('nj_empacar_url')) {
     function nj_empacar_url($order_id) {
         return add_query_arg(array(
@@ -300,8 +312,7 @@ if (!function_exists('nj_empacar_request')) {
             }
         }
         $order = $order_id ? wc_get_order($order_id) : false;
-        $expected = $order_id ? nj_empacar_token($order_id) : '';
-        if (!$order || $expected === '' || strlen($expected) !== strlen($token) || !hash_equals($expected, $token)) {
+        if (!$order || !nj_empacar_token_matches($order_id, $token)) {
             nj_empacar_screen('Enlace no válido', 'Este enlace no corresponde a un pedido de la tienda.');
         }
         if ($order->has_status('empacando')) {

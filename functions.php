@@ -1,10 +1,17 @@
 <?php
-require_once __DIR__ . '/inc/wp-stubs.php';
 require_once __DIR__ . '/inc/helpers.php';
 require_once get_template_directory() . '/inc/shop.php';
+require_once get_template_directory() . '/inc/bolsa.php';
+require_once get_template_directory() . '/inc/pagos.php';
+require_once get_template_directory() . '/inc/pedido.php';
 require_once get_template_directory() . '/inc/cards.php';
 require_once get_template_directory() . '/inc/catalog.php';
 require_once get_template_directory() . '/inc/portada.php';
+require_once get_template_directory() . '/inc/hero.php';
+require_once get_template_directory() . '/inc/espacios.php';
+require_once get_template_directory() . '/inc/prendas.php';
+require_once get_template_directory() . '/inc/mitienda.php';
+require_once get_template_directory() . '/inc/tema.php';
 require_once get_template_directory() . '/inc/ficha.php';
 require_once get_template_directory() . '/inc/paginas.php';
 require_once get_template_directory() . '/inc/whatsapp.php';
@@ -35,17 +42,17 @@ function nj_assets() {
         array(),
         null
     );
-    wp_enqueue_style('nj-home', get_template_directory_uri() . '/assets/home.css', array('nj-fonts'), '1.7.1');
-    wp_enqueue_script('nj-bolsa', get_template_directory_uri() . '/assets/bolsa.js', array(), '1.1.2', true);
-    wp_enqueue_script('nj-tienda', get_template_directory_uri() . '/assets/tienda.js', array('nj-bolsa'), '1.3.3', true);
+    wp_enqueue_style('nj-home', get_template_directory_uri() . '/assets/home.css', array('nj-fonts'), NJ_VERSION);
+    wp_enqueue_script('nj-bolsa', get_template_directory_uri() . '/assets/bolsa.js', array(), NJ_VERSION, true);
+    wp_enqueue_script('nj-tienda', get_template_directory_uri() . '/assets/tienda.js', array('nj-bolsa'), NJ_VERSION, true);
     if (function_exists('WC') && WC() && function_exists('home_url') && function_exists('add_query_arg')) {
         wp_localize_script('nj-bolsa', 'njShop', array(
             'ajax' => add_query_arg('wc-ajax', 'add_to_cart', home_url('/')),
             'bag' => add_query_arg('wc-ajax', 'nj_bag', home_url('/')),
-            'nonce' => wp_create_nonce('nj-bag'),
+            'nonce' => wp_create_nonce(nj_bag_nonce_action()),
         ));
     }
-    wp_enqueue_script('nj-home', get_template_directory_uri() . '/assets/home.js', array(), '1.2.9', true);
+    wp_enqueue_script('nj-home', get_template_directory_uri() . '/assets/home.js', array(), NJ_VERSION, true);
     if (function_exists('WC')) {
         wp_enqueue_script('wc-cart-fragments');
     }

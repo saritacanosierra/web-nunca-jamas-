@@ -5,15 +5,11 @@
 
 require_once __DIR__ . '/cards.php';
 
-if (!function_exists('nj_hero_link')) {
-    function nj_hero_link($index) {
-        if ($index === 0) {
-            return nj_shop_link('shop');
+if (!function_exists('nj_portada_espacios')) {
+    function nj_portada_espacios() {
+        if (!function_exists('nj_espacios_promo')) {
+            require_once __DIR__ . '/espacios.php';
         }
-        if ($index === 2) {
-            return nj_shop_link('newest');
-        }
-        return nj_shop_link('shop');
     }
 }
 
@@ -62,6 +58,16 @@ if (!function_exists('nj_home_tabs')) {
             'limit' => 8,
             'category' => array('colecciones'),
         ));
+        if (function_exists('nj_prendas_for_home')) {
+            $picked_new = nj_prendas_for_home('nuevo');
+            $picked_col = nj_prendas_for_home('coleccion');
+            if ($picked_new) {
+                $newest = $picked_new;
+            }
+            if ($picked_col) {
+                $collection = $picked_col;
+            }
+        }
         if (!$collection) {
             $collection = $newest;
         }
@@ -69,64 +75,6 @@ if (!function_exists('nj_home_tabs')) {
             nj_tab('nuevo', 'Lo nuevo', $newest, nj_shop_link('newest'), true),
             nj_tab('coleccion', 'Colección', $collection, nj_shop_link('shop'), true),
         );
-    }
-}
-
-if (!function_exists('nj_style_from_terms')) {
-    function nj_style_from_terms() {
-        if (!function_exists('get_terms')) {
-            return array();
-        }
-        $terms = get_terms(array(
-            'taxonomy' => 'product_cat',
-            'hide_empty' => false,
-            'number' => 8,
-        ));
-        if (is_wp_error($terms) || !$terms) {
-            return array();
-        }
-        $fallback = nj_slots_data()['styles'];
-        $items = array();
-        foreach ($terms as $index => $term) {
-            if (in_array($term->slug, array('uncategorized', 'sin-categorizar'), true)) {
-                continue;
-            }
-            $items[] = nj_style_from_term($term, $fallback, $index);
-        }
-        return $items;
-    }
-}
-
-if (!function_exists('nj_style_from_term')) {
-    function nj_style_from_term($term, $fallback, $index) {
-        $thumb_id = get_term_meta($term->term_id, 'thumbnail_id', true);
-        $image = $thumb_id ? wp_get_attachment_image_url($thumb_id, 'woocommerce_thumbnail') : '';
-        if (!$image && isset($fallback[$index])) {
-            $image = nj_img($fallback[$index]['src']);
-        }
-        if (!$image && isset($fallback[0])) {
-            $image = nj_img($fallback[0]['src']);
-        }
-        $link = get_term_link($term);
-        return array(
-            'label' => $term->name,
-            'href' => is_wp_error($link) ? nj_shop_link('shop') : $link,
-            'image' => $image,
-        );
-    }
-}
-
-if (!function_exists('nj_style_fallback')) {
-    function nj_style_fallback() {
-        $items = array();
-        foreach (nj_slots_data()['styles'] as $style) {
-            $items[] = array(
-                'label' => $style['label'],
-                'href' => nj_shop_link('shop'),
-                'image' => nj_img($style['src']),
-            );
-        }
-        return $items;
     }
 }
 
@@ -147,25 +95,30 @@ if (!function_exists('nj_cuentos_url')) {
 
 if (!function_exists('nj_home_cuentos')) {
     function nj_home_cuentos() {
-        $items = array();
-        foreach (nj_slots_data()['cuentos'] as $cuento) {
-            $cuento['image'] = nj_img($cuento['src']);
-            $items[] = $cuento;
-        }
-        return $items;
+        nj_portada_espacios();
+        return nj_espacios_cuentos();
     }
 }
 
 if (!function_exists('nj_style_items')) {
     function nj_style_items() {
-        $items = array();
-        foreach (nj_slots_data()['styles'] as $style) {
-            $items[] = array(
-                'label' => $style['label'],
-                'href' => nj_section_link($style['label']),
-                'image' => nj_img($style['src']),
-            );
-        }
-        return $items;
+        nj_portada_espacios();
+        return nj_espacios_styles();
+    }
+}
+
+if (!function_exists('nj_portada_vista')) {
+    function nj_portada_vista() {
+        nj_portada_espacios();
+        return array(
+            'promo' => array(
+                'gift' => nj_espacios_promo('gift'),
+                'collect' => nj_espacios_promo('collect'),
+                'three_d' => nj_espacios_promo('three_d'),
+            ),
+            'looks' => nj_espacios_looks(),
+            'tabs' => nj_home_tabs(),
+            'styles' => nj_style_items(),
+        );
     }
 }

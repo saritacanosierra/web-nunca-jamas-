@@ -19,7 +19,7 @@ $nj_search_action = nj_home_url();
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Baloo+2:wght@700;800&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
   <?php if (defined('NJ_PREVIEW')) : ?>
-    <link rel="stylesheet" href="assets/home.css?v=1.7.1">
+    <link rel="stylesheet" href="assets/home.css?v=<?php echo rawurlencode(NJ_VERSION); ?>">
   <?php endif; ?>
   <?php if (function_exists('wp_head')) { wp_head(); } ?>
 </head>

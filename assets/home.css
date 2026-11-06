@@ -1,4 +1,4 @@
-@import url("css/tienda.css?v=1.3.5");
+@import url("css/tienda.css?v=1.8.1");
 
 :root {
   --coral: #EAA799;
@@ -310,6 +310,58 @@ button { cursor: pointer; }
   height: 100%;
   object-fit: cover;
   display: block;
+}
+.hero__slide--build {
+  background: var(--hero-bg, #64bfae);
+  color: var(--ink);
+}
+.hero__build {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  align-items: center;
+  height: 100%;
+  padding: 5% 6%;
+  gap: 4%;
+}
+.hero__slide--build.is-copy-only .hero__build {
+  grid-template-columns: minmax(0, 680px);
+}
+.hero__build-copy {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+.hero__build-copy small {
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 12px;
+}
+.hero__build-copy strong {
+  font-family: var(--logo);
+  font-weight: 800;
+  font-size: clamp(36px, 4.6vw, 68px);
+  line-height: 0.92;
+}
+.hero__build-text {
+  font-size: clamp(14px, 1.5vw, 18px);
+  max-width: 34ch;
+  white-space: pre-line;
+}
+.hero__build-btn {
+  display: inline-block;
+  margin-top: 6px;
+  background: #fff;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-weight: 700;
+}
+.hero--banners .hero__slide--build .hero__build img {
+  width: 100%;
+  height: 86%;
+  object-fit: contain;
+  justify-self: end;
 }
 .hero__card {
   position: absolute;
@@ -736,6 +788,7 @@ button { cursor: pointer; }
   position: absolute;
   top: var(--point-top);
   left: var(--point-left);
+  transform: translate(-50%, -50%);
   z-index: 2;
   width: 34px;
   height: 34px;
@@ -743,6 +796,8 @@ button { cursor: pointer; }
   border: 0;
   background: var(--yellow);
   color: var(--ink);
+  display: grid;
+  place-items: center;
   font-size: 22px;
   line-height: 1;
   box-shadow: 0 6px 16px rgba(0,0,0,.18);
@@ -764,7 +819,8 @@ button { cursor: pointer; }
 .hotspot:hover .tip,
 .hotspot:focus .tip { display: block; }
 .hotspot .tip strong { display: block; font-size: 13px; }
-.hotspot .tip em { font-style: normal; color: var(--muted); font-size: 12px; }
+.hotspot .tip em,
+.hotspot .tip span { display: block; font-style: normal; color: var(--muted); font-size: 12px; }
 
 .caption {
   width: min(820px, calc(100% - 48px));
@@ -920,6 +976,8 @@ button { cursor: pointer; }
   }
   .hero { min-height: 640px; height: auto; }
   .hero.hero--banners { min-height: 0; aspect-ratio: 1024 / 480; }
+  .hero.hero--banners.is-build { aspect-ratio: auto; min-height: 460px; }
+  .hero.hero--banners.is-build .hero__build { grid-template-columns: 1fr; align-content: center; }
   .hero__slide { position: relative; min-height: 640px; display: none; }
   .hero.hero--banners .hero__slide {
     position: absolute;

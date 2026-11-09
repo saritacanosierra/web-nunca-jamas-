@@ -22,50 +22,35 @@ if (!function_exists('nj_prendas_admin_categories')) {
 
 if (!function_exists('nj_prendas_admin_attributes')) {
     function nj_prendas_admin_attributes($product) {
-        $tallas = $product ? nj_prendas_attribute_labels($product, 'talla') : array('');
-        if (!$tallas) {
-            $tallas = array('');
-        }
-        $colores = $product ? nj_prendas_attribute_labels($product, 'color') : array();
-        $stock = $product ? nj_prendas_stock_lookup($product) : array();
-        $color_labels = $colores ? $colores : array('');
+        $groups = function_exists('nj_prendas_color_groups') ? nj_prendas_color_groups($product) : array(array('color' => '', 'sizes' => array(array('talla' => '', 'qty' => 1))));
         ?>
         <div data-nj-attrs>
-          <div data-nj-attr="talla">
-            <p class="nj-prenda-note">Tallas y existencias. Escribe las que tiene esta prenda, por ejemplo 2, 4, 6, 8 y 10.</p>
-            <div data-nj-attr-list>
-              <?php foreach ($tallas as $talla) : ?>
-                <div class="nj-attr-row" data-nj-attr-row>
-                  <input type="text" name="talla_nombre[]" value="<?php echo esc_attr($talla); ?>" placeholder="Talla">
-                  <div data-nj-stocks>
-                    <?php foreach ($color_labels as $color) :
-                        $key = nj_prendas_size_slug($talla) . '|' . nj_prendas_size_slug($color);
-                        $qty = ($talla !== '' && isset($stock[$key])) ? (int) $stock[$key] : 1;
-                        ?>
-                      <label class="nj-celda" data-nj-stock>
-                        <?php if ($color !== '') : ?><span><?php echo esc_html($color); ?></span><?php endif; ?>
-                        <input type="number" min="0" max="999" name="talla_celda[]" value="<?php echo esc_attr((string) $qty); ?>" aria-label="Existencias">
+          <p class="nj-prenda-note">Cada color lleva sus tallas y sus existencias. La misma prenda puede tener otra cantidad en otro color.</p>
+          <div data-nj-colors>
+            <?php foreach ($groups as $nj_color_index => $nj_group) : ?>
+              <div class="nj-color-block" data-nj-color>
+                <div class="nj-color-head">
+                  <label>Color
+                    <input type="text" data-nj-color-name name="pieza[<?php echo (int) $nj_color_index; ?>][color]" value="<?php echo esc_attr($nj_group['color']); ?>" placeholder="Rosado">
+                  </label>
+                  <button type="button" class="button" data-nj-color-remove>Quitar color</button>
+                </div>
+                <div data-nj-sizes>
+                  <?php foreach ($nj_group['sizes'] as $nj_size_index => $nj_size) : ?>
+                    <div class="nj-attr-row" data-nj-size>
+                      <input type="text" name="pieza[<?php echo (int) $nj_color_index; ?>][tallas][<?php echo (int) $nj_size_index; ?>][nombre]" value="<?php echo esc_attr($nj_size['talla']); ?>" placeholder="Talla">
+                      <label class="nj-celda">Existencias
+                        <input type="number" min="0" max="999" name="pieza[<?php echo (int) $nj_color_index; ?>][tallas][<?php echo (int) $nj_size_index; ?>][qty]" value="<?php echo esc_attr((string) (int) $nj_size['qty']); ?>">
                       </label>
-                    <?php endforeach; ?>
-                  </div>
-                  <button type="button" class="button" data-nj-attr-remove>Quitar</button>
+                      <button type="button" class="button" data-nj-size-remove>Quitar</button>
+                    </div>
+                  <?php endforeach; ?>
                 </div>
-              <?php endforeach; ?>
-            </div>
-            <button type="button" class="button" data-nj-attr-add="talla">Agregar talla</button>
+                <button type="button" class="button" data-nj-size-add>Agregar talla</button>
+              </div>
+            <?php endforeach; ?>
           </div>
-          <div data-nj-attr="color">
-            <p class="nj-prenda-note">Colores. Con un solo color se elige la talla. Con varios, se elige talla y color.</p>
-            <div data-nj-attr-list>
-              <?php foreach ($colores as $color) : ?>
-                <div class="nj-attr-row" data-nj-attr-row>
-                  <input type="text" name="color_nombre[]" value="<?php echo esc_attr($color); ?>" placeholder="Color">
-                  <button type="button" class="button" data-nj-attr-remove>Quitar</button>
-                </div>
-              <?php endforeach; ?>
-            </div>
-            <button type="button" class="button" data-nj-attr-add="color">Agregar color</button>
-          </div>
+          <button type="button" class="button" data-nj-color-add>Agregar color</button>
         </div>
         <?php
     }
@@ -158,6 +143,8 @@ if (!function_exists('nj_prendas_admin_fields')) {
               </label>
               <label class="nj-check"><input type="checkbox" name="en_nuevo" value="1"<?php echo $flags['nuevo'] ? ' checked' : ''; ?>> Mostrar en Lo nuevo</label>
               <label class="nj-check"><input type="checkbox" name="en_coleccion" value="1"<?php echo $flags['coleccion'] ? ' checked' : ''; ?>> Mostrar en Colección</label>
+              <?php $nj_personalizado = $product && function_exists('get_post_meta') && get_post_meta($product->get_id(), '_nj_personalizado', true) === '1'; ?>
+              <label class="nj-check"><input type="checkbox" name="personalizado" value="1"<?php echo $nj_personalizado ? ' checked' : ''; ?>> Personalizado. Se puede bordar el nombre, con dos fuentes, por $ 20.000.</label>
             </section>
             <section class="nj-modal-section">
               <h3>Tallas y color</h3>
@@ -198,6 +185,7 @@ if (!function_exists('nj_prendas_admin_panel')) {
         }
         ?>
         <div class="nj-prenda-filters">
+          <button type="button" class="nj-prenda-stock" data-nj-stock-filter>Por agotarse</button>
           <div class="nj-prenda-filters__cats">
             <button type="button" class="is-on" data-nj-cat-filter="">Todas</button>
             <?php foreach (nj_prendas_terms() as $term) :

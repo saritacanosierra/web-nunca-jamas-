@@ -1,7 +1,20 @@
 <?php
 /**
  * Ficha de producto: carrusel de fotos y compra a la derecha.
+ * Quien incluye este archivo define $nj_ficha.
  */
+$nj_ficha = isset($nj_ficha) && is_array($nj_ficha) ? $nj_ficha : array();
+$nj_ficha += array(
+    'frames' => array(),
+    'sizes' => array(),
+    'name' => '',
+    'image' => '',
+    'url' => '',
+    'alt' => '',
+    'kicker' => '',
+    'price_html' => '',
+    'tabs' => array(),
+);
 $nj_frames = $nj_ficha['frames'];
 $nj_sizes = isset($nj_ficha['sizes']) ? $nj_ficha['sizes'] : array();
 $nj_payload = array(
@@ -12,6 +25,8 @@ $nj_payload = array(
     'regular' => isset($nj_ficha['regular']) ? (int) $nj_ficha['regular'] : 0,
     'id' => isset($nj_ficha['id']) ? (int) $nj_ficha['id'] : 0,
     'variations' => isset($nj_ficha['variations']) ? $nj_ficha['variations'] : array(),
+    'personalizado' => !empty($nj_ficha['personalizado']),
+    'bordado' => function_exists('nj_personalizado_fee') ? nj_personalizado_fee() : 20000,
 );
 $nj_colors = array();
 foreach ($nj_payload['variations'] as $nj_variation) {
@@ -27,6 +42,9 @@ foreach ($nj_payload['variations'] as $nj_variation) {
       <?php foreach ($nj_frames as $frame) : ?>
         <figure class="ficha__slide" style="--frame-position: <?php echo esc_attr($frame['position']); ?>">
           <img src="<?php echo esc_url($frame['src']); ?>" alt="<?php echo esc_attr($nj_ficha['alt']); ?>">
+          <?php if (!empty($nj_ficha['personalizado'])) : ?>
+            <span class="ficha__embroider is-cursiva" data-ficha-embroider hidden></span>
+          <?php endif; ?>
         </figure>
       <?php endforeach; ?>
     </div>
@@ -69,10 +87,31 @@ foreach ($nj_payload['variations'] as $nj_variation) {
           <?php endforeach; ?>
         </div>
       <?php endif; ?>
+      <?php if (!empty($nj_ficha['personalizado'])) : ?>
+        <div class="ficha__custom" data-ficha-custom>
+          <?php echo function_exists('nj_personalizado_warning_html') ? nj_personalizado_warning_html() : ''; ?>
+          <p class="ficha__label">Nombre para bordar</p>
+          <label class="ficha__name">
+            <input type="text" data-ficha-name maxlength="12" autocomplete="off" placeholder="Lucía" aria-label="Nombre para bordar">
+            <span data-ficha-count>0/12</span>
+          </label>
+          <p class="ficha__label">Fuente</p>
+          <div class="ficha__fonts">
+            <button type="button" class="is-selected is-cursiva" data-ficha-font="cursiva">Cursiva</button>
+            <button type="button" class="is-imprenta" data-ficha-font="imprenta">Imprenta</button>
+          </div>
+          <p class="ficha__extra" data-ficha-extra hidden>+ <?php echo esc_html(nj_personalizado_money(nj_personalizado_fee())); ?> por bordar el nombre</p>
+          <p class="ficha__hint">El nombre se ve sobre la prenda. Si lo escribes, suma <?php echo esc_html(nj_personalizado_money(nj_personalizado_fee())); ?>. Desde el pago cuentan 8 días hábiles de elaboración y después de esa fecha se entrega.</p>
+        </div>
+      <?php endif; ?>
       <p class="ficha__alert" data-ficha-alert hidden>Elige una talla para agregarla a la bolsa.</p>
+      <button class="ficha__save" type="button" data-save data-save-id="<?php echo esc_attr((string) (isset($nj_ficha['id']) ? (int) $nj_ficha['id'] : 0)); ?>" aria-pressed="false" aria-label="Guardar en favoritos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 19s-7-4.4-7-9a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4.6-7 9-7 9z"/></svg>
+        <span>Guardar</span>
+      </button>
       <button class="ficha__add" type="button" data-ficha-add>Agregar a mi bolsa</button>
       <?php if (!defined('NJ_PREVIEW') && function_exists('woocommerce_template_single_add_to_cart')) : ?>
-        <div class="ficha__gateway">
+        <div class="ficha__gateway" aria-hidden="true" inert>
           <?php call_user_func('woocommerce_template_single_add_to_cart'); ?>
         </div>
       <?php endif; ?>
@@ -110,6 +149,6 @@ foreach ($nj_payload['variations'] as $nj_variation) {
         <?php endforeach; ?>
       </select>
     <?php endif; ?>
-    <button type="button" data-ficha-add>Agregar al carrito</button>
+    <button type="button" data-ficha-add>A mi bolsa</button>
   </div>
 </article>

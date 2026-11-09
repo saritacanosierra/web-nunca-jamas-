@@ -184,7 +184,9 @@ if (!function_exists('nj_order_lines_html')) {
     function nj_order_lines_html($order) {
         $rows = '';
         foreach ($order->get_items() as $item) {
-            $rows .= '<tr><td style="padding:8px 0;border-bottom:1px solid #f3ece8">' . esc_html($item->get_name()) . ' × ' . esc_html((string) $item->get_quantity()) . '</td><td style="padding:8px 0;border-bottom:1px solid #f3ece8;text-align:right">' . wp_kses_post($order->get_formatted_line_subtotal($item)) . '</td></tr>';
+            $embroider = method_exists($item, 'get_meta') ? $item->get_meta('Nombre para bordar') : '';
+            $label = $item->get_name() . ($embroider !== '' ? ' · bordar ' . $embroider : '');
+            $rows .= '<tr><td style="padding:8px 0;border-bottom:1px solid #f3ece8">' . esc_html($label) . ' × ' . esc_html((string) $item->get_quantity()) . '</td><td style="padding:8px 0;border-bottom:1px solid #f3ece8;text-align:right">' . wp_kses_post($order->get_formatted_line_subtotal($item)) . '</td></tr>';
         }
         $rows .= '<tr><td style="padding:12px 0;font-weight:800">Total</td><td style="padding:12px 0;text-align:right;font-weight:800">' . wp_kses_post($order->get_formatted_order_total()) . '</td></tr>';
         return '<table style="width:100%;border-collapse:collapse">' . $rows . '</table>';

@@ -4,6 +4,7 @@ require_once get_template_directory() . '/inc/shop.php';
 require_once get_template_directory() . '/inc/bolsa.php';
 require_once get_template_directory() . '/inc/pagos.php';
 require_once get_template_directory() . '/inc/pedido.php';
+require_once get_template_directory() . '/inc/personalizado.php';
 require_once get_template_directory() . '/inc/cards.php';
 require_once get_template_directory() . '/inc/catalog.php';
 require_once get_template_directory() . '/inc/portada.php';
@@ -17,11 +18,13 @@ require_once get_template_directory() . '/inc/paginas.php';
 require_once get_template_directory() . '/inc/blog.php';
 require_once get_template_directory() . '/inc/seo.php';
 require_once get_template_directory() . '/inc/whatsapp.php';
+require_once get_template_directory() . '/inc/cuenta.php';
 require_once get_template_directory() . '/inc/avisos.php';
 
 function nj_setup() {
     add_theme_support('title-tag');
     add_theme_support('post-thumbnails');
+    add_theme_support('header-footer-elementor');
     add_theme_support('woocommerce', array(
         'thumbnail_image_width' => 600,
         'single_image_width' => 900,
@@ -36,6 +39,41 @@ function nj_setup() {
     ));
 }
 add_action('after_setup_theme', 'nj_setup');
+
+function nj_keep_theme_footer() {
+    return false;
+}
+add_filter('hfe_footer_enabled', 'nj_keep_theme_footer');
+
+function nj_release_theme_footer() {
+    global $wp_filter;
+    if (!isset($wp_filter['get_footer']) || !is_object($wp_filter['get_footer'])) {
+        return;
+    }
+    $drop = array();
+    foreach ($wp_filter['get_footer']->callbacks as $priority => $callbacks) {
+        foreach ($callbacks as $callback) {
+            $fn = isset($callback['function']) ? $callback['function'] : null;
+            $label = '';
+            if (is_string($fn)) {
+                $label = $fn;
+            } elseif (is_array($fn) && isset($fn[1])) {
+                $owner = is_object($fn[0]) ? get_class($fn[0]) : (string) $fn[0];
+                $label = $owner . '::' . $fn[1];
+            }
+            $label = strtolower($label);
+            if ($label === '' || (strpos($label, 'hfe') === false && strpos($label, 'header_footer_elementor') === false && strpos($label, 'elementor') === false)) {
+                continue;
+            }
+            $drop[] = array($fn, (int) $priority);
+        }
+    }
+    foreach ($drop as $item) {
+        remove_action('get_footer', $item[0], $item[1]);
+    }
+}
+add_action('wp', 'nj_release_theme_footer', 999);
+add_action('template_redirect', 'nj_release_theme_footer', 999);
 
 function nj_assets() {
     wp_enqueue_style(
@@ -59,6 +97,15 @@ function nj_assets() {
         ));
     }
     wp_enqueue_script('nj-home', get_template_directory_uri() . '/assets/home.js', array(), NJ_VERSION, true);
+    wp_enqueue_script('nj-cuenta', get_template_directory_uri() . '/assets/cuenta.js', array(), NJ_VERSION, true);
+    if (function_exists('wp_localize_script') && function_exists('wp_create_nonce') && function_exists('admin_url')) {
+        wp_localize_script('nj-cuenta', 'njCuenta', array(
+            'ajax' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('nj_cuenta'),
+            'logged' => function_exists('is_user_logged_in') && is_user_logged_in(),
+            'saved' => function_exists('nj_cuenta_saved_ids') ? nj_cuenta_saved_ids() : array(),
+        ));
+    }
     if (function_exists('WC')) {
         wp_enqueue_script('wc-cart-fragments');
     }
@@ -86,6 +133,7 @@ function nj_store_chrome() {
     $done = true;
     require get_template_directory() . '/template-parts/vista-rapida.php';
     require get_template_directory() . '/template-parts/bolsa.php';
+    require get_template_directory() . '/template-parts/cuenta.php';
 }
 add_action('wp_footer', 'nj_store_chrome', 5);
 

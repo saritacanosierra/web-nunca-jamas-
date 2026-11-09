@@ -126,29 +126,268 @@ if (!function_exists('nj_blog_schema')) {
 
 if (!function_exists('nj_menu_blog')) {
     function nj_menu_blog($menu) {
-        if (!is_array($menu) || empty($menu['departments']) || !function_exists('nj_menu_key')) {
+        if (!is_array($menu) || empty($menu['departments']) || !is_array($menu['departments'])) {
             return $menu;
         }
-        $link = array(
+        $href = nj_blog_url();
+        $story = array(
             'label' => 'Leer cuentos',
-            'href' => nj_blog_url(),
+            'href' => $href,
         );
+        $visible = false;
         foreach ($menu['departments'] as $index => $department) {
-            if (nj_menu_key($department['label']) !== 'cuentos') {
+            $label = isset($department['label']) ? $department['label'] : '';
+            $key = function_exists('nj_menu_key') ? nj_menu_key($label) : strtolower($label);
+            if ($key === 'blog' || (isset($department['href']) && $department['href'] === $href)) {
+                $visible = true;
+            }
+            if ($key !== 'cuentos') {
                 continue;
             }
             $children = isset($department['children']) && is_array($department['children']) ? $department['children'] : array();
             foreach ($children as $child) {
-                if (isset($child['href']) && $child['href'] === $link['href']) {
+                if (isset($child['href']) && $child['href'] === $href) {
                     continue 2;
                 }
             }
-            array_unshift($children, $link);
+            array_unshift($children, $story);
             $menu['departments'][$index]['children'] = $children;
+        }
+        if (!$visible) {
+            $menu['departments'][] = array(
+                'label' => 'Blog',
+                'href' => $href,
+                'children' => array(),
+            );
         }
         return $menu;
     }
 }
+
+if (!function_exists('nj_blog_to_text')) {
+    function nj_blog_to_text($html) {
+        $html = (string) $html;
+        $html = preg_replace('/<h2[^>]*>\s*/i', "\n\n## ", $html);
+        $html = preg_replace('/<\/h2>|<\/p>|<br\s*\/?>/i', "\n\n", $html);
+        $text = html_entity_decode(strip_tags($html), ENT_QUOTES, 'UTF-8');
+        $text = preg_replace("/[ \t]+\n/", "\n", $text);
+        $text = preg_replace("/\n{3,}/", "\n\n", $text);
+        return trim((string) $text);
+    }
+}
+
+if (!function_exists('nj_blog_from_text')) {
+    function nj_blog_from_text($text) {
+        $text = str_replace(array("\r\n", "\r"), "\n", trim((string) $text));
+        if ($text === '') {
+            return '';
+        }
+        $html = '';
+        foreach (preg_split("/\n\s*\n/", $text) as $part) {
+            $part = trim($part);
+            if ($part === '') {
+                continue;
+            }
+            if (strpos($part, '## ') === 0) {
+                $html .= '<h2>' . esc_html(trim(substr($part, 3))) . '</h2>';
+                continue;
+            }
+            $html .= '<p>' . str_replace("\n", '<br>', esc_html($part)) . '</p>';
+        }
+        return $html;
+    }
+}
+
+if (!function_exists('nj_blog_ads')) {
+    function nj_blog_ads($post_id) {
+        $saved = function_exists('get_post_meta') ? get_post_meta($post_id, '_nj_blog_ads', true) : array();
+        $rows = array();
+        if (is_array($saved)) {
+            foreach ($saved as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $image = isset($row['image']) ? (int) $row['image'] : 0;
+                $src = '';
+                if ($image > 0 && function_exists('wp_get_attachment_image_url')) {
+                    $url = wp_get_attachment_image_url($image, 'large');
+                    $src = is_string($url) ? $url : '';
+                }
+                $rows[] = array(
+                    'image' => $image,
+                    'src' => $src,
+                    'href' => isset($row['href']) ? (string) $row['href'] : '',
+                );
+                if (count($rows) >= 2) {
+                    break;
+                }
+            }
+        }
+        while (count($rows) < 2) {
+            $rows[] = array('image' => 0, 'src' => '', 'href' => '');
+        }
+        return $rows;
+    }
+}
+
+if (!function_exists('nj_blog_posted_ads')) {
+    function nj_blog_posted_ads() {
+        $raw = isset($_POST['publicidad']) && is_array($_POST['publicidad']) ? wp_unslash($_POST['publicidad']) : array();
+        $ads = array();
+        foreach (array_values($raw) as $row) {
+            if (count($ads) >= 2) {
+                break;
+            }
+            if (!is_array($row)) {
+                continue;
+            }
+            $image = isset($row['image']) ? (int) $row['image'] : 0;
+            if ($image > 0 && function_exists('wp_attachment_is_image') && !wp_attachment_is_image($image)) {
+                $image = 0;
+            }
+            $href = isset($row['href']) ? trim((string) $row['href']) : '';
+            if (function_exists('esc_url_raw')) {
+                $href = (string) esc_url_raw($href);
+            }
+            $ads[] = array(
+                'image' => $image,
+                'href' => $href,
+            );
+        }
+        return $ads;
+    }
+}
+
+if (!function_exists('nj_blog_ad_html')) {
+    function nj_blog_ad_html($ad) {
+        if (!is_array($ad) || empty($ad['src'])) {
+            return '';
+        }
+        $image = '<img src="' . esc_url($ad['src']) . '" alt="Publicidad">';
+        if (!empty($ad['href'])) {
+            $image = '<a href="' . esc_url($ad['href']) . '">' . $image . '</a>';
+        }
+        return '<aside class="blog-ad">' . $image . '</aside>';
+    }
+}
+
+if (!function_exists('nj_blog_note_parts')) {
+    function nj_blog_note_parts($post_id) {
+        $content = function_exists('get_post_field') ? (string) get_post_field('post_content', $post_id) : '';
+        if (function_exists('apply_filters')) {
+            $content = (string) apply_filters('the_content', $content);
+        }
+        $ads = nj_blog_ads($post_id);
+        $before = $content;
+        $after = '';
+        if ($ads[0]['src'] !== '' && preg_match_all('/<\/p>/i', $content, $found, PREG_OFFSET_CAPTURE) && count($found[0]) > 1) {
+            $cut = (int) floor((count($found[0]) - 1) / 2);
+            $pos = $found[0][$cut][1] + strlen($found[0][$cut][0]);
+            $before = substr($content, 0, $pos);
+            $after = substr($content, $pos);
+        }
+        return array(
+            'before' => $before,
+            'after' => $after,
+            'ads' => $ads,
+        );
+    }
+}
+
+if (!function_exists('nj_blog_admin_rows')) {
+    function nj_blog_admin_rows($status) {
+        if (!function_exists('get_posts')) {
+            return array();
+        }
+        $rows = get_posts(array(
+            'post_type' => 'post',
+            'post_status' => $status,
+            'numberposts' => 40,
+            'orderby' => 'date',
+            'order' => 'DESC',
+        ));
+        return is_array($rows) ? $rows : array();
+    }
+}
+
+if (!function_exists('nj_blog_admin_save')) {
+    function nj_blog_admin_save() {
+        $allowed = function_exists('nj_tienda_can') ? nj_tienda_can() : false;
+        if (!$allowed) {
+            wp_die('No tienes permiso para cambiar el blog.');
+        }
+        check_admin_referer('nj_blog_save', 'nj_blog_nonce');
+        $id = isset($_POST['nota_id']) ? (int) $_POST['nota_id'] : 0;
+        $loaded = ($id > 0 && function_exists('get_post')) ? get_post($id) : null;
+        $current = null;
+        if ($loaded instanceof WP_Post && $loaded->post_type === 'post') {
+            $current = $loaded;
+        } elseif ($loaded !== null) {
+            $id = 0;
+        }
+        $back = function_exists('admin_url') ? admin_url('admin.php?page=nj-tienda&updated=blog#blog') : '';
+        if ($current instanceof WP_Post && (!empty($_POST['ocultar']) || !empty($_POST['mostrar'])) && function_exists('wp_update_post')) {
+            wp_update_post(array(
+                'ID' => (int) $current->ID,
+                'post_status' => empty($_POST['ocultar']) ? 'publish' : 'draft',
+            ));
+            $code = empty($_POST['ocultar']) ? 'blog' : 'blog-oculta';
+            wp_safe_redirect(admin_url('admin.php?page=nj-tienda&updated=' . $code . '#blog'));
+            exit;
+        }
+        $title = isset($_POST['titulo']) ? sanitize_text_field(wp_unslash($_POST['titulo'])) : '';
+        $excerpt = isset($_POST['resumen']) ? sanitize_textarea_field(wp_unslash($_POST['resumen'])) : '';
+        $raw = isset($_POST['texto']) ? wp_unslash($_POST['texto']) : '';
+        $raw = function_exists('sanitize_textarea_field') ? sanitize_textarea_field($raw) : trim(strip_tags((string) $raw));
+        $content = nj_blog_from_text($raw);
+        $image = isset($_POST['foto']) ? (int) $_POST['foto'] : 0;
+        if ($image > 0 && function_exists('wp_attachment_is_image') && !wp_attachment_is_image($image)) {
+            $image = 0;
+        }
+        if ($title === '' || $content === '') {
+            wp_safe_redirect(admin_url('admin.php?page=nj-tienda&updated=blog-falta#blog'));
+            exit;
+        }
+        $data = array(
+            'post_title' => $title,
+            'post_excerpt' => function_exists('mb_substr') ? mb_substr($excerpt, 0, 300) : substr($excerpt, 0, 300),
+            'post_content' => $content,
+            'post_status' => 'publish',
+            'post_type' => 'post',
+        );
+        if ($id > 0) {
+            $data['ID'] = $id;
+            $saved = function_exists('wp_update_post') ? wp_update_post($data, true) : 0;
+        } else {
+            $saved = function_exists('wp_insert_post') ? wp_insert_post($data, true) : 0;
+        }
+        if (function_exists('is_wp_error') && is_wp_error($saved)) {
+            $saved = 0;
+        }
+        $saved = (int) $saved;
+        if ($saved < 1) {
+            wp_safe_redirect(admin_url('admin.php?page=nj-tienda&updated=blog-falta#blog'));
+            exit;
+        }
+        if ($image > 0 && function_exists('set_post_thumbnail')) {
+            set_post_thumbnail($saved, $image);
+        } elseif (function_exists('delete_post_thumbnail')) {
+            delete_post_thumbnail($saved);
+        }
+        if (function_exists('get_term_by') && function_exists('wp_set_post_categories')) {
+            $term = get_term_by('slug', 'leer-cuentos', 'category');
+            if (is_object($term) && isset($term->term_id)) {
+                wp_set_post_categories($saved, array((int) $term->term_id));
+            }
+        }
+        if (function_exists('update_post_meta')) {
+            update_post_meta($saved, '_nj_blog_ads', nj_blog_posted_ads());
+        }
+        wp_safe_redirect($back);
+        exit;
+    }
+}
+add_action('admin_post_nj_blog_save', 'nj_blog_admin_save');
 
 if (!function_exists('nj_blog_stories')) {
     function nj_blog_stories() {
@@ -178,7 +417,7 @@ if (!function_exists('nj_blog_ensure')) {
             return;
         }
         $page = get_page_by_path('blog');
-        $page_id = $page ? (int) $page->ID : 0;
+        $page_id = $page instanceof WP_Post ? (int) $page->ID : 0;
         if (!$page_id) {
             $page_id = (int) wp_insert_post(array(
                 'post_title' => 'Cuentos',
@@ -195,11 +434,14 @@ if (!function_exists('nj_blog_ensure')) {
             return;
         }
         $sample = get_page_by_path('hello-world', OBJECT, 'post');
-        if ($sample && strpos((string) $sample->post_content, 'Welcome to WordPress. This is your first post.') !== false && function_exists('wp_update_post')) {
-            wp_update_post(array(
-                'ID' => (int) $sample->ID,
-                'post_status' => 'draft',
-            ));
+        if ($sample instanceof WP_Post && function_exists('wp_update_post')) {
+            $welcome = strpos((string) $sample->post_content, 'Welcome to WordPress. This is your first post.') !== false;
+            if ($welcome) {
+                wp_update_post(array(
+                    'ID' => (int) $sample->ID,
+                    'post_status' => 'draft',
+                ));
+            }
         }
         $term_id = 0;
         if (function_exists('wp_insert_term')) {
@@ -231,3 +473,5 @@ if (!function_exists('nj_blog_ensure')) {
     }
 }
 add_action('init', 'nj_blog_ensure', 30);
+
+require_once __DIR__ . '/admin/blog.php';

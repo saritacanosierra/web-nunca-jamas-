@@ -5,15 +5,22 @@ require_once __DIR__ . '/inc/cards.php';
 require_once __DIR__ . '/inc/catalog.php';
 require_once __DIR__ . '/inc/portada.php';
 require_once __DIR__ . '/inc/ficha.php';
+require_once __DIR__ . '/inc/tema.php';
 $nj_menu = function_exists('nj_menu_blog') ? nj_menu_blog(nj_menu()) : nj_menu();
+$nj_header = function_exists('nj_tema_header') ? nj_tema_header() : array(
+    'notice' => '',
+    'notice_href' => '',
+    'search' => 'Buscar prendas, cuentos o accesorios',
+);
 $nj_search_action = nj_home_url();
+$nj_document_title = isset($nj_document_title) ? (string) $nj_document_title : 'Inicio — Nunca Jamás';
 ?><!DOCTYPE html>
 <html lang="es-CO">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <?php if (defined('NJ_PREVIEW')) : ?>
-  <title><?php echo esc_html(isset($nj_document_title) ? $nj_document_title : 'Inicio — Nunca Jamás'); ?></title>
+  <title><?php echo esc_html($nj_document_title); ?></title>
   <?php endif; ?>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,6 +32,15 @@ $nj_search_action = nj_home_url();
 </head>
 <body <?php echo function_exists('body_class') ? '' : 'class="nj-home"'; ?><?php if (function_exists('body_class')) { body_class('nj-home'); } ?>>
 <?php if (function_exists('wp_body_open')) { wp_body_open(); } ?>
+  <?php if ($nj_header['notice'] !== '') : ?>
+    <div class="site-notice">
+      <?php if ($nj_header['notice_href'] !== '') : ?>
+        <a href="<?php echo esc_url($nj_header['notice_href']); ?>"><?php nj_e($nj_header['notice']); ?></a>
+      <?php else : ?>
+        <p><?php nj_e($nj_header['notice']); ?></p>
+      <?php endif; ?>
+    </div>
+  <?php endif; ?>
   <header class="site-header">
     <div class="header-inner">
       <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-label="Abrir menú">
@@ -57,9 +73,9 @@ $nj_search_action = nj_home_url();
         <button class="icon-btn" type="button" data-search-open aria-expanded="false" aria-label="Buscar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>
         </button>
-        <a class="icon-btn" href="<?php echo esc_url(nj_shop_link('account')); ?>" aria-label="Mi cuenta">
+        <button class="icon-btn" type="button" data-cuenta-open aria-expanded="false" aria-label="Mi cuenta">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.2"/><path d="M5 19c1.4-3 3.8-4.5 7-4.5S17.6 16 19 19"/></svg>
-        </a>
+        </button>
         <button class="icon-btn" type="button" data-bag-open aria-label="Bolsa">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V7a3 3 0 0 1 6 0v1"/></svg>
           <span class="bag-count"><?php echo esc_html((string) nj_cart_count()); ?></span>
@@ -68,7 +84,7 @@ $nj_search_action = nj_home_url();
     </div>
     <div class="search-bar" data-search>
       <form action="<?php echo esc_url($nj_search_action); ?>" method="get" role="search">
-        <input type="search" name="s" placeholder="Buscar prendas, cuentos o accesorios" aria-label="Buscar">
+        <input type="search" name="s" placeholder="<?php echo esc_attr($nj_header['search']); ?>" aria-label="Buscar">
         <input type="hidden" name="post_type" value="product">
         <button type="submit">Buscar</button>
       </form>
@@ -86,6 +102,6 @@ $nj_search_action = nj_home_url();
       <?php endforeach; ?>
       <a href="<?php echo esc_url($nj_menu['newest']['href']); ?>"><?php nj_e($nj_menu['newest']['label']); ?></a>
       <button type="button" data-bag-open>Bolsa</button>
-      <a href="<?php echo esc_url(nj_shop_link('account')); ?>">Mi cuenta</a>
+      <button type="button" data-cuenta-open>Mi cuenta</button>
     </nav>
   </header>

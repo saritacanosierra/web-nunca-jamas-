@@ -207,6 +207,7 @@ if (!function_exists('nj_card_from_product')) {
             'regular' => $regular,
             'ref' => method_exists($product, 'get_sku') ? (string) $product->get_sku() : '',
             'note' => '',
+            'personalizado' => function_exists('nj_personalizado_on') && nj_personalizado_on($product->get_id()),
             'description' => nj_card_description($product),
             'composition' => '',
         );

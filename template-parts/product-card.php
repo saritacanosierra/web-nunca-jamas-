@@ -1,5 +1,16 @@
 <?php
-/** @var array $item */
+/**
+ * Tarjeta de producto. Quien incluye este archivo define $item.
+ */
+$item = isset($item) && is_array($item) ? $item : array();
+$item += array(
+    'name' => '',
+    'kicker' => '',
+    'price_html' => '',
+    'url' => '',
+    'image' => '',
+    'alt' => '',
+);
 $nj_sizes = isset($item['sizes']) ? $item['sizes'] : array();
 $nj_gallery = !empty($item['gallery']) ? $item['gallery'] : array($item['image']);
 $nj_quick = array(
@@ -16,6 +27,7 @@ $nj_quick = array(
     'id' => isset($item['id']) ? (int) $item['id'] : 0,
     'variations' => isset($item['variations']) ? $item['variations'] : array(),
     'note' => isset($item['note']) ? $item['note'] : '',
+    'personalizado' => !empty($item['personalizado']),
     'description' => isset($item['description']) ? $item['description'] : '',
     'composition' => isset($item['composition']) ? $item['composition'] : '',
 );

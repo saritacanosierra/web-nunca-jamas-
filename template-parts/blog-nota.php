@@ -7,6 +7,7 @@ while (have_posts()) {
     $nj_post_id = get_the_ID();
     $nj_image = nj_blog_image($nj_post_id);
     $nj_related = nj_blog_related($nj_post_id);
+    $nj_note = function_exists('nj_blog_note_parts') ? nj_blog_note_parts($nj_post_id) : array('before' => '', 'after' => '', 'ads' => array());
     ?>
 <main class="blog blog-note">
   <article class="wrap">
@@ -19,8 +20,15 @@ while (have_posts()) {
       </figure>
     <?php endif; ?>
     <div class="blog-body">
-      <?php the_content(); ?>
+      <?php echo $nj_note['before']; ?>
     </div>
+    <?php echo function_exists('nj_blog_ad_html') ? nj_blog_ad_html($nj_note['ads'][0]) : ''; ?>
+    <?php if ($nj_note['after'] !== '') : ?>
+      <div class="blog-body">
+        <?php echo $nj_note['after']; ?>
+      </div>
+    <?php endif; ?>
+    <?php echo function_exists('nj_blog_ad_html') ? nj_blog_ad_html($nj_note['ads'][1]) : ''; ?>
   </article>
 
   <?php if ($nj_related) : ?>

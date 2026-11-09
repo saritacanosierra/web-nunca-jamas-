@@ -177,6 +177,18 @@
   font-size: 32px;
   line-height: 1;
 }
+.blog-ad {
+  margin: 28px 0;
+}
+.blog-ad a,
+.blog-ad img {
+  display: block;
+  width: 100%;
+}
+.blog-ad img {
+  max-height: 420px;
+  object-fit: cover;
+}
 .blog-more { margin-top: 18px; }
 .blog-more > h2 {
   margin: 0 0 16px;

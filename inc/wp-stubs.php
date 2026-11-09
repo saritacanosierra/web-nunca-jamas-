@@ -8,6 +8,28 @@ if (defined('ABSPATH')) {
     return;
 }
 
+if (!defined('OBJECT')) {
+    define('OBJECT', 'OBJECT');
+}
+if (!defined('OBJECT_K')) {
+    define('OBJECT_K', 'OBJECT_K');
+}
+if (!defined('ARRAY_A')) {
+    define('ARRAY_A', 'ARRAY_A');
+}
+if (!defined('ARRAY_N')) {
+    define('ARRAY_N', 'ARRAY_N');
+}
+if (!defined('MINUTE_IN_SECONDS')) {
+    define('MINUTE_IN_SECONDS', 60);
+}
+if (!defined('HOUR_IN_SECONDS')) {
+    define('HOUR_IN_SECONDS', 3600);
+}
+if (!defined('DAY_IN_SECONDS')) {
+    define('DAY_IN_SECONDS', 86400);
+}
+
 if (!function_exists('get_template_directory')) {
     function get_template_directory() {
         return dirname(__DIR__);
@@ -233,8 +255,31 @@ if (!function_exists('get_terms')) {
     }
 }
 
+if (!class_exists('WP_Term')) {
+    class WP_Term {
+        public $term_id = 0;
+        public $name = '';
+        public $slug = '';
+        public $taxonomy = '';
+        public $parent = 0;
+
+        public function __construct($term_id = 0, $name = '', $slug = '', $taxonomy = '') {
+            $this->term_id = (int) $term_id;
+            $this->name = (string) $name;
+            $this->slug = (string) $slug;
+            $this->taxonomy = (string) $taxonomy;
+        }
+    }
+}
+
 if (!function_exists('get_term')) {
     function get_term($term, $taxonomy = '', $output = null, $filter = 'raw') {
+        if ($term instanceof WP_Term) {
+            return $term;
+        }
+        if (!is_numeric($term) || (int) $term < 1) {
+            return new WP_Error('invalid_term', '');
+        }
         return null;
     }
 }
@@ -281,6 +326,13 @@ if (!class_exists('WP_Error')) {
 
         public function has_errors() {
             return $this->errors !== array();
+        }
+
+        public function get_error_data($code = '') {
+            if ($code === '') {
+                $code = $this->get_error_code();
+            }
+            return isset($this->error_data[$code]) ? $this->error_data[$code] : null;
         }
     }
 }
@@ -392,6 +444,120 @@ if (!function_exists('get_queried_object_id')) {
 
 if (!function_exists('is_product_category')) {
     function is_product_category($term = '') {
+        return false;
+    }
+}
+
+if (!function_exists('is_page')) {
+    function is_page($page = '') {
+        return false;
+    }
+}
+
+if (!function_exists('is_singular')) {
+    function is_singular($post_types = '') {
+        return false;
+    }
+}
+
+if (!function_exists('is_home')) {
+    function is_home() {
+        return false;
+    }
+}
+
+if (!function_exists('is_category')) {
+    function is_category($category = '') {
+        return false;
+    }
+}
+
+if (!function_exists('is_front_page')) {
+    function is_front_page() {
+        return false;
+    }
+}
+
+if (!function_exists('is_shop')) {
+    function is_shop() {
+        return false;
+    }
+}
+
+if (!function_exists('is_product')) {
+    function is_product() {
+        return false;
+    }
+}
+
+if (!function_exists('is_checkout')) {
+    function is_checkout() {
+        return false;
+    }
+}
+
+if (!function_exists('is_cart')) {
+    function is_cart() {
+        return false;
+    }
+}
+
+if (!function_exists('is_search')) {
+    function is_search() {
+        return false;
+    }
+}
+
+if (!function_exists('is_404')) {
+    function is_404() {
+        return false;
+    }
+}
+
+if (!function_exists('is_tax')) {
+    function is_tax($taxonomy = '', $term = '') {
+        return false;
+    }
+}
+
+if (!function_exists('is_tag')) {
+    function is_tag($tag = '') {
+        return false;
+    }
+}
+
+if (!function_exists('is_author')) {
+    function is_author($author = '') {
+        return false;
+    }
+}
+
+if (!function_exists('is_attachment')) {
+    function is_attachment($attachment = '') {
+        return false;
+    }
+}
+
+if (!function_exists('is_account_page')) {
+    function is_account_page() {
+        return false;
+    }
+}
+
+if (!function_exists('is_order_received_page')) {
+    function is_order_received_page() {
+        return false;
+    }
+}
+
+if (!function_exists('is_checkout_pay_page')) {
+    function is_checkout_pay_page() {
+        return false;
+    }
+}
+
+if (!function_exists('is_view_order_page')) {
+    function is_view_order_page() {
         return false;
     }
 }
@@ -518,6 +684,75 @@ if (!function_exists('get_pages')) {
     }
 }
 
+if (!function_exists('get_posts')) {
+    function get_posts($args = array()) {
+        return array();
+    }
+}
+
+if (!function_exists('get_post')) {
+    function get_post($post = null, $output = OBJECT, $filter = 'raw') {
+        if ($post instanceof WP_Post) {
+            return $post;
+        }
+        return null;
+    }
+}
+
+if (!function_exists('wp_insert_post')) {
+    function wp_insert_post($postarr, $wp_error = false, $fire_after_hooks = true) {
+        return 0;
+    }
+}
+
+if (!function_exists('wp_update_post')) {
+    function wp_update_post($postarr = array(), $wp_error = false, $fire_after_hooks = true) {
+        return 0;
+    }
+}
+
+if (!function_exists('set_post_thumbnail')) {
+    function set_post_thumbnail($post, $thumbnail_id) {
+        return false;
+    }
+}
+
+if (!function_exists('delete_post_thumbnail')) {
+    function delete_post_thumbnail($post) {
+        return false;
+    }
+}
+
+if (!function_exists('get_post_meta')) {
+    function get_post_meta($post_id, $key = '', $single = false) {
+        return $single ? '' : array();
+    }
+}
+
+if (!function_exists('update_post_meta')) {
+    function update_post_meta($post_id, $meta_key, $meta_value, $prev_value = '') {
+        return true;
+    }
+}
+
+if (!function_exists('get_post_thumbnail_id')) {
+    function get_post_thumbnail_id($post = null) {
+        return 0;
+    }
+}
+
+if (!function_exists('sanitize_textarea_field')) {
+    function sanitize_textarea_field($str) {
+        return trim(strip_tags((string) $str));
+    }
+}
+
+if (!function_exists('wp_set_post_categories')) {
+    function wp_set_post_categories($post_id = 0, $post_categories = array(), $append = false) {
+        return array();
+    }
+}
+
 if (!function_exists('sanitize_key')) {
     function sanitize_key($key) {
         $key = strtolower((string) $key);
@@ -609,8 +844,615 @@ if (!function_exists('woocommerce_product_loop_end')) {
     }
 }
 
+if (!class_exists('WC_Cart')) {
+    class WC_Cart {
+        public function get_cart() {
+            return array();
+        }
+        public function get_displayed_subtotal() {
+            return 0;
+        }
+        public function get_subtotal() {
+            return 0;
+        }
+        public function get_discount_total() {
+            return 0;
+        }
+        public function get_total($context = 'view') {
+            return 0;
+        }
+        public function get_cart_contents_count() {
+            return 0;
+        }
+        public function add_discount($code) {
+            return false;
+        }
+        public function remove_cart_item($key) {
+            return false;
+        }
+        public function set_quantity($key, $quantity = 1, $refresh_totals = true) {
+            return true;
+        }
+        public function calculate_totals() {
+        }
+    }
+}
+
+if (!class_exists('WooCommerce')) {
+    class WooCommerce {
+        /** @var WC_Cart|null */
+        public $cart = null;
+
+        public function __construct($cart = null) {
+            $this->cart = $cart instanceof WC_Cart ? $cart : null;
+        }
+
+        public function payment_gateways() {
+            return null;
+        }
+    }
+}
+
 if (!function_exists('WC')) {
     function WC() {
+        if (isset($GLOBALS['woocommerce']) && $GLOBALS['woocommerce'] instanceof WooCommerce) {
+            return $GLOBALS['woocommerce'];
+        }
         return null;
+    }
+}
+
+if (!function_exists('add_submenu_page')) {
+    function add_submenu_page($parent_slug, $page_title, $menu_title, $capability, $menu_slug, $callback = '', $position = null) {
+        return '';
+    }
+}
+
+if (!function_exists('body_class')) {
+    function body_class($css_class = '') {
+        echo 'class=""';
+    }
+}
+
+if (!function_exists('wp_body_open')) {
+    function wp_body_open() {
+    }
+}
+
+if (!function_exists('the_title')) {
+    function the_title($before = '', $after = '', $echo = true) {
+        if ($echo) {
+            echo $before . $after;
+        }
+        return '';
+    }
+}
+
+if (!function_exists('clean_post_cache')) {
+    function clean_post_cache($post) {
+    }
+}
+
+if (!class_exists('WP_Post')) {
+    class WP_Post {
+        public $ID = 0;
+        public $post_content = '';
+        public $post_title = '';
+        public $post_excerpt = '';
+        public $post_name = '';
+        public $post_status = '';
+        public $post_type = '';
+
+        public function __construct($id = 0) {
+            $this->ID = (int) $id;
+        }
+    }
+}
+
+if (!function_exists('get_page_by_path')) {
+    function get_page_by_path($page_path, $output = OBJECT, $post_type = 'page') {
+        if ($page_path instanceof WP_Post) {
+            return $page_path;
+        }
+        return null;
+    }
+}
+
+if (!function_exists('get_page_by_title')) {
+    function get_page_by_title($page_title, $output = OBJECT, $post_type = 'page') {
+        return null;
+    }
+}
+
+if (!function_exists('get_post_field')) {
+    function get_post_field($field, $post = null, $context = 'display') {
+        return '';
+    }
+}
+
+if (!function_exists('get_query_var')) {
+    function get_query_var($query_var, $default = '') {
+        return $default;
+    }
+}
+
+if (!function_exists('get_term_by')) {
+    function get_term_by($field, $value, $taxonomy = '', $output = OBJECT, $filter = 'raw') {
+        return false;
+    }
+}
+
+if (!function_exists('get_the_post_thumbnail_url')) {
+    function get_the_post_thumbnail_url($post = null, $size = 'post-thumbnail') {
+        return '';
+    }
+}
+
+if (!function_exists('get_transient')) {
+    function get_transient($transient) {
+        return false;
+    }
+}
+
+if (!function_exists('set_transient')) {
+    function set_transient($transient, $value, $expiration = 0) {
+        return true;
+    }
+}
+
+if (!function_exists('delete_transient')) {
+    function delete_transient($transient) {
+        return true;
+    }
+}
+
+if (!function_exists('nocache_headers')) {
+    function nocache_headers() {
+    }
+}
+
+if (!function_exists('paginate_links')) {
+    function paginate_links($args = '') {
+        return '';
+    }
+}
+
+if (!function_exists('register_post_status')) {
+    function register_post_status($post_status, $args = array()) {
+        return $args;
+    }
+}
+
+if (!function_exists('register_taxonomy')) {
+    function register_taxonomy($taxonomy, $object_type, $args = array()) {
+        return true;
+    }
+}
+
+if (!function_exists('remove_filter')) {
+    function remove_filter($hook_name, $callback, $priority = 10) {
+        return true;
+    }
+}
+
+if (!function_exists('sanitize_title')) {
+    function sanitize_title($title, $fallback_title = '', $context = 'save') {
+        $title = strtolower(trim(preg_replace('/[^A-Za-z0-9]+/', '-', (string) $title), '-'));
+        return $title === '' ? $fallback_title : $title;
+    }
+}
+
+if (!function_exists('status_header')) {
+    function status_header($code, $description = '') {
+    }
+}
+
+if (!function_exists('taxonomy_exists')) {
+    function taxonomy_exists($taxonomy) {
+        return false;
+    }
+}
+
+if (!function_exists('untrailingslashit')) {
+    function untrailingslashit($value) {
+        return rtrim((string) $value, '/\\');
+    }
+}
+
+if (!function_exists('user_trailingslashit')) {
+    function user_trailingslashit($string, $type_of_url = '') {
+        return (string) $string;
+    }
+}
+
+if (!function_exists('wp_date')) {
+    function wp_date($format, $timestamp = null, $timezone = null) {
+        return date((string) $format, $timestamp ? (int) $timestamp : time());
+    }
+}
+
+if (!function_exists('wp_delete_term')) {
+    function wp_delete_term($term, $taxonomy, $args = array()) {
+        return true;
+    }
+}
+
+if (!function_exists('wp_doing_ajax')) {
+    function wp_doing_ajax() {
+        return false;
+    }
+}
+
+if (!function_exists('wp_get_canonical_url')) {
+    function wp_get_canonical_url($post = null) {
+        return '';
+    }
+}
+
+if (!function_exists('wp_get_document_title')) {
+    function wp_get_document_title() {
+        return '';
+    }
+}
+
+if (!function_exists('wp_get_post_categories')) {
+    function wp_get_post_categories($post_id = 0, $args = array()) {
+        return array();
+    }
+}
+
+if (!function_exists('wp_insert_term')) {
+    function wp_insert_term($term, $taxonomy, $args = array()) {
+        if (!is_string($term) || $term === '') {
+            return new WP_Error('invalid_term', '');
+        }
+        return array('term_id' => 0, 'term_taxonomy_id' => 0);
+    }
+}
+
+if (!function_exists('wp_update_term')) {
+    function wp_update_term($term_id, $taxonomy, $args = array()) {
+        return array('term_id' => (int) $term_id, 'term_taxonomy_id' => 0);
+    }
+}
+
+if (!function_exists('wp_mail')) {
+    function wp_mail($to, $subject, $message, $headers = '', $attachments = array()) {
+        return false;
+    }
+}
+
+if (!function_exists('wp_remote_get')) {
+    function wp_remote_get($url, $args = array()) {
+        return array('response' => array('code' => 0), 'body' => '');
+    }
+}
+
+if (!function_exists('wp_send_json')) {
+    function wp_send_json($response, $status_code = null, $flags = 0) {
+        echo json_encode($response);
+        exit;
+    }
+}
+
+if (!function_exists('wp_set_object_terms')) {
+    function wp_set_object_terms($object_id, $terms, $taxonomy, $append = false) {
+        return array();
+    }
+}
+
+if (!function_exists('wpautop')) {
+    function wpautop($text, $br = true) {
+        return (string) $text;
+    }
+}
+
+if (!function_exists('_n_noop')) {
+    function _n_noop($singular, $plural, $domain = null) {
+        return array($singular, $plural);
+    }
+}
+
+if (!function_exists('get_woocommerce_currency')) {
+    function get_woocommerce_currency() {
+        return 'COP';
+    }
+}
+
+if (!function_exists('wc_attribute_taxonomy_id_by_name')) {
+    function wc_attribute_taxonomy_id_by_name($name) {
+        return 0;
+    }
+}
+
+if (!function_exists('wc_clean')) {
+    function wc_clean($var) {
+        return is_scalar($var) ? trim((string) $var) : $var;
+    }
+}
+
+if (!function_exists('wc_clear_notices')) {
+    function wc_clear_notices() {
+    }
+}
+
+if (!function_exists('wc_create_attribute')) {
+    function wc_create_attribute($args) {
+        return 0;
+    }
+}
+
+if (!function_exists('wc_delete_product_transients')) {
+    function wc_delete_product_transients($post_id = 0) {
+    }
+}
+
+if (!function_exists('wc_format_coupon_code')) {
+    function wc_format_coupon_code($value) {
+        return trim((string) $value);
+    }
+}
+
+if (!function_exists('wc_get_checkout_url')) {
+    function wc_get_checkout_url() {
+        return '/checkout/';
+    }
+}
+
+if (!function_exists('wc_get_notices')) {
+    function wc_get_notices($notice_type = '') {
+        return array();
+    }
+}
+
+if (!class_exists('WC_Order')) {
+    class WC_Order {
+        public function get_id() {
+            return 0;
+        }
+        public function get_meta($key = '', $single = true) {
+            return '';
+        }
+        public function update_meta_data($key, $value) {
+            return $this;
+        }
+        public function get_items($types = 'line_item') {
+            return array();
+        }
+        public function get_date_paid() {
+            return null;
+        }
+        public function add_order_note($note) {
+            return 0;
+        }
+        public function save() {
+            return 0;
+        }
+        public function has_status($status) {
+            return false;
+        }
+        public function is_paid() {
+            return false;
+        }
+        public function needs_payment() {
+            return false;
+        }
+    }
+}
+
+if (!function_exists('wc_get_order')) {
+    function wc_get_order($the_order = false) {
+        if ($the_order instanceof WC_Order) {
+            return $the_order;
+        }
+        return null;
+    }
+}
+
+if (!function_exists('wc_get_page_id')) {
+    function wc_get_page_id($page) {
+        return 0;
+    }
+}
+
+if (!function_exists('wc_get_product')) {
+    function wc_get_product($the_product = false, $deprecated = array()) {
+        if ($the_product instanceof WC_Product) {
+            return $the_product;
+        }
+        return null;
+    }
+}
+
+if (!function_exists('wc_get_stock_html')) {
+    function wc_get_stock_html($product = null) {
+        return '';
+    }
+}
+
+if (!function_exists('wc_price')) {
+    function wc_price($price, $args = array()) {
+        return (string) $price;
+    }
+}
+
+if (!function_exists('woocommerce_register_additional_checkout_field')) {
+    function woocommerce_register_additional_checkout_field($options) {
+        return null;
+    }
+}
+
+if (!class_exists('WC_Product')) {
+    class WC_Product {
+        public function get_id() {
+            return 0;
+        }
+        public function get_name() {
+            return '';
+        }
+        public function get_price() {
+            return '';
+        }
+        public function get_regular_price() {
+            return '';
+        }
+        public function is_type($type) {
+            return false;
+        }
+        public function get_children() {
+            return array();
+        }
+        public function get_attributes() {
+            return array();
+        }
+        public function set_name($name) {
+            return $this;
+        }
+        public function set_status($status) {
+            return $this;
+        }
+        public function set_catalog_visibility($visibility) {
+            return $this;
+        }
+        public function set_description($description) {
+            return $this;
+        }
+        public function set_short_description($description) {
+            return $this;
+        }
+        public function set_sku($sku) {
+            return $this;
+        }
+        public function set_image_id($image_id) {
+            return $this;
+        }
+        public function set_gallery_image_ids($ids) {
+            return $this;
+        }
+        public function set_category_ids($ids) {
+            return $this;
+        }
+        public function set_attributes($attributes) {
+            return $this;
+        }
+        public function set_regular_price($price) {
+            return $this;
+        }
+        public function set_sale_price($price) {
+            return $this;
+        }
+        public function get_parent_id() {
+            return 0;
+        }
+        public function set_parent_id($parent_id) {
+            return $this;
+        }
+        public function set_manage_stock($manage) {
+            return $this;
+        }
+        public function set_stock_quantity($quantity) {
+            return $this;
+        }
+        public function set_stock_status($status) {
+            return $this;
+        }
+        public function save() {
+            return 0;
+        }
+        public function delete($force = false) {
+            return true;
+        }
+    }
+}
+
+if (!class_exists('WC_Product_Simple')) {
+    class WC_Product_Simple extends WC_Product {
+    }
+}
+
+if (!class_exists('WC_Product_Variable')) {
+    class WC_Product_Variable extends WC_Product {
+        public static function sync($product_id) {
+            return $product_id;
+        }
+    }
+}
+
+if (!class_exists('WC_Product_Variation')) {
+    class WC_Product_Variation extends WC_Product {
+    }
+}
+
+if (!class_exists('WC_Product_Attribute')) {
+    class WC_Product_Attribute {
+        public function set_id($id) {
+            return $this;
+        }
+        public function set_name($name) {
+            return $this;
+        }
+        public function get_name() {
+            return '';
+        }
+        public function set_options($options) {
+            return $this;
+        }
+        public function set_position($position) {
+            return $this;
+        }
+        public function set_visible($visible) {
+            return $this;
+        }
+        public function set_variation($variation) {
+            return $this;
+        }
+    }
+}
+
+if (!class_exists('WC_Shipping_Zone')) {
+    class WC_Shipping_Zone {
+        public function __construct($zone = 0) {
+        }
+        public function get_shipping_methods($enabled_only = false, $context = 'admin') {
+            return array();
+        }
+        public function add_shipping_method($method) {
+            return 0;
+        }
+        public function set_zone_name($name) {
+            return $this;
+        }
+        public function add_location($code, $type) {
+            return $this;
+        }
+        public function save() {
+            return 0;
+        }
+    }
+}
+
+if (!class_exists('WC_Shipping_Zones')) {
+    class WC_Shipping_Zones {
+        public static function get_zones() {
+            return array();
+        }
+        public static function get_shipping_method($instance_id) {
+            return null;
+        }
+    }
+}
+
+if (!class_exists('WC_Cache_Helper')) {
+    class WC_Cache_Helper {
+        public static function get_transient_version($group, $refresh = false) {
+            return '1';
+        }
+    }
+}
+
+if (!class_exists('WC_AJAX')) {
+    class WC_AJAX {
+        public static function get_refreshed_fragments() {
+        }
     }
 }

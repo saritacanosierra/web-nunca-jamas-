@@ -104,31 +104,40 @@ if (!function_exists('nj_espacios_panel_styles')) {
     function nj_espacios_panel_styles() {
         ?>
         <h2>Categorías</h2>
-        <h3>Fila de la tienda</h3>
-        <p>Son las pastillas de la tienda: Accesorios, Blusas y las demás. Cambia el nombre, súbelas o bájalas, agrega una o quita la que sobre. Al quitarla deja de salir en esa fila; los productos siguen en su categoría.</p>
-        <?php nj_espacios_form_open('pills'); ?>
-        <div class="nj-pill-list" data-nj-pill-list>
-          <?php foreach (nj_catalog_pill_editor_rows() as $index => $row) : ?>
-            <div class="nj-pill-row" data-nj-pill>
-              <label>Nombre
-                <input type="text" name="espacios[<?php echo (int) $index; ?>][label]" value="<?php echo esc_attr($row['label']); ?>">
-              </label>
-              <input type="hidden" name="espacios[<?php echo (int) $index; ?>][term]" value="<?php echo esc_attr((string) (int) $row['term']); ?>">
-              <p class="nj-prenda-actions">
-                <button type="button" class="button" data-nj-pill-up>Subir</button>
-                <button type="button" class="button" data-nj-pill-down>Bajar</button>
-                <button type="button" class="button" data-nj-pill-remove>Quitar</button>
-              </p>
-            </div>
-          <?php endforeach; ?>
+        <p class="nj-studio-lead">Hay tres lugares distintos. Elige el que quieres cambiar.</p>
+        <?php
+        $nj_pill_rows = function_exists('nj_catalog_pill_editor_rows') ? nj_catalog_pill_editor_rows() : array();
+        $nj_style_rows = nj_espacios_rows('styles');
+        $nj_banner_rows = function_exists('nj_catalog_banner_rows') ? nj_catalog_banner_rows() : array();
+        ?>
+        <div class="nj-cat-map">
+          <button type="button" data-nj-cat-jump="circulos">
+            <small>Portada</small>
+            <strong>Círculos</strong>
+            <span>La fila “Compra por categorías”.</span>
+          </button>
+          <button type="button" data-nj-cat-jump="fila">
+            <small>Tienda</small>
+            <strong>Pastillas</strong>
+            <span>Los nombres sobre los productos.</span>
+          </button>
+          <button type="button" data-nj-cat-jump="foto">
+            <small>Listado</small>
+            <strong>Foto ancha</strong>
+            <span>La imagen al entrar a una categoría.</span>
+          </button>
         </div>
-        <p><button type="button" class="button" data-nj-pill-add>Agregar categoría</button></p>
-        <?php nj_espacios_form_close('Guardar fila'); ?>
-        <h3>Círculos de la portada</h3>
-        <p>Son los círculos de “Compra por categorías”. Cambia el nombre y la foto, agrega una nueva o elimina la que ya no quieres. Al guardar, la categoría también se crea o se borra en la tienda.</p>
+
+        <section class="nj-cat-block" data-nj-cat-block="circulos">
+          <button type="button" class="nj-cat-summary" data-nj-cat-toggle aria-expanded="false">
+            <small>Portada</small>
+            <strong>Círculos de “Compra por categorías”</strong>
+            <span><?php echo count($nj_style_rows); ?> círculos. El nombre y la foto. Al guardar, esa categoría se crea o se elimina en la tienda.</span>
+          </button>
+          <div class="nj-cat-body">
         <?php nj_espacios_form_open('styles'); ?>
         <div class="nj-style-grid" data-nj-style-list>
-          <?php foreach (nj_espacios_rows('styles') as $index => $row) :
+          <?php foreach ($nj_style_rows as $index => $row) :
               $src = nj_espacio_url(isset($row['image']) ? $row['image'] : 0, isset($row['src']) ? $row['src'] : '');
               ?>
             <div class="nj-style-card" data-nj-photo data-nj-style>
@@ -150,11 +159,46 @@ if (!function_exists('nj_espacios_panel_styles')) {
             </div>
           <?php endforeach; ?>
         </div>
-        <p><button type="button" class="button" data-nj-style-add>Agregar categoría</button></p>
-        <?php nj_espacios_form_close('Guardar categorías'); ?>
-        <h3>Foto del listado</h3>
-        <p>Esta es la foto ancha de “El regalo perfecto”. Cada categoría tiene la suya: pijamas muestra una y blusas otra. Si una categoría no tiene foto, se usa la de su categoría padre.</p>
-        <?php $nj_banner_rows = function_exists('nj_catalog_banner_rows') ? nj_catalog_banner_rows() : array(); ?>
+        <p><button type="button" class="button" data-nj-style-add>Agregar círculo</button></p>
+        <?php nj_espacios_form_close('Guardar círculos'); ?>
+          </div>
+        </section>
+
+        <section class="nj-cat-block" data-nj-cat-block="fila">
+          <button type="button" class="nj-cat-summary" data-nj-cat-toggle aria-expanded="false">
+            <small>Tienda</small>
+            <strong>Pastillas sobre los productos</strong>
+            <span><?php echo count($nj_pill_rows); ?> nombres. El orden y cuáles se ven. Quitar una la saca de esa fila; los productos siguen en su categoría.</span>
+          </button>
+          <div class="nj-cat-body">
+        <?php nj_espacios_form_open('pills'); ?>
+        <div class="nj-pill-list" data-nj-pill-list>
+          <?php foreach ($nj_pill_rows as $index => $row) : ?>
+            <div class="nj-pill-row" data-nj-pill>
+              <label>Nombre
+                <input type="text" name="espacios[<?php echo (int) $index; ?>][label]" value="<?php echo esc_attr($row['label']); ?>">
+              </label>
+              <input type="hidden" name="espacios[<?php echo (int) $index; ?>][term]" value="<?php echo esc_attr((string) (int) $row['term']); ?>">
+              <p class="nj-prenda-actions">
+                <button type="button" class="button" data-nj-pill-up>Subir</button>
+                <button type="button" class="button" data-nj-pill-down>Bajar</button>
+                <button type="button" class="button" data-nj-pill-remove>Quitar</button>
+              </p>
+            </div>
+          <?php endforeach; ?>
+        </div>
+        <p><button type="button" class="button" data-nj-pill-add>Agregar pastilla</button></p>
+        <?php nj_espacios_form_close('Guardar pastillas'); ?>
+          </div>
+        </section>
+
+        <section class="nj-cat-block" data-nj-cat-block="foto">
+          <button type="button" class="nj-cat-summary" data-nj-cat-toggle aria-expanded="false">
+            <small>Listado</small>
+            <strong>Foto ancha de cada categoría</strong>
+            <span><?php echo count($nj_banner_rows); ?> fotos. La imagen grande al abrir pijamas, blusas u otra categoría. Si no tiene, se usa la de su categoría padre.</span>
+          </button>
+          <div class="nj-cat-body">
         <?php if (!$nj_banner_rows) : ?>
           <p>Todavía no hay categorías en la tienda.</p>
         <?php else : ?>
@@ -176,9 +220,11 @@ if (!function_exists('nj_espacios_panel_styles')) {
                 </div>
               <?php endforeach; ?>
             </div>
-            <p class="nj-studio-save"><button type="submit" class="button button-primary">Guardar fotos del listado</button></p>
+            <p class="nj-studio-save"><button type="submit" class="button button-primary">Guardar fotos</button></p>
           </form>
         <?php endif; ?>
+          </div>
+        </section>
         <?php
     }
 }

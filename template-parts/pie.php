@@ -1,56 +1,97 @@
+<?php
+$nj_footer = function_exists('nj_tema_footer') ? nj_tema_footer() : array(
+    'blurb' => '',
+    'news' => '',
+    'news_label' => '',
+    'news_placeholder' => 'Tu correo',
+    'email' => '',
+    'whatsapp' => '',
+    'place' => '',
+    'legal' => '',
+    'columns' => array(),
+    'socials' => array(),
+    'pays' => array(),
+    'trust' => array(),
+    'legal_links' => array(),
+);
+$nj_footer_wa = '';
+if ($nj_footer['whatsapp'] !== '') {
+    $nj_footer_wa = 'https://wa.me/' . $nj_footer['whatsapp'];
+} elseif (function_exists('nj_whatsapp_chat_url')) {
+    $nj_footer_wa = nj_whatsapp_chat_url();
+}
+?>
 <footer class="site-footer">
   <div class="wrap footer-grid">
     <div class="footer-brand">
       <?php require __DIR__ . '/marca.php'; ?>
-      <p>Ropa de cuento para niñas: colecciones, línea, accesorios y personalizados sobre pedido.</p>
-      <form class="news" data-news>
-        <input type="email" required placeholder="Tu correo" aria-label="Correo">
-        <button type="submit" aria-label="Suscribirme">→</button>
-        <p class="form-note"></p>
-      </form>
+      <?php if ($nj_footer['blurb'] !== '') : ?>
+        <p><?php nj_e($nj_footer['blurb']); ?></p>
+      <?php endif; ?>
+      <?php if ($nj_footer['news'] === '1') : ?>
+        <p class="footer-news-label"><?php nj_e($nj_footer['news_label']); ?></p>
+        <form class="news" data-news>
+          <input type="email" required placeholder="<?php echo esc_attr($nj_footer['news_placeholder']); ?>" aria-label="<?php echo esc_attr($nj_footer['news_label']); ?>">
+          <button type="submit" aria-label="Suscribirme">→</button>
+          <p class="form-note"></p>
+        </form>
+      <?php endif; ?>
     </div>
-    <div>
-      <h3>Ayuda</h3>
-      <ul>
-        <li><a href="<?php echo esc_url(nj_page_url('preguntas')); ?>">Preguntas frecuentes</a></li>
-        <li><a href="<?php echo esc_url(nj_page_url('envios')); ?>">Envíos</a></li>
-        <li><a href="<?php echo esc_url(nj_page_url('cambios')); ?>">Cambios</a></li>
-        <li><a href="<?php echo esc_url(nj_page_url('tallas')); ?>">Guía de tallas</a></li>
-      </ul>
-    </div>
-    <div>
-      <h3>La tienda</h3>
-      <ul>
-        <?php foreach (array_slice(nj_nav_items(), 0, 6) as $item) : ?>
-          <li><a href="<?php echo esc_url($item['href']); ?>"><?php nj_e($item['label']); ?></a></li>
-        <?php endforeach; ?>
-        <li><a href="<?php echo esc_url(function_exists('nj_blog_url') ? nj_blog_url() : nj_home_url()); ?>">Cuentos</a></li>
-        <li><a href="<?php echo esc_url(nj_shop_link('cart')); ?>">Bolsa</a></li>
-        <li><a href="<?php echo esc_url(nj_shop_link('account')); ?>">Mi cuenta</a></li>
-      </ul>
-    </div>
+    <?php foreach ($nj_footer['columns'] as $nj_column) : ?>
+      <div>
+        <h3><?php nj_e($nj_column['title']); ?></h3>
+        <ul>
+          <?php foreach ($nj_column['links'] as $nj_link) : ?>
+            <li><a href="<?php echo esc_url($nj_link['href']); ?>"><?php nj_e($nj_link['label']); ?></a></li>
+          <?php endforeach; ?>
+        </ul>
+      </div>
+    <?php endforeach; ?>
+    <?php if ($nj_footer['email'] !== '' || $nj_footer_wa !== '' || $nj_footer['place'] !== '' || $nj_footer['socials'] || $nj_footer['pays'] || $nj_footer['trust']) : ?>
     <div>
       <h3>Contacto</h3>
       <ul>
-        <li><a href="mailto:saritacanosierra@gmail.com">saritacanosierra@gmail.com</a></li>
-        <li><a href="<?php echo esc_url(nj_home_url()); ?>">Nunca Jamás</a></li>
-        <li>Envíos a Colombia</li>
+        <?php if ($nj_footer['email'] !== '') : ?>
+          <li><a href="<?php echo esc_url('mailto:' . $nj_footer['email']); ?>"><?php echo esc_html($nj_footer['email']); ?></a></li>
+        <?php endif; ?>
+        <?php if ($nj_footer_wa !== '') : ?>
+          <li><a href="<?php echo esc_url($nj_footer_wa); ?>">WhatsApp</a></li>
+        <?php endif; ?>
+        <?php if ($nj_footer['place'] !== '') : ?>
+          <li><?php nj_e($nj_footer['place']); ?></li>
+        <?php endif; ?>
+        <?php foreach ($nj_footer['socials'] as $nj_social) : ?>
+          <li><a href="<?php echo esc_url($nj_social['href']); ?>"><?php nj_e($nj_social['label']); ?></a></li>
+        <?php endforeach; ?>
       </ul>
-      <div class="pay-row" aria-label="Medios de pago">
-          <span class="pill">VISA</span>
-          <span class="pill">Mastercard</span>
-          <span class="pill">PSE</span>
-      </div>
-      <div class="trust-row">
-        <span class="pill">Compra segura</span>
-        <span class="pill">Hecho para niñas</span>
-      </div>
+      <?php if ($nj_footer['pays']) : ?>
+        <div class="pay-row" aria-label="Medios de pago">
+          <?php foreach ($nj_footer['pays'] as $nj_pay) : ?>
+            <span class="pill"><?php echo esc_html($nj_pay); ?></span>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+      <?php if ($nj_footer['trust']) : ?>
+        <div class="trust-row">
+          <?php foreach ($nj_footer['trust'] as $nj_trust) : ?>
+            <span class="pill"><?php echo esc_html($nj_trust); ?></span>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
     </div>
+    <?php endif; ?>
   </div>
   <div class="legal">
     <div class="wrap">
-      <span>© <?php echo date('Y'); ?> Nunca Jamás. Ropa para niñas.</span>
-      <span><a href="<?php echo esc_url(nj_page_url('terminos')); ?>">Términos</a> · <a href="<?php echo esc_url(nj_page_url('privacidad')); ?>">Privacidad</a></span>
+      <span>© <?php echo esc_html(date('Y')); ?><?php echo $nj_footer['legal'] !== '' ? ' ' . esc_html($nj_footer['legal']) : ''; ?></span>
+      <?php if ($nj_footer['legal_links']) : ?>
+        <span>
+          <?php foreach ($nj_footer['legal_links'] as $nj_index => $nj_legal) : ?>
+            <?php if ($nj_index > 0) : ?> · <?php endif; ?>
+            <a href="<?php echo esc_url($nj_legal['href']); ?>"><?php nj_e($nj_legal['label']); ?></a>
+          <?php endforeach; ?>
+        </span>
+      <?php endif; ?>
     </div>
   </div>
 </footer>

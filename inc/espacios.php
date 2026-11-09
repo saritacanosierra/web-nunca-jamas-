@@ -346,11 +346,11 @@ if (!function_exists('nj_espacios_category_keep')) {
             return 0;
         }
         $created = wp_insert_term($label, 'product_cat');
-        if (is_wp_error($created)) {
+        if ($created instanceof WP_Error) {
             $data = $created->get_error_data();
-            return is_numeric($data) ? (int) $data : (isset($data['term_exists']) ? (int) $data['term_exists'] : 0);
+            return is_numeric($data) ? (int) $data : (is_array($data) && isset($data['term_exists']) ? (int) $data['term_exists'] : 0);
         }
-        return isset($created['term_id']) ? (int) $created['term_id'] : 0;
+        return is_array($created) && isset($created['term_id']) ? (int) $created['term_id'] : 0;
     }
 }
 

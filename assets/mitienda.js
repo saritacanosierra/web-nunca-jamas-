@@ -1,5 +1,8 @@
 (function ($) {
   function show(id) {
+    if (id === "menus") {
+      id = "encabezado";
+    }
     var nav = document.querySelectorAll("[data-panel]");
     var screens = document.querySelectorAll("[data-screen]");
     var found = false;
@@ -171,6 +174,17 @@
       return;
     }
     var prefix = group.getAttribute("data-nj-menu-name") || "";
+    var label = group.querySelector("[data-nj-menu-label]");
+    if (label) {
+      label.name = prefix + "[label]";
+    }
+    var parent = group.querySelector(".nj-menu-parent");
+    if (parent) {
+      var href = parent.querySelector("input[type=url]");
+      if (href) {
+        href.name = prefix + "[href]";
+      }
+    }
     var rows = group.querySelectorAll("[data-nj-menu-children] .nj-menu-row");
     Array.prototype.forEach.call(rows, function (row, index) {
       var inputs = row.querySelectorAll("input");
@@ -182,6 +196,137 @@
       }
     });
     syncMenuCount(group);
+  }
+
+  function reindexDepts() {
+    var list = document.querySelector("[data-nj-dept-list]");
+    var bar = document.querySelector("[data-nj-dept-bar]");
+    if (!list) {
+      return;
+    }
+    var groups = list.querySelectorAll("[data-nj-menu-dept]");
+    Array.prototype.forEach.call(groups, function (group, index) {
+      group.setAttribute("data-nj-menu-key", "d-" + index);
+      group.setAttribute("data-nj-menu-name", "menu[departments][" + index + "]");
+      reindexMenu(group);
+    });
+    if (!bar) {
+      return;
+    }
+    bar.innerHTML = "";
+    Array.prototype.forEach.call(groups, function (group, index) {
+      var button = document.createElement("button");
+      var title = group.querySelector("[data-nj-menu-title]");
+      button.type = "button";
+      button.setAttribute("data-nj-menu-jump", "d-" + index);
+      button.setAttribute("aria-expanded", group.classList.contains("is-open") ? "true" : "false");
+      button.textContent = title && title.textContent.trim() ? title.textContent.trim() : "Menú";
+      if (group.classList.contains("is-open")) {
+        button.classList.add("is-on");
+      }
+      bar.appendChild(button);
+    });
+  }
+
+  function deptGroupHtml(index) {
+    var name = "menu[departments][" + index + "]";
+    var key = "d-" + index;
+    return ''
+      + '<div class="nj-menu-group" data-nj-menu-group data-nj-menu-dept data-nj-menu-key="' + key + '" data-nj-menu-name="' + name + '">'
+      + '<button type="button" class="nj-menu-summary" data-nj-menu-toggle aria-expanded="false"><span data-nj-menu-title>Nuevo menú</span><span class="nj-menu-count" data-nj-menu-count>0 enlaces</span></button>'
+      + '<div class="nj-menu-body">'
+      + '<div class="nj-menu-parent">'
+      + '<label>Nombre en la barra <input type="text" data-nj-menu-label name="' + name + '[label]" value=""></label>'
+      + '<label>Enlace <input type="url" name="' + name + '[href]" value="" placeholder="https://"></label>'
+      + '</div>'
+      + '<p class="nj-menu-subhead">Enlaces que se abren al tocarlo</p>'
+      + '<div data-nj-menu-children></div>'
+      + '<p><button type="button" class="button" data-nj-menu-add>Agregar enlace</button></p>'
+      + '<p><button type="button" class="button" data-nj-dept-remove>Quitar este menú</button></p>'
+      + '</div></div>';
+  }
+
+  function reindexLinks(list) {
+    if (!list) {
+      return;
+    }
+    var name = list.getAttribute("data-nj-link-name") || "";
+    var rows = list.querySelectorAll(".nj-menu-row");
+    Array.prototype.forEach.call(rows, function (row, index) {
+      var inputs = row.querySelectorAll("input");
+      if (inputs[0]) {
+        inputs[0].name = name + "[" + index + "][label]";
+      }
+      if (inputs[1]) {
+        inputs[1].name = name + "[" + index + "][href]";
+      }
+    });
+  }
+
+  function reindexColumns(list) {
+    if (!list) {
+      return;
+    }
+    var columns = list.querySelectorAll("[data-nj-foot-column]");
+    Array.prototype.forEach.call(columns, function (column, index) {
+      column.setAttribute("data-nj-menu-key", "col-" + index);
+      var title = column.querySelector("[data-nj-column-title]");
+      if (title) {
+        title.name = "footer[columns][" + index + "][title]";
+      }
+      var links = column.querySelector("[data-nj-link-list]");
+      if (links) {
+        links.setAttribute("data-nj-link-name", "footer[columns][" + index + "][links]");
+        reindexLinks(links);
+      }
+    });
+  }
+
+  function columnHtml() {
+    return ''
+      + '<div class="nj-menu-group" data-nj-menu-group data-nj-foot-column data-nj-menu-key="col-0">'
+      + '<button type="button" class="nj-menu-summary" data-nj-menu-toggle aria-expanded="false"><span data-nj-menu-title>Nueva columna</span><span class="nj-menu-count">Columna</span></button>'
+      + '<div class="nj-menu-body">'
+      + '<label>Título <input type="text" data-nj-column-title name="footer[columns][0][title]" value=""></label>'
+      + '<div data-nj-link-list data-nj-link-name="footer[columns][0][links]" data-nj-link-max="8"></div>'
+      + '<p><button type="button" class="button" data-nj-link-add>Agregar enlace</button></p>'
+      + '<p><button type="button" class="button" data-nj-column-remove>Quitar columna</button></p>'
+      + '</div></div>';
+  }
+
+  function reindexHelp(list) {
+    if (!list) {
+      return;
+    }
+    var name = list.getAttribute("data-nj-help-name") || "";
+    var kind = list.getAttribute("data-nj-help-kind") || "line";
+    var keys = (list.getAttribute("data-nj-help-keys") || "q,a").split(",");
+    var rows = list.querySelectorAll(".nj-help-line, .nj-help-row");
+    Array.prototype.forEach.call(rows, function (row, index) {
+      var inputs = row.querySelectorAll("input, textarea");
+      if (kind === "line") {
+        if (inputs[0]) {
+          inputs[0].name = name + "[" + index + "]";
+        }
+        return;
+      }
+      if (inputs[0]) {
+        inputs[0].name = name + "[" + index + "][" + keys[0] + "]";
+      }
+      if (inputs[1]) {
+        inputs[1].name = name + "[" + index + "][" + keys[1] + "]";
+      }
+    });
+  }
+
+  function helpRowHtml(list) {
+    var kind = list.getAttribute("data-nj-help-kind") || "line";
+    var area = list.getAttribute("data-nj-help-area") === "1";
+    if (kind === "line") {
+      return '<div class="nj-menu-row nj-help-line"><input type="text" value=""><button type="button" class="button" data-nj-help-remove>Quitar</button></div>';
+    }
+    var second = area ? '<textarea rows="3"></textarea>' : '<input type="text" value="">';
+    return '<div class="nj-help-row"><input type="text" value="">' + second + '<button type="button" class="button" data-nj-help-remove>Quitar</button></div>';
   }
 
   function syncMenuTitle(group) {
@@ -437,96 +582,62 @@
     return node ? node.closest("[data-nj-attrs]") : null;
   }
 
-  function colorNames(box) {
-    var names = [];
-    if (!box) {
-      return names;
-    }
-    Array.prototype.forEach.call(box.querySelectorAll("[data-nj-attr=color] [data-nj-attr-row] input[type=text]"), function (input) {
-      if (input.value.trim() !== "") {
-        names.push(input.value.trim());
-      }
-    });
-    return names;
-  }
-
-  function stockCell(color) {
-    var label = document.createElement("label");
-    label.className = "nj-celda";
-    label.setAttribute("data-nj-stock", "");
-    if (color) {
-      var span = document.createElement("span");
-      span.textContent = color;
-      label.appendChild(span);
-    }
-    var input = document.createElement("input");
-    input.type = "number";
-    input.min = "0";
-    input.max = "999";
-    input.name = "talla_celda[]";
-    input.value = "1";
-    input.setAttribute("aria-label", "Existencias");
-    label.appendChild(input);
-    return label;
-  }
-
-  function rebuildStocks(box) {
+  function reindexPiezas(box) {
     if (!box) {
       return;
     }
-    var colors = colorNames(box);
-    var labels = colors.length ? colors : [""];
-    Array.prototype.forEach.call(box.querySelectorAll("[data-nj-attr=talla] [data-nj-attr-row]"), function (row) {
-      var holder = row.querySelector("[data-nj-stocks]");
-      if (!holder) {
-        return;
+    Array.prototype.forEach.call(box.querySelectorAll("[data-nj-color]"), function (block, colorIndex) {
+      var colorInput = block.querySelector("[data-nj-color-name]");
+      if (colorInput) {
+        colorInput.name = "pieza[" + colorIndex + "][color]";
       }
-      var previous = [];
-      Array.prototype.forEach.call(holder.querySelectorAll("input"), function (input) {
-        previous.push(input.value);
-      });
-      holder.innerHTML = "";
-      labels.forEach(function (color, index) {
-        var cell = stockCell(color);
-        var input = cell.querySelector("input");
-        if (previous[index] !== undefined) {
-          input.value = previous[index];
+      Array.prototype.forEach.call(block.querySelectorAll("[data-nj-size]"), function (row, sizeIndex) {
+        var fields = row.querySelectorAll("input");
+        if (fields[0]) {
+          fields[0].name = "pieza[" + colorIndex + "][tallas][" + sizeIndex + "][nombre]";
         }
-        holder.appendChild(cell);
+        if (fields[1]) {
+          fields[1].name = "pieza[" + colorIndex + "][tallas][" + sizeIndex + "][qty]";
+        }
       });
     });
   }
 
-  function addAttrRow(box, kind) {
-    if (!box) {
+  function sizeRowHtml() {
+    return '<div class="nj-attr-row" data-nj-size><input type="text" placeholder="Talla"><label class="nj-celda">Existencias<input type="number" min="0" max="999" value="1"></label><button type="button" class="button" data-nj-size-remove>Quitar</button></div>';
+  }
+
+  function addSizeRow(block) {
+    var list = block ? block.querySelector("[data-nj-sizes]") : null;
+    if (!list || list.querySelectorAll("[data-nj-size]").length >= 12) {
       return;
     }
-    var list = box.querySelector("[data-nj-attr=" + kind + "] [data-nj-attr-list]");
-    if (!list || list.querySelectorAll("[data-nj-attr-row]").length >= 12) {
-      return;
-    }
-    var row = document.createElement("div");
-    row.className = "nj-attr-row";
-    row.setAttribute("data-nj-attr-row", "");
-    var input = document.createElement("input");
-    input.type = "text";
-    input.name = kind === "color" ? "color_nombre[]" : "talla_nombre[]";
-    input.placeholder = kind === "color" ? "Color" : "Talla";
-    row.appendChild(input);
-    if (kind === "talla") {
-      var stocks = document.createElement("div");
-      stocks.setAttribute("data-nj-stocks", "");
-      row.appendChild(stocks);
-    }
-    var button = document.createElement("button");
-    button.type = "button";
-    button.className = "button";
-    button.setAttribute("data-nj-attr-remove", "");
-    button.textContent = "Quitar";
-    row.appendChild(button);
+    var wrap = document.createElement("div");
+    wrap.innerHTML = sizeRowHtml();
+    var row = wrap.firstElementChild;
     list.appendChild(row);
-    rebuildStocks(box);
-    input.focus();
+    reindexPiezas(attrBox(block));
+    var field = row.querySelector("input");
+    if (field) {
+      field.focus();
+    }
+  }
+
+  function addColorBlock(box) {
+    var list = box ? box.querySelector("[data-nj-colors]") : null;
+    if (!list || list.querySelectorAll("[data-nj-color]").length >= 8) {
+      return;
+    }
+    var block = document.createElement("div");
+    block.className = "nj-color-block";
+    block.setAttribute("data-nj-color", "");
+    block.innerHTML = '<div class="nj-color-head"><label>Color<input type="text" data-nj-color-name placeholder="Rosado"></label><button type="button" class="button" data-nj-color-remove>Quitar color</button></div><div data-nj-sizes></div><button type="button" class="button" data-nj-size-add>Agregar talla</button>';
+    list.appendChild(block);
+    addSizeRow(block);
+    var field = block.querySelector("[data-nj-color-name]");
+    if (field) {
+      field.focus();
+    }
   }
 
   function appendGallery(list, id, url) {
@@ -615,8 +726,13 @@
       var opener = event.target.closest("[data-nj-open]");
       if (opener) {
         var dialog = document.getElementById(opener.getAttribute("data-nj-open"));
-        if (dialog && dialog.showModal) {
-          dialog.showModal();
+        if (dialog) {
+          if (dialog.show) {
+            dialog.show();
+          } else {
+            dialog.setAttribute("open", "");
+          }
+          document.body.classList.add("nj-modal-open");
         }
       }
       var closer = event.target.closest("[data-nj-close]");
@@ -629,15 +745,45 @@
       if (event.target.matches && event.target.matches("dialog.nj-modal")) {
         event.target.close();
       }
+      if (event.target === document.body && document.body.classList.contains("nj-modal-open") && !event.target.closest(".media-modal")) {
+        var front = document.querySelector("dialog.nj-modal[open]");
+        if (front) {
+          front.close();
+        }
+      }
+    });
+    document.querySelectorAll("dialog.nj-modal").forEach(function (dialog) {
+      dialog.addEventListener("close", function () {
+        if (!document.querySelector("dialog.nj-modal[open]")) {
+          document.body.classList.remove("nj-modal-open");
+        }
+      });
+    });
+    document.addEventListener("keydown", function (event) {
+      if (event.key !== "Escape" || document.querySelector(".media-modal")) {
+        return;
+      }
+      var front = document.querySelector("dialog.nj-modal[open]");
+      if (front) {
+        front.close();
+      }
     });
     document.addEventListener("input", function (event) {
-      var colorInput = event.target.closest("[data-nj-attr=color] input[type=text]");
+      var colorInput = event.target.closest("[data-nj-color-name]");
       if (colorInput) {
-        rebuildStocks(attrBox(colorInput));
+        reindexPiezas(attrBox(colorInput));
       }
       var menuLabel = event.target.closest("[data-nj-menu-label]");
       if (menuLabel) {
         syncMenuTitle(menuLabel.closest("[data-nj-menu-group]"));
+      }
+      var columnTitle = event.target.closest("[data-nj-column-title]");
+      if (columnTitle) {
+        var columnCard = columnTitle.closest("[data-nj-foot-column]");
+        var columnName = columnCard ? columnCard.querySelector("[data-nj-menu-title]") : null;
+        if (columnName) {
+          columnName.textContent = columnTitle.value.trim() ? columnTitle.value.trim() : "Columna";
+        }
       }
       var promoName = event.target.closest("[data-nj-promo] input[type=text]");
       if (promoName) {
@@ -647,7 +793,37 @@
         }
       }
     });
+    function openCatBlock(key) {
+      var blocks = document.querySelectorAll("[data-nj-cat-block]");
+      Array.prototype.forEach.call(blocks, function (item) {
+        var on = item.getAttribute("data-nj-cat-block") === key;
+        item.classList.toggle("is-open", on);
+        var summary = item.querySelector("[data-nj-cat-toggle]");
+        if (summary) {
+          summary.setAttribute("aria-expanded", on ? "true" : "false");
+        }
+      });
+      var opened = document.querySelector('[data-nj-cat-block="' + key + '"]');
+      if (opened && opened.scrollIntoView) {
+        opened.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
     document.addEventListener("click", function (event) {
+      var catJump = event.target.closest("[data-nj-cat-jump]");
+      if (catJump) {
+        openCatBlock(catJump.getAttribute("data-nj-cat-jump"));
+      }
+      var catToggle = event.target.closest("[data-nj-cat-toggle]");
+      if (catToggle) {
+        var catBlock = catToggle.closest("[data-nj-cat-block]");
+        var catKey = catBlock ? catBlock.getAttribute("data-nj-cat-block") : "";
+        if (catBlock && catBlock.classList.contains("is-open")) {
+          catBlock.classList.remove("is-open");
+          catToggle.setAttribute("aria-expanded", "false");
+        } else if (catKey) {
+          openCatBlock(catKey);
+        }
+      }
       var pickButton = event.target.closest("[data-nj-pick]");
       if (pickButton) {
         var box = pickButton.closest("[data-nj-photo]");
@@ -679,18 +855,31 @@
       if (addPoint) {
         addLookPoint(addPoint.closest("[data-nj-look]"));
       }
-      var addAttr = event.target.closest("[data-nj-attr-add]");
-      if (addAttr) {
-        addAttrRow(attrBox(addAttr), addAttr.getAttribute("data-nj-attr-add"));
+      var addColor = event.target.closest("[data-nj-color-add]");
+      if (addColor) {
+        addColorBlock(attrBox(addColor));
       }
-      var removeAttr = event.target.closest("[data-nj-attr-remove]");
-      if (removeAttr) {
-        var attrRow = removeAttr.closest("[data-nj-attr-row]");
-        var attrs = attrBox(removeAttr);
-        if (attrRow) {
-          attrRow.remove();
+      var removeColor = event.target.closest("[data-nj-color-remove]");
+      if (removeColor) {
+        var colorBlock = removeColor.closest("[data-nj-color]");
+        var colorBox = attrBox(removeColor);
+        if (colorBlock && colorBox && colorBox.querySelectorAll("[data-nj-color]").length > 1) {
+          colorBlock.remove();
+          reindexPiezas(colorBox);
         }
-        rebuildStocks(attrs);
+      }
+      var addSize = event.target.closest("[data-nj-size-add]");
+      if (addSize) {
+        addSizeRow(addSize.closest("[data-nj-color]"));
+      }
+      var removeSize = event.target.closest("[data-nj-size-remove]");
+      if (removeSize) {
+        var sizeRow = removeSize.closest("[data-nj-size]");
+        var sizeBox = attrBox(removeSize);
+        if (sizeRow) {
+          sizeRow.remove();
+        }
+        reindexPiezas(sizeBox);
       }
       var addGalleryButton = event.target.closest("[data-nj-gallery-add]");
       if (addGalleryButton) {
@@ -810,6 +999,140 @@
           menuRow.remove();
         }
         reindexMenu(menuGroup);
+      }
+      var addDept = event.target.closest("[data-nj-dept-add]");
+      if (addDept) {
+        var deptList = document.querySelector("[data-nj-dept-list]");
+        if (deptList && deptList.querySelectorAll("[data-nj-menu-dept]").length < 6) {
+          var deptIndex = deptList.querySelectorAll("[data-nj-menu-dept]").length;
+          var dept = document.createElement("div");
+          dept.innerHTML = deptGroupHtml(deptIndex);
+          var deptGroup = dept.firstElementChild;
+          deptList.appendChild(deptGroup);
+          reindexDepts();
+          toggleMenu(deptGroup.getAttribute("data-nj-menu-key"));
+          var deptLabel = deptGroup.querySelector("[data-nj-menu-label]");
+          if (deptLabel) {
+            deptLabel.focus();
+          }
+        }
+      }
+      var removeDept = event.target.closest("[data-nj-dept-remove]");
+      if (removeDept) {
+        var deptCard = removeDept.closest("[data-nj-menu-dept]");
+        if (deptCard && window.confirm("¿Quitar este menú de la barra?")) {
+          deptCard.remove();
+          reindexDepts();
+        }
+      }
+      var addLink = event.target.closest("[data-nj-link-add]");
+      if (addLink) {
+        var linkList = addLink.parentElement ? addLink.parentElement.previousElementSibling : null;
+        if (!linkList || !linkList.hasAttribute("data-nj-link-list")) {
+          linkList = addLink.closest(".nj-menu-body, .nj-screen, .nj-studio-main");
+          linkList = linkList ? linkList.querySelector("[data-nj-link-list]") : null;
+        }
+        if (linkList) {
+          var linkMax = Number(linkList.getAttribute("data-nj-link-max") || "8");
+          if (linkList.querySelectorAll(".nj-menu-row").length < linkMax) {
+            var linkRow = document.createElement("div");
+            linkRow.className = "nj-menu-row";
+            linkRow.innerHTML = '<input type="text" placeholder="Nombre"><input type="url" placeholder="https://"><button type="button" class="button" data-nj-link-remove>Quitar</button>';
+            linkList.appendChild(linkRow);
+            reindexLinks(linkList);
+            var linkInput = linkRow.querySelector("input");
+            if (linkInput) {
+              linkInput.focus();
+            }
+          }
+        }
+      }
+      var removeLink = event.target.closest("[data-nj-link-remove]");
+      if (removeLink) {
+        var linkRowRemove = removeLink.closest(".nj-menu-row");
+        var linkOwner = removeLink.closest("[data-nj-link-list]");
+        if (linkRowRemove) {
+          linkRowRemove.remove();
+        }
+        reindexLinks(linkOwner);
+        reindexColumns(document.querySelector("[data-nj-foot-columns]"));
+      }
+      var addColumn = event.target.closest("[data-nj-column-add]");
+      if (addColumn) {
+        var columnList = document.querySelector("[data-nj-foot-columns]");
+        if (columnList && columnList.querySelectorAll("[data-nj-foot-column]").length < 4) {
+          var column = document.createElement("div");
+          column.innerHTML = columnHtml();
+          var columnCard = column.firstElementChild;
+          columnList.appendChild(columnCard);
+          reindexColumns(columnList);
+          toggleMenu(columnCard.getAttribute("data-nj-menu-key"));
+          var columnTitle = columnCard.querySelector("[data-nj-column-title]");
+          if (columnTitle) {
+            columnTitle.focus();
+          }
+        }
+      }
+      var removeColumn = event.target.closest("[data-nj-column-remove]");
+      if (removeColumn) {
+        var columnCardRemove = removeColumn.closest("[data-nj-foot-column]");
+        if (columnCardRemove && window.confirm("¿Quitar esta columna del pie?")) {
+          columnCardRemove.remove();
+          reindexColumns(document.querySelector("[data-nj-foot-columns]"));
+        }
+      }
+      var addPill = event.target.closest("[data-nj-pill-add]");
+      if (addPill) {
+        var pillList = addPill.parentElement ? addPill.parentElement.previousElementSibling : null;
+        if (pillList && pillList.hasAttribute("data-nj-pill-list")) {
+          var pillMax = Number(pillList.getAttribute("data-nj-pill-max") || "8");
+          var pillName = pillList.getAttribute("data-nj-pill-name") || "";
+          if (pillList.querySelectorAll(".nj-menu-row").length < pillMax) {
+            var pillRow = document.createElement("div");
+            pillRow.className = "nj-menu-row nj-pill-edit";
+            pillRow.innerHTML = '<input type="text" name="' + pillName + '[]" value=""><button type="button" class="button" data-nj-pill-remove>Quitar</button>';
+            pillList.appendChild(pillRow);
+            var pillInput = pillRow.querySelector("input");
+            if (pillInput) {
+              pillInput.focus();
+            }
+          }
+        }
+      }
+      var removePill = event.target.closest("[data-nj-pill-remove]");
+      if (removePill) {
+        var pillRowRemove = removePill.closest(".nj-menu-row");
+        if (pillRowRemove) {
+          pillRowRemove.remove();
+        }
+      }
+      var addHelp = event.target.closest("[data-nj-help-add]");
+      if (addHelp) {
+        var helpParagraph = addHelp.closest("p");
+        var helpList = helpParagraph ? helpParagraph.previousElementSibling : null;
+        if (helpList && helpList.hasAttribute("data-nj-help-list")) {
+          var helpMax = Number(helpList.getAttribute("data-nj-help-max") || "8");
+          if (helpList.querySelectorAll(".nj-help-line, .nj-help-row").length < helpMax) {
+            var helpWrap = document.createElement("div");
+            helpWrap.innerHTML = helpRowHtml(helpList);
+            var helpRow = helpWrap.firstElementChild;
+            helpList.appendChild(helpRow);
+            reindexHelp(helpList);
+            var helpInput = helpRow.querySelector("input, textarea");
+            if (helpInput) {
+              helpInput.focus();
+            }
+          }
+        }
+      }
+      var removeHelp = event.target.closest("[data-nj-help-remove]");
+      if (removeHelp) {
+        var helpRowRemove = removeHelp.closest(".nj-help-line, .nj-help-row");
+        var helpOwner = removeHelp.closest("[data-nj-help-list]");
+        if (helpRowRemove) {
+          helpRowRemove.remove();
+        }
+        reindexHelp(helpOwner);
       }
       var pointToggle = event.target.closest("[data-nj-point-toggle]");
       if (pointToggle) {

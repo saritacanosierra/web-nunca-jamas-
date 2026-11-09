@@ -51,7 +51,11 @@
         '<button class="bag-line__remove" type="button" data-remove aria-label="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 7h14M9 7V5h6v2M8 7l1 12h6l1-12"/></svg></button>';
       row.querySelector("img").src = line.image || "";
       row.querySelector("h3").textContent = line.name;
-      row.querySelector(".bag-line__size").textContent = line.size ? "Talla " + line.size : "";
+      var detail = line.size ? "Talla " + line.size : "";
+      if (line.bordado) {
+        detail = detail ? detail + " · " + line.bordado : line.bordado;
+      }
+      row.querySelector(".bag-line__size").textContent = detail;
       row.querySelector("strong").textContent = money(line.price);
       row.querySelector(".bag-line__qty span").textContent = String(line.qty);
       row.setAttribute("data-index", String(index));
@@ -61,6 +65,10 @@
       linesNode.appendChild(row);
     });
     emptyNode.hidden = lines.length > 0;
+    var embroider = drawer.querySelector("[data-bag-embroider]");
+    if (embroider) {
+      embroider.hidden = !lines.some(function (line) { return !!line.bordado; });
+    }
     drawer.querySelector("[data-bag-subtotal]").textContent = money(sum.subtotal);
     drawer.querySelector("[data-bag-discount]").textContent = (sum.discount ? "-" : "") + money(sum.discount);
     drawer.querySelector("[data-bag-total]").textContent = money(sum.total);

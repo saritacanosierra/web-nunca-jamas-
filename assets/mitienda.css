@@ -40,6 +40,70 @@
 .nj-screen h2 {
   margin-top: 0;
 }
+.nj-cat-map {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 14px;
+}
+.nj-cat-map button,
+.nj-cat-summary {
+  border: 0;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  color: #1d2327;
+}
+.nj-cat-map button {
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: inset 0 0 0 1px #dcdcde;
+}
+.nj-cat-map button:hover,
+.nj-cat-map button:focus-visible,
+.nj-cat-block.is-open {
+  box-shadow: inset 3px 0 0 #111, inset 0 0 0 1px #dcdcde;
+}
+.nj-cat-map small,
+.nj-cat-summary small {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.nj-cat-map strong,
+.nj-cat-summary strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 16px;
+}
+.nj-cat-map span,
+.nj-cat-summary span {
+  display: block;
+  margin-top: 4px;
+  color: #646970;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+.nj-cat-block {
+  margin: 0 0 10px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1px #dcdcde;
+}
+.nj-cat-summary {
+  width: 100%;
+  padding: 14px 16px;
+}
+.nj-cat-body {
+  display: none;
+  padding: 0 16px 16px;
+}
+.nj-cat-block.is-open .nj-cat-body {
+  display: block;
+}
 .nj-photo-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -51,13 +115,27 @@
 .nj-pill-list {
   display: grid;
   gap: 10px;
-  max-width: 560px;
+  counter-reset: njpill;
 }
 .nj-pill-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
   gap: 8px 12px;
-  align-items: end;
+  align-items: center;
+  counter-increment: njpill;
+}
+.nj-pill-row::before {
+  content: counter(njpill);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #f6f7f7;
+  font-size: 12px;
+  font-weight: 700;
+}
+.nj-pill-row {
   background: #fff;
   border: 1px solid #dcdcde;
   border-radius: 12px;
@@ -188,10 +266,8 @@
   gap: 14px;
 }
 .nj-prenda-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
+  justify-items: start;
   gap: 10px;
   margin: 0 0 14px;
 }
@@ -210,11 +286,22 @@
   font-weight: 600;
   cursor: pointer;
 }
-.nj-prenda-filters button.is-on,
-.nj-prenda-stock.is-on {
+.nj-prenda-filters button.is-on {
   background: #111;
   border-color: #111;
   color: #fff;
+}
+.nj-prenda-filters .nj-prenda-stock {
+  padding: 9px 16px;
+  background: #f1c36b;
+  border-color: #c9942a;
+  color: #111;
+  font-weight: 700;
+}
+.nj-prenda-filters .nj-prenda-stock.is-on {
+  background: #111;
+  border-color: #111;
+  color: #f1c36b;
 }
 .nj-prenda-tile {
   position: relative;
@@ -285,9 +372,17 @@
 dialog.nj-modal:not([open]) {
   display: none;
 }
+body.nj-modal-open::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  background: rgba(17, 17, 17, 0.48);
+}
 dialog.nj-modal[open] {
   position: fixed;
   inset: 24px;
+  z-index: 100001;
   width: min(840px, calc(100vw - 48px));
   height: fit-content;
   max-height: calc(100vh - 48px);
@@ -372,6 +467,20 @@ dialog.nj-modal::backdrop {
   justify-self: stretch;
   text-align: center;
 }
+.nj-ad-slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.nj-ad-slot {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+.nj-ad-slot .nj-modal-frame {
+  width: 100%;
+  height: 140px;
+}
 .nj-modal-section {
   display: grid;
   gap: 12px;
@@ -443,12 +552,32 @@ dialog.nj-modal::backdrop {
 .nj-cats legend {
   width: 100%;
 }
+.nj-color-block {
+  margin: 0 0 14px;
+  padding: 12px;
+  border: 1px solid #dcdcde;
+  border-radius: 12px;
+  background: #fff;
+}
+.nj-color-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: end;
+  margin-bottom: 10px;
+}
+.nj-color-head label {
+  display: grid;
+  gap: 4px;
+  min-width: min(240px, 100%);
+  font-weight: 700;
+}
 .nj-attr-row {
   display: grid;
-  grid-template-columns: 150px auto auto;
+  grid-template-columns: 140px 120px auto;
   justify-content: start;
   gap: 8px;
-  align-items: center;
+  align-items: end;
   margin-bottom: 8px;
 }
 .nj-celda {
@@ -653,10 +782,32 @@ dialog.nj-modal::backdrop {
 }
 .nj-tema-fields input,
 .nj-tema-fields select,
+.nj-tema-fields textarea,
 .nj-tema-css {
   width: 100%;
   max-width: 640px;
 }
+[data-nj-foot-columns] {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+.nj-pill-edit {
+  grid-template-columns: minmax(0, 320px) auto;
+  max-width: 420px;
+}
+.nj-help-page { margin-top: 16px; }
+.nj-help-page h3 { margin: 14px 14px 0; }
+.nj-help-list { display: grid; gap: 8px; }
+.nj-help-line { grid-template-columns: minmax(0, 1fr) auto; max-width: 720px; }
+.nj-help-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 240px) minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+}
+.nj-help-row textarea,
+.nj-help-page textarea { width: 100%; max-width: none; }
 .nj-tema-photos {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 220px));
@@ -806,5 +957,13 @@ dialog.nj-modal::backdrop {
   }
   .nj-banner-card img {
     width: 100%;
+  }
+  .nj-cat-map,
+  .nj-pill-row,
+  .nj-ad-slots {
+    grid-template-columns: 1fr;
+  }
+  .nj-pill-row::before {
+    display: none;
   }
 }

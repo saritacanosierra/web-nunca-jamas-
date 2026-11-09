@@ -35,11 +35,20 @@
     });
   }
 
-  function shopAdd(data, size, color) {
+  function shopAdd(data, size, color, extra) {
+    if (data.personalizado && !extra && data.url) {
+      window.location.href = data.url;
+      return;
+    }
+    extra = extra || {};
     syncCartForm(size);
     if (window.njShop && window.njShop.ajax && data.id) {
       var body = new FormData();
       body.append("quantity", "1");
+      if (extra.nombre) {
+        body.append("nj_nombre", extra.nombre);
+        body.append("nj_fuente", extra.fuente || "cursiva");
+      }
       var variation = shopSizeMatch(data, size, color);
       if (variation && variation.id) {
         body.append("product_id", String(variation.id));
@@ -170,12 +179,34 @@
       });
       showQuickPhoto(gallery[0]);
       quickSizes.innerHTML = "";
-      (data.sizes || []).forEach(function (size) {
-        var button = document.createElement("button");
-        button.type = "button";
-        button.textContent = size;
-        quickSizes.appendChild(button);
+      var quickColors = [];
+      (data.variations || []).forEach(function (row) {
+        if (row.color && quickColors.indexOf(row.color) === -1) {
+          quickColors.push(row.color);
+        }
       });
+      if (quickColors.length > 1) {
+        (data.variations || []).forEach(function (row) {
+          if (!row.size) {
+            return;
+          }
+          var button = document.createElement("button");
+          button.type = "button";
+          button.textContent = row.color ? row.size + " · " + row.color : row.size;
+          button.setAttribute("data-size", row.size);
+          button.setAttribute("data-color", row.color || "");
+          quickSizes.appendChild(button);
+        });
+      } else {
+        (data.sizes || []).forEach(function (size) {
+          var button = document.createElement("button");
+          button.type = "button";
+          button.textContent = size;
+          button.setAttribute("data-size", size);
+          button.setAttribute("data-color", quickColors[0] || "");
+          quickSizes.appendChild(button);
+        });
+      }
       quickSizes.hidden = !data.sizes || !data.sizes.length;
       quickHint.hidden = quickSizes.hidden;
       quickView.showModal();
@@ -198,7 +229,7 @@
       });
       if (window.njBag && quickData) {
         quickView.close();
-        shopAdd(quickData, button.textContent.trim());
+        shopAdd(quickData, button.getAttribute("data-size") || button.textContent.trim(), button.getAttribute("data-color") || "");
       }
     });
 
@@ -230,21 +261,44 @@
     });
   });
 
-  Array.prototype.forEach.call(document.querySelectorAll("[data-save]"), function (button) {
-    button.addEventListener("click", function () {
-      var saved = button.getAttribute("aria-pressed") === "true";
-      button.setAttribute("aria-pressed", saved ? "false" : "true");
-    });
-  });
-
   var ficha = document.querySelector("[data-ficha]");
   if (ficha) {
     var fichaData = JSON.parse(ficha.querySelector("[data-ficha-data]").textContent);
     var fichaTrack = ficha.querySelector("[data-ficha-track]");
     var fichaSize = "";
     var fichaColor = "";
+    var fichaFont = "cursiva";
     var fichaAlert = ficha.querySelector("[data-ficha-alert]");
     var fichaSelect = ficha.querySelector("[data-ficha-size]");
+    var fichaName = ficha.querySelector("[data-ficha-name]");
+
+    function cleanFichaName(value) {
+      return String(value || "").replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ '\-]/g, "").replace(/\s+/g, " ").slice(0, 12);
+    }
+
+    function paintFichaName() {
+      if (!fichaName) {
+        return;
+      }
+      var nombre = cleanFichaName(fichaName.value);
+      if (fichaName.value !== nombre) {
+        fichaName.value = nombre;
+      }
+      var count = ficha.querySelector("[data-ficha-count]");
+      if (count) {
+        count.textContent = String(nombre.trim().length) + "/12";
+      }
+      Array.prototype.forEach.call(ficha.querySelectorAll("[data-ficha-embroider]"), function (layer) {
+        layer.textContent = nombre.trim();
+        layer.hidden = nombre.trim() === "";
+        layer.classList.toggle("is-cursiva", fichaFont === "cursiva");
+        layer.classList.toggle("is-imprenta", fichaFont === "imprenta");
+      });
+      var extra = ficha.querySelector("[data-ficha-extra]");
+      if (extra) {
+        extra.hidden = nombre.trim() === "";
+      }
+    }
 
     function fichaStep() {
       var slide = fichaTrack.querySelector(".ficha__slide");
@@ -265,11 +319,47 @@
       syncCartForm(fichaSize);
     }
 
+    function paintFichaSizes() {
+      var allowed = null;
+      if (fichaColor) {
+        allowed = {};
+        (fichaData.variations || []).forEach(function (row) {
+          if (String(row.color || "").toLowerCase() === String(fichaColor).toLowerCase() && row.size) {
+            allowed[String(row.size).toLowerCase()] = true;
+          }
+        });
+      }
+      Array.prototype.forEach.call(ficha.querySelectorAll("[data-ficha-size-button]"), function (button) {
+        var size = String(button.getAttribute("data-size") || "").toLowerCase();
+        var on = !allowed || !!allowed[size];
+        button.hidden = !on;
+        if (!on && button.classList.contains("is-selected")) {
+          fichaSize = "";
+          button.classList.remove("is-selected");
+        }
+      });
+      if (fichaSelect) {
+        Array.prototype.forEach.call(fichaSelect.options, function (option) {
+          if (!option.value) {
+            return;
+          }
+          var on = !allowed || !!allowed[String(option.value).toLowerCase()];
+          option.hidden = !on;
+          option.disabled = !on;
+          if (!on && fichaSelect.value === option.value) {
+            fichaSelect.value = "";
+            fichaSize = "";
+          }
+        });
+      }
+    }
+
     function chooseFichaColor(color) {
       fichaColor = color || "";
       Array.prototype.forEach.call(ficha.querySelectorAll("[data-ficha-color-button]"), function (button) {
         button.classList.toggle("is-selected", button.getAttribute("data-color") === fichaColor);
       });
+      paintFichaSizes();
       if (fichaAlert) {
         fichaAlert.hidden = true;
       }
@@ -285,7 +375,10 @@
         return;
       }
       if (window.njBag) {
-        shopAdd(fichaData, fichaSize, fichaColor);
+        shopAdd(fichaData, fichaSize, fichaColor, {
+          nombre: fichaName ? cleanFichaName(fichaName.value).trim() : "",
+          fuente: fichaFont
+        });
       }
     }
 
@@ -299,6 +392,15 @@
       var colorButton = event.target.closest("[data-ficha-color-button]");
       if (colorButton) {
         chooseFichaColor(colorButton.getAttribute("data-color"));
+        return;
+      }
+      var fontButton = event.target.closest("[data-ficha-font]");
+      if (fontButton) {
+        fichaFont = fontButton.getAttribute("data-ficha-font") || "cursiva";
+        Array.prototype.forEach.call(ficha.querySelectorAll("[data-ficha-font]"), function (item) {
+          item.classList.toggle("is-selected", item === fontButton);
+        });
+        paintFichaName();
         return;
       }
       var sizeButton = event.target.closest("[data-ficha-size-button]");
@@ -327,6 +429,9 @@
       fichaSelect.addEventListener("change", function () {
         chooseFichaSize(fichaSelect.value);
       });
+    }
+    if (fichaName) {
+      fichaName.addEventListener("input", paintFichaName);
     }
   }
 

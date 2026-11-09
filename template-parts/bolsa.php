@@ -32,6 +32,7 @@ $nj_bag_state = function_exists('nj_bag_state') ? nj_bag_state() : array('lines'
         <button type="submit">Aplicar</button>
         <p data-bag-coupon-note></p>
       </form>
+      <?php echo function_exists('nj_personalizado_warning_html') ? nj_personalizado_warning_html(true) : ''; ?>
       <a class="bag-drawer__checkout" href="<?php echo esc_url($nj_checkout); ?>">Pagar</a>
       <?php if (!empty($nj_bag['whatsapp'])) : ?>
         <a class="bag-drawer__whatsapp" href="<?php echo esc_url($nj_bag['whatsapp']); ?>" aria-label="WhatsApp" target="_blank" rel="noopener">

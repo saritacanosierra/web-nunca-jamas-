@@ -49,6 +49,7 @@ if (!function_exists('nj_bag_state')) {
                 'image' => $image,
                 'url' => get_permalink($item['product_id']),
                 'size' => $size,
+                'bordado' => function_exists('nj_personalizado_line_note') ? nj_personalizado_line_note($item) : '',
                 'price' => (int) round((float) $product->get_price()),
                 'regular' => (int) round((float) $product->get_regular_price()),
                 'qty' => (int) $item['quantity'],

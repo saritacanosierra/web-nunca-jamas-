@@ -148,11 +148,11 @@ if (!function_exists('nj_prendas_term_id')) {
             return (int) $term->term_id;
         }
         $created = wp_insert_term($label, $taxonomy, array('slug' => $slug));
-        if (is_wp_error($created)) {
+        if ($created instanceof WP_Error) {
             $data = $created->get_error_data();
             return is_numeric($data) ? (int) $data : 0;
         }
-        return isset($created['term_id']) ? (int) $created['term_id'] : 0;
+        return is_array($created) && isset($created['term_id']) ? (int) $created['term_id'] : 0;
     }
 }
 
@@ -165,38 +165,41 @@ if (!function_exists('nj_prendas_clean_label')) {
 
 if (!function_exists('nj_prendas_posted_rows')) {
     function nj_prendas_posted_rows() {
-        $tallas = isset($_POST['talla_nombre']) && is_array($_POST['talla_nombre']) ? wp_unslash($_POST['talla_nombre']) : array();
-        $colores = isset($_POST['color_nombre']) && is_array($_POST['color_nombre']) ? wp_unslash($_POST['color_nombre']) : array();
-        $cells = isset($_POST['talla_celda']) && is_array($_POST['talla_celda']) ? wp_unslash($_POST['talla_celda']) : array();
-        $talla_labels = array();
-        foreach ($tallas as $label) {
-            $talla_labels[] = nj_prendas_clean_label($label);
-        }
-        $color_labels = array();
-        foreach ($colores as $label) {
-            $label = nj_prendas_clean_label($label);
-            if ($label !== '') {
-                $color_labels[] = $label;
+        $posted = isset($_POST['pieza']) && is_array($_POST['pieza']) ? wp_unslash($_POST['pieza']) : array();
+        $named = false;
+        foreach ($posted as $pieza) {
+            if (is_array($pieza) && nj_prendas_clean_label(isset($pieza['color']) ? $pieza['color'] : '') !== '') {
+                $named = true;
             }
         }
-        $colors = $color_labels ? $color_labels : array('');
         $rows = array();
-        $index = 0;
-        foreach ($talla_labels as $talla) {
-            foreach ($colors as $color) {
-                $qty = isset($cells[$index]) ? (int) $cells[$index] : 0;
-                $index++;
+        foreach ($posted as $pieza) {
+            if (!is_array($pieza)) {
+                continue;
+            }
+            $color = nj_prendas_clean_label(isset($pieza['color']) ? $pieza['color'] : '');
+            if ($named && $color === '') {
+                continue;
+            }
+            $tallas = isset($pieza['tallas']) && is_array($pieza['tallas']) ? $pieza['tallas'] : array();
+            foreach ($tallas as $size) {
+                if (!is_array($size)) {
+                    continue;
+                }
+                $talla = nj_prendas_clean_label(isset($size['nombre']) ? $size['nombre'] : '');
                 if ($talla === '') {
                     continue;
                 }
-                $rows[] = array(
+                $qty = isset($size['qty']) ? (int) $size['qty'] : 0;
+                $key = nj_prendas_size_slug($talla) . '|' . nj_prendas_size_slug($color);
+                $rows[$key] = array(
                     'talla' => $talla,
                     'color' => $color,
                     'qty' => max(0, min(999, $qty)),
                 );
             }
         }
-        return $rows;
+        return array_values($rows);
     }
 }
 
@@ -210,7 +213,10 @@ if (!function_exists('nj_prendas_posted_categories')) {
                 continue;
             }
             $term = get_term($id, 'product_cat');
-            if ($term && !is_wp_error($term) && !in_array($term->slug, array('uncategorized', 'sin-categorizar'), true)) {
+            if (!$term instanceof WP_Term) {
+                continue;
+            }
+            if (!in_array($term->slug, array('uncategorized', 'sin-categorizar'), true)) {
                 $ids[] = $id;
             }
         }
@@ -266,7 +272,7 @@ if (!function_exists('nj_prendas_attribute_labels')) {
             foreach ($attr->get_options() as $option) {
                 if ($attr->get_id() && function_exists('get_term')) {
                     $term = get_term((int) $option, $attr->get_name());
-                    $label = ($term && !is_wp_error($term)) ? $term->name : '';
+                    $label = $term instanceof WP_Term ? $term->name : '';
                 } else {
                     $label = trim((string) $option);
                 }
@@ -280,7 +286,7 @@ if (!function_exists('nj_prendas_attribute_labels')) {
         }
         foreach ($product->get_children() as $child_id) {
             $child = wc_get_product($child_id);
-            if (!$child) {
+            if (!$child instanceof WC_Product) {
                 continue;
             }
             foreach ($child->get_attributes() as $key => $value) {
@@ -297,6 +303,50 @@ if (!function_exists('nj_prendas_attribute_labels')) {
     }
 }
 
+if (!function_exists('nj_prendas_color_groups')) {
+    function nj_prendas_color_groups($product) {
+        $empty = array(array('color' => '', 'sizes' => array(array('talla' => '', 'qty' => 1))));
+        if (!is_object($product) || !method_exists($product, 'is_type') || !$product->is_type('variable')) {
+            return $empty;
+        }
+        $groups = array();
+        $order = array();
+        foreach ($product->get_children() as $child_id) {
+            $child = wc_get_product($child_id);
+            if (!$child instanceof WC_Product) {
+                continue;
+            }
+            $talla = '';
+            $color = '';
+            foreach ($child->get_attributes() as $key => $value) {
+                if (nj_prendas_is_kind($key, 'talla')) {
+                    $talla = nj_prendas_value_label($key, $value);
+                }
+                if (nj_prendas_is_kind($key, 'color')) {
+                    $color = nj_prendas_value_label($key, $value);
+                }
+            }
+            if ($talla === '') {
+                continue;
+            }
+            if (!isset($groups[$color])) {
+                $groups[$color] = array();
+                $order[] = $color;
+            }
+            $qty = $child->managing_stock() ? (int) $child->get_stock_quantity() : ($child->is_in_stock() ? 1 : 0);
+            $groups[$color][] = array('talla' => $talla, 'qty' => max(0, $qty));
+        }
+        if (!$order) {
+            return $empty;
+        }
+        $result = array();
+        foreach ($order as $color) {
+            $result[] = array('color' => $color, 'sizes' => $groups[$color]);
+        }
+        return $result;
+    }
+}
+
 if (!function_exists('nj_prendas_stock_lookup')) {
     function nj_prendas_stock_lookup($product) {
         $map = array();
@@ -305,7 +355,7 @@ if (!function_exists('nj_prendas_stock_lookup')) {
         }
         foreach ($product->get_children() as $child_id) {
             $child = wc_get_product($child_id);
-            if (!$child) {
+            if (!$child instanceof WC_Product) {
                 continue;
             }
             $talla = '';
@@ -336,7 +386,7 @@ if (!function_exists('nj_prendas_tag_text')) {
         }
         foreach ($product->get_tag_ids() as $id) {
             $term = get_term((int) $id, 'product_tag');
-            if ($term && !is_wp_error($term)) {
+            if ($term instanceof WP_Term) {
                 $names[] = $term->name;
             }
         }
@@ -468,7 +518,7 @@ if (!function_exists('nj_prendas_sync_sizes')) {
         $existing = array();
         foreach ($product->get_children() as $child_id) {
             $child = wc_get_product($child_id);
-            if (!$child) {
+            if (!$child instanceof WC_Product) {
                 continue;
             }
             $talla = '';
@@ -509,7 +559,7 @@ if (!function_exists('nj_prendas_sync_sizes')) {
         foreach ($product->get_children() as $child_id) {
             if (!in_array((int) $child_id, $keep, true)) {
                 $child = wc_get_product($child_id);
-                if ($child) {
+                if ($child instanceof WC_Product) {
                     $child->delete(true);
                 }
             }
@@ -547,6 +597,7 @@ if (!function_exists('nj_prendas_apply')) {
         wp_set_object_terms($id, $tags, 'product_tag');
         update_post_meta($id, '_nj_home_nuevo', empty($_POST['en_nuevo']) ? '0' : '1');
         update_post_meta($id, '_nj_home_coleccion', empty($_POST['en_coleccion']) ? '0' : '1');
+        update_post_meta($id, '_nj_personalizado', empty($_POST['personalizado']) ? '0' : '1');
         return $id;
     }
 }

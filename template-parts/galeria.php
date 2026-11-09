@@ -1,5 +1,21 @@
 <?php
-/** @var array $nj_catalog */
+/**
+ * Catálogo. Quien incluye este archivo define $nj_catalog.
+ */
+$nj_catalog = isset($nj_catalog) && is_array($nj_catalog) ? $nj_catalog : array();
+$nj_catalog += array(
+    'banner' => array('kicker' => '', 'title' => '', 'text' => '', 'image' => '', 'alt' => ''),
+    'title' => '',
+    'lead' => '',
+    'crumbs' => array(array('href' => '', 'label' => '')),
+    'pills' => array(),
+    'action' => '',
+    'hidden' => array(),
+    'order_name' => 'orden',
+    'orders' => array(),
+    'order' => '',
+    'items' => array(),
+);
 $nj_banner = $nj_catalog['banner'];
 ?>
 <main class="shop-page">

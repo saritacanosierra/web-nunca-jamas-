@@ -3,12 +3,10 @@
  * Panel de un departamento: "Ver todo" y sus subcategorías.
  * El archivo que lo incluye define $nj_panel con href y children.
  */
-if (!isset($nj_panel)) {
-    $nj_panel = array(
-        'href' => '',
-        'children' => array(),
-    );
-}
+$nj_panel = isset($nj_panel) && is_array($nj_panel) ? $nj_panel : array(
+    'href' => '',
+    'children' => array(),
+);
 if (empty($nj_panel['children'])) {
     return;
 }

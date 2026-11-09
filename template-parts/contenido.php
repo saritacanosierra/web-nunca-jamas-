@@ -12,7 +12,13 @@ while (have_posts()) {
         continue;
     }
     echo '<main class="section"><div class="wrap">';
-    echo '<h1 class="page-title">' . esc_html(get_the_title()) . '</h1>';
-    the_content();
+    $nj_help = function_exists('nj_pages_help_current') ? nj_pages_help_current() : null;
+    if (is_array($nj_help)) {
+        $nj_help_title = get_the_title();
+        require __DIR__ . '/ayuda.php';
+    } else {
+        echo '<h1 class="page-title">' . esc_html(get_the_title()) . '</h1>';
+        the_content();
+    }
     echo '</div></main>';
 }

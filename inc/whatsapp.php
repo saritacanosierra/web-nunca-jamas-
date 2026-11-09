@@ -49,7 +49,8 @@ if (!function_exists('nj_whatsapp_items')) {
     function nj_whatsapp_items($order) {
         $parts = array();
         foreach ($order->get_items() as $item) {
-            $parts[] = $item->get_name() . ' x' . $item->get_quantity();
+            $embroider = method_exists($item, 'get_meta') ? $item->get_meta('Nombre para bordar') : '';
+            $parts[] = $item->get_name() . ($embroider !== '' ? ' (bordar ' . $embroider . ')' : '') . ' x' . $item->get_quantity();
         }
         $text = implode(', ', $parts);
         return $text !== '' ? $text : '-';

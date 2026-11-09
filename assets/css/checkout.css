@@ -7,6 +7,11 @@ body.woocommerce-checkout .site-footer {
   background: #fff;
 }
 
+body.woocommerce-checkout .nj-embroider-alert {
+  width: min(1080px, calc(100% - 48px));
+  margin: 28px auto 0;
+}
+
 body.woocommerce-checkout .nj-checkout-lead,
 body.woocommerce-checkout .wp-block-woocommerce-checkout {
   width: min(1080px, calc(100% - 48px));

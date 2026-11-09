@@ -150,6 +150,21 @@
     });
   }
 
+  var faq = document.querySelector(".faq");
+  if (faq) {
+    faq.addEventListener("toggle", function (event) {
+      var item = event.target;
+      if (!item.open || item.tagName !== "DETAILS") {
+        return;
+      }
+      Array.prototype.forEach.call(faq.querySelectorAll("details[open]"), function (other) {
+        if (other !== item) {
+          other.removeAttribute("open");
+        }
+      });
+    }, true);
+  }
+
   if (news) {
     news.addEventListener("submit", function (event) {
       event.preventDefault();

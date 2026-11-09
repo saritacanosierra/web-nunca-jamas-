@@ -115,7 +115,12 @@ add_filter('body_class', 'nj_despacho_body_class');
 if (!function_exists('nj_despacho_thankyou_text')) {
     function nj_despacho_thankyou_text($text, $order = false) {
         if ($order && nj_order_is_dispatch($order)) {
-            return 'Tu pedido ' . $order->get_order_number() . ' ya está en despacho.';
+            $number = $order->get_order_number();
+            $embroider = function_exists('nj_personalizado_order_has') && nj_personalizado_order_has($order);
+            if ($embroider) {
+                return 'Qué buena compra. El pedido ' . $number . ' ya es tuyo.';
+            }
+            return 'Qué buena compra. El pedido ' . $number . ' ya va hacia ti.';
         }
         return $text;
     }
@@ -152,8 +157,25 @@ if (!function_exists('nj_order_received_note')) {
             return;
         }
         if (nj_order_is_dispatch($order)) {
-            echo '<p class="nj-order-dispatch">El pago quedó confirmado. Te avisamos por el correo cuando lo estemos empacando y cuando salga el envío.</p>';
-            echo '<a class="nj-order-dispatch__home" href="' . esc_url(nj_shop_link()) . '">Volver a la tienda</a>';
+            $embroider = function_exists('nj_personalizado_order_has') && nj_personalizado_order_has($order);
+            echo '<div class="nj-thanks">';
+            echo '<ol class="nj-thanks__steps">';
+            echo '<li class="is-done"><span>1</span><strong>Pago listo</strong><em>Ya es tuyo</em></li>';
+            if ($embroider) {
+                echo '<li class="is-now"><span>2</span><strong>Bordamos el nombre</strong><em>8 días hábiles</em></li>';
+                echo '<li><span>3</span><strong>Sale a tu casa</strong><em>Después de esa fecha</em></li>';
+            } else {
+                echo '<li class="is-now"><span>2</span><strong>Lo empacamos</strong><em>Con cuidado</em></li>';
+                echo '<li><span>3</span><strong>Va hacia ti</strong><em>Te avisamos al salir</em></li>';
+            }
+            echo '</ol>';
+            if ($embroider) {
+                echo '<p class="nj-thanks__lead">El pago quedó confirmado. Primero bordamos el nombre y, cuando esté listo, sale hacia tu casa. Te escribimos al correo en cada paso.</p>';
+            } else {
+                echo '<p class="nj-thanks__lead">El pago quedó confirmado. Lo empacamos y te escribimos al correo en cuanto salga. Ya falta poco para que llegue a tu casa.</p>';
+            }
+            echo '<a class="nj-order-dispatch__home" href="' . esc_url(nj_shop_link()) . '">Seguir viendo la tienda</a>';
+            echo '</div>';
             return;
         }
         if (!method_exists($order, 'needs_payment') || !$order->needs_payment()) {

@@ -26,12 +26,47 @@ if (!function_exists('nj_tema_menu_count')) {
     }
 }
 
+if (!function_exists('nj_tema_link_editor')) {
+    function nj_tema_link_editor($name, $links, $add_label, $max = 8) {
+        $links = is_array($links) ? $links : array();
+        ?>
+        <div data-nj-link-list data-nj-link-name="<?php echo esc_attr($name); ?>" data-nj-link-max="<?php echo (int) $max; ?>">
+          <?php foreach ($links as $index => $link) : ?>
+            <div class="nj-menu-row">
+              <input type="text" name="<?php echo esc_attr($name); ?>[<?php echo (int) $index; ?>][label]" value="<?php echo esc_attr(isset($link['label']) ? $link['label'] : ''); ?>" placeholder="Nombre">
+              <input type="url" name="<?php echo esc_attr($name); ?>[<?php echo (int) $index; ?>][href]" value="<?php echo esc_attr(isset($link['href']) ? $link['href'] : ''); ?>" placeholder="https://">
+              <button type="button" class="button" data-nj-link-remove>Quitar</button>
+            </div>
+          <?php endforeach; ?>
+        </div>
+        <p><button type="button" class="button" data-nj-link-add><?php echo esc_html($add_label); ?></button></p>
+        <?php
+    }
+}
+
+if (!function_exists('nj_tema_pill_editor')) {
+    function nj_tema_pill_editor($name, $items, $add_label, $max = 8) {
+        $items = is_array($items) ? $items : array();
+        ?>
+        <div data-nj-pill-list data-nj-pill-name="<?php echo esc_attr($name); ?>" data-nj-pill-max="<?php echo (int) $max; ?>">
+          <?php foreach ($items as $item) : ?>
+            <div class="nj-menu-row nj-pill-edit">
+              <input type="text" name="<?php echo esc_attr($name); ?>[]" value="<?php echo esc_attr($item); ?>">
+              <button type="button" class="button" data-nj-pill-remove>Quitar</button>
+            </div>
+          <?php endforeach; ?>
+        </div>
+        <p><button type="button" class="button" data-nj-pill-add><?php echo esc_html($add_label); ?></button></p>
+        <?php
+    }
+}
+
 if (!function_exists('nj_tema_menu_fields')) {
-    function nj_tema_menu_fields($name, $item, $key, $with_children = true) {
+    function nj_tema_menu_fields($name, $item, $key, $with_children = true, $removable = false) {
         $children = isset($item['children']) && is_array($item['children']) ? $item['children'] : array();
         $label = isset($item['label']) ? $item['label'] : '';
         ?>
-        <div class="nj-menu-group" data-nj-menu-group data-nj-menu-key="<?php echo esc_attr($key); ?>" data-nj-menu-name="<?php echo esc_attr($name); ?>">
+        <div class="nj-menu-group" data-nj-menu-group<?php echo $removable ? ' data-nj-menu-dept' : ''; ?> data-nj-menu-key="<?php echo esc_attr($key); ?>" data-nj-menu-name="<?php echo esc_attr($name); ?>">
           <button type="button" class="nj-menu-summary" data-nj-menu-toggle aria-expanded="false">
             <span data-nj-menu-title><?php echo esc_html($label !== '' ? $label : 'Menú'); ?></span>
             <span class="nj-menu-count" data-nj-menu-count><?php echo esc_html($with_children ? nj_tema_menu_count(count($children)) : 'Enlace de la barra'); ?></span>
@@ -57,9 +92,46 @@ if (!function_exists('nj_tema_menu_fields')) {
                 <?php endforeach; ?>
               </div>
               <p><button type="button" class="button" data-nj-menu-add>Agregar enlace</button></p>
+              <?php if ($removable) : ?>
+                <p><button type="button" class="button" data-nj-dept-remove>Quitar este menú</button></p>
+              <?php endif; ?>
             <?php endif; ?>
           </div>
         </div>
+        <?php
+    }
+}
+
+if (!function_exists('nj_tema_help_list')) {
+    function nj_tema_help_list($name, $kind, $rows, $add, $max, $keys = array()) {
+        $area = $kind === 'answer' ? '1' : '0';
+        $list_kind = $kind === 'line' ? 'line' : 'pair';
+        ?>
+        <div class="nj-help-list" data-nj-help-list data-nj-help-name="<?php echo esc_attr($name); ?>" data-nj-help-kind="<?php echo esc_attr($list_kind); ?>" data-nj-help-max="<?php echo (int) $max; ?>" data-nj-help-area="<?php echo esc_attr($area); ?>" data-nj-help-keys="<?php echo esc_attr(implode(',', $keys)); ?>">
+          <?php foreach ($rows as $index => $row) : ?>
+            <?php if ($kind === 'line') : ?>
+              <div class="nj-menu-row nj-help-line">
+                <input type="text" name="<?php echo esc_attr($name); ?>[<?php echo (int) $index; ?>]" value="<?php echo esc_attr($row); ?>">
+                <button type="button" class="button" data-nj-help-remove>Quitar</button>
+              </div>
+            <?php else : ?>
+              <?php
+                $left = isset($row[$keys[0]]) ? $row[$keys[0]] : (isset($row[0]) ? $row[0] : '');
+                $right = isset($row[$keys[1]]) ? $row[$keys[1]] : (isset($row[1]) ? $row[1] : '');
+              ?>
+              <div class="nj-help-row">
+                <input type="text" name="<?php echo esc_attr($name); ?>[<?php echo (int) $index; ?>][<?php echo esc_attr($keys[0]); ?>]" value="<?php echo esc_attr($left); ?>">
+                <?php if ($kind === 'answer') : ?>
+                  <textarea rows="3" name="<?php echo esc_attr($name); ?>[<?php echo (int) $index; ?>][<?php echo esc_attr($keys[1]); ?>]"><?php echo esc_textarea($right); ?></textarea>
+                <?php else : ?>
+                  <input type="text" name="<?php echo esc_attr($name); ?>[<?php echo (int) $index; ?>][<?php echo esc_attr($keys[1]); ?>]" value="<?php echo esc_attr($right); ?>">
+                <?php endif; ?>
+                <button type="button" class="button" data-nj-help-remove>Quitar</button>
+              </div>
+            <?php endif; ?>
+          <?php endforeach; ?>
+        </div>
+        <p><button type="button" class="button" data-nj-help-add><?php echo esc_html($add); ?></button></p>
         <?php
     }
 }
@@ -82,6 +154,8 @@ if (!function_exists('nj_tema_admin_page')) {
             'bg' => 'Fondo',
         );
         $menu = function_exists('nj_menu') ? nj_menu() : array('departments' => array(), 'collections' => array(), 'newest' => array());
+        $header = function_exists('nj_tema_header') ? nj_tema_header() : nj_tema_header_defaults();
+        $footer = function_exists('nj_tema_footer') ? nj_tema_footer() : nj_tema_footer_defaults();
         $saved = isset($_GET['updated']) && sanitize_key(wp_unslash($_GET['updated'])) === 'tema';
         $show_front = function_exists('get_option') ? get_option('show_on_front', 'posts') : 'posts';
         $notice_on = function_exists('get_option') && get_option('woocommerce_demo_store') === 'yes';
@@ -91,7 +165,7 @@ if (!function_exists('nj_tema_admin_page')) {
           <?php if ($saved) : ?>
             <div class="notice notice-success is-dismissible"><p>El tema quedó guardado. Recarga la tienda para verlo.</p></div>
           <?php endif; ?>
-          <p class="nj-studio-lead">Aquí está la identidad, los menús, la portada, WooCommerce, los pagos y el CSS. Las fotos y las prendas siguen en Mi tienda.</p>
+          <p class="nj-studio-lead">Aquí están la identidad, el encabezado, el pie, las páginas de ayuda, la portada, WooCommerce, los pagos y el CSS. Las fotos y las prendas siguen en Mi tienda.</p>
           <form method="post" action="<?php echo esc_url(function_exists('admin_url') ? admin_url('admin-post.php') : 'admin-post.php'); ?>">
             <?php if (function_exists('wp_nonce_field')) { wp_nonce_field('nj_tema_save', 'nj_tema_nonce'); } ?>
             <input type="hidden" name="action" value="nj_tema_save">
@@ -99,7 +173,9 @@ if (!function_exists('nj_tema_admin_page')) {
             <div class="nj-studio">
               <nav class="nj-studio-nav" aria-label="Partes del tema">
                 <button type="button" data-panel="identidad" class="is-on">Identidad del sitio</button>
-                <button type="button" data-panel="menus">Menús</button>
+                <button type="button" data-panel="encabezado">Encabezado</button>
+                <button type="button" data-panel="pie">Pie de página</button>
+                <button type="button" data-panel="ayuda">Ayuda</button>
                 <button type="button" data-panel="portada">Ajustes de portada</button>
                 <button type="button" data-panel="woocommerce">WooCommerce</button>
                 <button type="button" data-panel="pagos">Pagos</button>
@@ -149,24 +225,173 @@ if (!function_exists('nj_tema_admin_page')) {
                     <?php endforeach; ?>
                   </div>
                 </section>
-                <section class="nj-screen" data-screen="menus" id="menus">
-                  <h2>Menús</h2>
-                  <p>Es la misma barra de la tienda. Toca un nombre para ver y editar los enlaces que se abren debajo.</p>
+                <section class="nj-screen" data-screen="encabezado" id="encabezado">
+                  <h2>Encabezado</h2>
+                  <p>La barra de arriba, el buscador y los menús. Agrega, cambia o quita cada enlace.</p>
+                  <div class="nj-tema-fields">
+                    <label>Aviso de la barra
+                      <input type="text" name="header[notice]" value="<?php echo esc_attr($header['notice']); ?>" placeholder="Envíos a Colombia">
+                    </label>
+                    <label>Enlace del aviso
+                      <input type="url" name="header[notice_href]" value="<?php echo esc_attr($header['notice_href']); ?>" placeholder="https://">
+                    </label>
+                    <label>Texto del buscador
+                      <input type="text" name="header[search]" value="<?php echo esc_attr($header['search']); ?>">
+                    </label>
+                  </div>
+                  <p class="nj-prenda-note">Si dejas el aviso vacío, la franja no se muestra. Un menú sin nombre se quita al guardar.</p>
                   <div class="nj-menu-bar" aria-label="Menú de la tienda">
-                    <?php foreach ($menu['departments'] as $index => $item) : ?>
-                      <button type="button" data-nj-menu-jump="d-<?php echo (int) $index; ?>" aria-expanded="false"><?php echo esc_html($item['label']); ?></button>
-                    <?php endforeach; ?>
+                    <span data-nj-dept-bar>
+                      <?php foreach ($menu['departments'] as $index => $item) : ?>
+                        <button type="button" data-nj-menu-jump="d-<?php echo (int) $index; ?>" aria-expanded="false"><?php echo esc_html($item['label']); ?></button>
+                      <?php endforeach; ?>
+                    </span>
                     <span class="nj-menu-bar-gap"></span>
                     <button type="button" data-nj-menu-jump="collections" aria-expanded="false"><?php echo esc_html(isset($menu['collections']['label']) ? $menu['collections']['label'] : 'Colecciones'); ?></button>
                     <button type="button" data-nj-menu-jump="newest" aria-expanded="false"><?php echo esc_html(isset($menu['newest']['label']) ? $menu['newest']['label'] : 'Nuevo'); ?></button>
                   </div>
                   <div class="nj-menu-list">
-                    <?php foreach ($menu['departments'] as $index => $item) : ?>
-                      <?php nj_tema_menu_fields('menu[departments][' . (int) $index . ']', $item, 'd-' . (int) $index, true); ?>
-                    <?php endforeach; ?>
+                    <div data-nj-dept-list>
+                      <?php foreach ($menu['departments'] as $index => $item) : ?>
+                        <?php nj_tema_menu_fields('menu[departments][' . (int) $index . ']', $item, 'd-' . (int) $index, true, true); ?>
+                      <?php endforeach; ?>
+                    </div>
                     <?php nj_tema_menu_fields('menu[collections]', isset($menu['collections']) ? $menu['collections'] : array(), 'collections', true); ?>
                     <?php nj_tema_menu_fields('menu[newest]', isset($menu['newest']) ? $menu['newest'] : array(), 'newest', false); ?>
                   </div>
+                  <p><button type="button" class="button" data-nj-dept-add>Agregar menú</button></p>
+                </section>
+                <section class="nj-screen" data-screen="pie" id="pie">
+                  <h2>Pie de página</h2>
+                  <p>La marca, lo que se puede comprar, la ayuda, el contacto, los pagos y la barra legal. Agrega, cambia o quita cada pieza.</p>
+                  <div class="nj-tema-fields">
+                    <label>Frase de la marca
+                      <textarea name="footer[blurb]" rows="3"><?php echo esc_textarea($footer['blurb']); ?></textarea>
+                    </label>
+                    <label class="nj-check"><input type="checkbox" name="footer[news]" value="1" <?php checked($footer['news'] === '1'); ?>> Mostrar el correo de novedades</label>
+                    <label>Título del correo
+                      <input type="text" name="footer[news_label]" value="<?php echo esc_attr($footer['news_label']); ?>">
+                    </label>
+                    <label>Texto dentro del campo
+                      <input type="text" name="footer[news_placeholder]" value="<?php echo esc_attr($footer['news_placeholder']); ?>">
+                    </label>
+                  </div>
+                  <div data-nj-foot-columns>
+                    <?php foreach ($footer['columns'] as $index => $column) : ?>
+                      <div class="nj-menu-group is-open" data-nj-menu-group data-nj-foot-column data-nj-menu-key="col-<?php echo (int) $index; ?>">
+                        <button type="button" class="nj-menu-summary" data-nj-menu-toggle aria-expanded="true">
+                          <span data-nj-menu-title><?php echo esc_html($column['title']); ?></span>
+                          <span class="nj-menu-count">Columna</span>
+                        </button>
+                        <div class="nj-menu-body">
+                          <label>Título
+                            <input type="text" data-nj-column-title name="footer[columns][<?php echo (int) $index; ?>][title]" value="<?php echo esc_attr($column['title']); ?>">
+                          </label>
+                          <?php nj_tema_link_editor('footer[columns][' . (int) $index . '][links]', $column['links'], 'Agregar enlace'); ?>
+                          <p><button type="button" class="button" data-nj-column-remove>Quitar columna</button></p>
+                        </div>
+                      </div>
+                    <?php endforeach; ?>
+                  </div>
+                  <p><button type="button" class="button" data-nj-column-add>Agregar columna</button></p>
+                  <h3>Contacto</h3>
+                  <div class="nj-tema-fields">
+                    <label>Correo
+                      <input type="email" name="footer[email]" value="<?php echo esc_attr($footer['email']); ?>">
+                    </label>
+                    <label>WhatsApp
+                      <input type="text" name="footer[whatsapp]" value="<?php echo esc_attr($footer['whatsapp']); ?>" placeholder="573001112233" inputmode="numeric">
+                    </label>
+                    <label>Lugar
+                      <input type="text" name="footer[place]" value="<?php echo esc_attr($footer['place']); ?>">
+                    </label>
+                  </div>
+                  <h3>Redes</h3>
+                  <?php nj_tema_link_editor('footer[socials]', $footer['socials'], 'Agregar red', 6); ?>
+                  <h3>Medios de pago</h3>
+                  <?php nj_tema_pill_editor('footer[pays]', $footer['pays'], 'Agregar medio'); ?>
+                  <h3>Sellos</h3>
+                  <?php nj_tema_pill_editor('footer[trust]', $footer['trust'], 'Agregar sello', 6); ?>
+                  <h3>Barra legal</h3>
+                  <div class="nj-tema-fields">
+                    <label>Texto
+                      <input type="text" name="footer[legal]" value="<?php echo esc_attr($footer['legal']); ?>">
+                    </label>
+                  </div>
+                  <p class="nj-prenda-note">El año se escribe solo delante de ese texto.</p>
+                  <?php nj_tema_link_editor('footer[legal_links]', $footer['legal_links'], 'Agregar enlace legal', 4); ?>
+                </section>
+                <section class="nj-screen" data-screen="ayuda" id="ayuda">
+                  <h2>Ayuda</h2>
+                  <p>Preguntas, envíos, cambios y la guía de tallas. La foto queda a un lado y el texto al otro. Agrega, cambia o quita cada texto. Un correo escrito en el texto se vuelve enlace solo.</p>
+                  <?php
+                    $nj_help_pages = array(
+                        'preguntas' => 'Preguntas frecuentes',
+                        'envios' => 'Envíos',
+                        'cambios' => 'Cambios',
+                        'tallas' => 'Guía de tallas',
+                    );
+                    foreach ($nj_help_pages as $nj_help_key => $nj_help_label) :
+                        $nj_help_page = function_exists('nj_pages_help') ? nj_pages_help($nj_help_key) : array();
+                        if (!is_array($nj_help_page)) {
+                            $nj_help_page = array();
+                        }
+                        $nj_help_page += array(
+                            'lead' => '',
+                            'image' => 0,
+                            'image_url' => '',
+                            'facts' => array(),
+                            'steps_title' => '',
+                            'steps' => array(),
+                            'note' => '',
+                            'table' => array(),
+                            'items' => array(),
+                        );
+                        $nj_help_name = 'ayuda[' . $nj_help_key . ']';
+                  ?>
+                    <div class="nj-menu-group is-open nj-help-page">
+                      <h3><?php echo esc_html($nj_help_label); ?></h3>
+                      <div class="nj-menu-body">
+                        <div class="nj-photo" data-nj-photo>
+                          <img alt=""<?php echo $nj_help_page['image_url'] === '' ? ' hidden' : ' src="' . esc_url($nj_help_page['image_url']) . '"'; ?>>
+                          <div class="nj-photo-body">
+                            <strong>Foto al lado del texto</strong>
+                            <input data-nj-id type="hidden" name="<?php echo esc_attr($nj_help_name); ?>[image]" value="<?php echo esc_attr((string) (int) $nj_help_page['image']); ?>">
+                            <p class="nj-prenda-actions">
+                              <button type="button" class="button button-primary" data-nj-pick>Elegir foto</button>
+                              <button type="button" class="button" data-nj-clear>Quitar</button>
+                            </p>
+                            <p class="nj-prenda-note">Si la quitas, vuelve la foto de la marca.</p>
+                          </div>
+                        </div>
+                        <label>Texto de entrada
+                          <textarea name="<?php echo esc_attr($nj_help_name); ?>[lead]" rows="2"><?php echo esc_textarea($nj_help_page['lead']); ?></textarea>
+                        </label>
+                        <?php if ($nj_help_key === 'envios') : ?>
+                          <p class="nj-menu-subhead">Datos de arriba</p>
+                          <?php nj_tema_help_list($nj_help_name . '[facts]', 'pair', $nj_help_page['facts'], 'Agregar dato', 6, array('label', 'value')); ?>
+                        <?php endif; ?>
+                        <?php if ($nj_help_key === 'envios' || $nj_help_key === 'cambios') : ?>
+                          <label>Título de los pasos
+                            <input type="text" name="<?php echo esc_attr($nj_help_name); ?>[steps_title]" value="<?php echo esc_attr($nj_help_page['steps_title']); ?>">
+                          </label>
+                          <p class="nj-menu-subhead">Pasos</p>
+                          <?php nj_tema_help_list($nj_help_name . '[steps]', 'line', $nj_help_page['steps'], 'Agregar paso', 8); ?>
+                        <?php endif; ?>
+                        <?php if ($nj_help_key === 'tallas') : ?>
+                          <p class="nj-menu-subhead">Tabla. La primera fila es el título.</p>
+                          <?php nj_tema_help_list($nj_help_name . '[table]', 'pair', $nj_help_page['table'], 'Agregar talla', 12, array('size', 'who')); ?>
+                        <?php endif; ?>
+                        <?php if ($nj_help_key !== 'preguntas') : ?>
+                          <label>Aviso
+                            <textarea name="<?php echo esc_attr($nj_help_name); ?>[note]" rows="2"><?php echo esc_textarea($nj_help_page['note']); ?></textarea>
+                          </label>
+                        <?php endif; ?>
+                        <p class="nj-menu-subhead">Preguntas</p>
+                        <?php nj_tema_help_list($nj_help_name . '[items]', 'answer', $nj_help_page['items'], 'Agregar pregunta', 12, array('q', 'a')); ?>
+                      </div>
+                    </div>
+                  <?php endforeach; ?>
                 </section>
                 <section class="nj-screen" data-screen="portada" id="portada">
                   <h2>Ajustes de portada</h2>

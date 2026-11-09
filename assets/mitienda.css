@@ -156,12 +156,13 @@
 }
 .nj-pill-list {
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
   counter-reset: njpill;
 }
 .nj-pill-row {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) auto;
+  grid-template-columns: 28px minmax(0, 1fr);
   gap: 8px 12px;
   align-items: center;
   counter-increment: njpill;
@@ -189,7 +190,9 @@
 }
 .nj-pill-row .nj-prenda-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+  grid-column: 1 / -1;
   margin: 0;
 }
 .nj-style-grid {
@@ -845,20 +848,29 @@ dialog.nj-modal::backdrop {
 }
 .nj-help-row textarea,
 .nj-help-page textarea { width: 100%; max-width: none; }
-.nj-franja-list { display: grid; gap: 28px; }
-.nj-franja { max-width: 720px; }
-.nj-regalo-card { max-width: 720px; }
+.nj-franja-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.nj-franja,
+.nj-regalo-card,
+.nj-franja .nj-regalo-html { max-width: none; }
+.nj-franja .nj-photo img {
+  aspect-ratio: 3 / 1;
+  object-fit: cover;
+}
 .nj-regalo-html {
   display: grid;
   gap: 6px;
-  margin-top: 18px;
-  max-width: 720px;
+  margin-top: 12px;
   font-weight: 600;
 }
 .nj-regalo-html textarea {
   width: 100%;
   max-width: none;
-  min-height: 240px;
+  min-height: 120px;
   font-family: Consolas, monospace;
   font-weight: 400;
   font-size: 13px;
@@ -1012,7 +1024,8 @@ dialog.nj-modal::backdrop {
   .nj-cat-map,
   .nj-pill-row,
   .nj-ad-slots,
-  .nj-promo-texts {
+  .nj-promo-texts,
+  .nj-franja-list {
     grid-template-columns: 1fr;
   }
   .nj-pill-row::before {

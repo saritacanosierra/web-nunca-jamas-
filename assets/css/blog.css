@@ -163,19 +163,23 @@
 }
 .blog-read {
   display: grid;
-  grid-template-columns: minmax(0, 68ch) 300px;
+  grid-template-columns: minmax(0, 1fr) 300px;
   gap: 28px 40px;
   align-items: start;
-  justify-content: center;
+  width: 100%;
   margin-top: 12px;
 }
 .blog-read:not(:has(.blog-ad--rail)) {
   grid-template-columns: minmax(0, 68ch);
+  justify-content: center;
 }
 .blog-body {
   width: auto;
-  max-width: 68ch;
+  max-width: none;
   padding-bottom: 12px;
+}
+.blog-read:not(:has(.blog-ad--rail)) .blog-body {
+  max-width: 68ch;
 }
 .blog-body p,
 .blog-body li {

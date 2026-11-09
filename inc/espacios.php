@@ -76,25 +76,30 @@ if (!function_exists('nj_espacios_rows')) {
         $saved = nj_espacios_saved();
         $over = isset($saved[$group]) && is_array($saved[$group]) ? $saved[$group] : array();
         $rows = array();
-        if ($group === 'promo' && array_key_exists('promo', $saved) && $saved['promo'] === array()) {
-            return array();
-        }
-        if ($group === 'promo' && array_key_exists('promo', $saved) && nj_espacios_is_list($saved['promo'])) {
-            foreach ($saved['promo'] as $index => $row) {
+        if ($group === 'promo' && array_key_exists('promo', $saved)) {
+            foreach ($saved['promo'] as $key => $row) {
                 if (!is_array($row)) {
                     continue;
                 }
-                $kind = isset($row['kind']) ? (string) $row['kind'] : 'photo';
+                $kind = isset($row['kind']) ? (string) $row['kind'] : (string) $key;
                 $base = isset($defaults[$kind]) && is_array($defaults[$kind]) ? $defaults[$kind] : array();
                 $item = nj_espacios_merge_row($base, $row);
                 $item['kind'] = $kind;
+                if (empty($row['image']) && empty($row['src'])) {
+                    $item['src'] = '';
+                    $item['image'] = 0;
+                }
                 $rows[] = $item;
             }
             return $rows;
         }
         if ($group === 'promo') {
             foreach ($defaults as $key => $base) {
-                $rows[$key] = nj_espacios_merge_row($base, isset($over[$key]) ? $over[$key] : array());
+                if (!is_array($base)) {
+                    continue;
+                }
+                $base['kind'] = (string) $key;
+                $rows[] = $base;
             }
             return $rows;
         }
@@ -139,33 +144,27 @@ if (!function_exists('nj_espacios_rows')) {
 
 if (!function_exists('nj_espacios_promo')) {
     function nj_espacios_promo($key) {
-        $rows = nj_espacios_rows('promo');
-        $row = isset($rows[$key]) ? $rows[$key] : array('src' => '', 'alt' => '');
-        $row['src'] = nj_espacio_url(isset($row['image']) ? $row['image'] : 0, isset($row['src']) ? $row['src'] : '');
-        return $row;
+        foreach (nj_espacios_promos() as $row) {
+            if (isset($row['kind']) && (string) $row['kind'] === (string) $key) {
+                return $row;
+            }
+        }
+        return array('src' => '', 'alt' => '', 'kind' => (string) $key);
     }
 }
 
 if (!function_exists('nj_espacios_promos')) {
     function nj_espacios_promos() {
-        $saved = nj_espacios_saved();
-        $rows = nj_espacios_rows('promo');
         $items = array();
-        if (array_key_exists('promo', $saved) && ($saved['promo'] === array() || nj_espacios_is_list($saved['promo']))) {
-            foreach ($rows as $row) {
-                $row['file'] = isset($row['src']) ? $row['src'] : '';
-                $row['src'] = nj_espacio_url(isset($row['image']) ? $row['image'] : 0, $row['file']);
-                if ($row['src'] === '') {
-                    continue;
-                }
-                $items[] = $row;
-            }
-            return $items;
-        }
-        foreach ($rows as $kind => $row) {
+        foreach (nj_espacios_rows('promo') as $key => $row) {
+            $kind = isset($row['kind']) ? (string) $row['kind'] : (string) $key;
             $row['kind'] = $kind;
             $row['file'] = isset($row['src']) ? $row['src'] : '';
             $row['src'] = nj_espacio_url(isset($row['image']) ? $row['image'] : 0, $row['file']);
+            $html = isset($row['html']) ? trim((string) $row['html']) : '';
+            if ($row['src'] === '' && $html === '') {
+                continue;
+            }
             $items[] = $row;
         }
         return $items;
@@ -497,8 +496,45 @@ if (!function_exists('nj_espacios_admin_save')) {
         $saved = nj_espacios_saved();
         $saved[$group] = $clean;
         update_option('nj_espacios', $saved, true);
+        nj_espacios_purge();
         wp_safe_redirect(admin_url('admin.php?page=nj-tienda&updated=' . $map[$group] . '#' . $map[$group]));
         exit;
+    }
+}
+
+if (!function_exists('nj_espacios_purge')) {
+    function nj_espacios_purge() {
+        $urls = array();
+        if (function_exists('home_url')) {
+            $urls[] = home_url('/');
+            $urls[] = home_url('');
+        }
+        if (function_exists('get_option') && function_exists('get_permalink')) {
+            $front = (int) get_option('page_on_front');
+            if ($front > 0) {
+                $link = get_permalink($front);
+                if (is_string($link) && $link !== '') {
+                    $urls[] = $link;
+                }
+            }
+        }
+        $urls = array_values(array_unique(array_filter($urls)));
+        if (class_exists('WPStackCache')) {
+            $purge = array('WPStackCache', 'purge');
+            if (is_callable($purge)) {
+                foreach ($urls as $url) {
+                    call_user_func($purge, $url);
+                }
+            }
+        }
+        if (function_exists('rocket_clean_home')) {
+            rocket_clean_home();
+        }
+        if (function_exists('litespeed_purge_url')) {
+            foreach ($urls as $url) {
+                litespeed_purge_url($url);
+            }
+        }
     }
 }
 add_action('admin_post_nj_espacios_save', 'nj_espacios_admin_save');

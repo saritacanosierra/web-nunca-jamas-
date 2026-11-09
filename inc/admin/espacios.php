@@ -242,7 +242,7 @@ if (!function_exists('nj_espacios_panel_regalo')) {
                 </div>
               </div>
               <label class="nj-regalo-html">HTML de la franja
-                <textarea name="franjas[<?php echo (int) $index; ?>][html]" rows="14" spellcheck="false" placeholder="<div class=&quot;gift-banner__copy&quot;><p>Texto</p><h2>Título</h2></div>"><?php echo esc_textarea($banner['html']); ?></textarea>
+                <textarea name="franjas[<?php echo (int) $index; ?>][html]" rows="6" spellcheck="false" placeholder="<div class=&quot;gift-banner__copy&quot;><p>Texto</p><h2>Título</h2></div>"><?php echo esc_textarea($banner['html']); ?></textarea>
               </label>
             </div>
             <?php endforeach; ?>

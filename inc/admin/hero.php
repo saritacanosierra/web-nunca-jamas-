@@ -83,7 +83,8 @@ if (!function_exists('nj_hero_admin_page')) {
           <?php if (isset($_GET['updated']) && $_GET['updated'] === 'banner') : ?>
             <div class="notice notice-success is-dismissible"><p>El banner quedó guardado. Recarga la portada para verlo.</p></div>
           <?php endif; ?>
-          <p class="nj-hero-lead">Cada diapositiva puede ser una imagen terminada o un recuadro que armas aquí: color, textos y una foto. La medida de la imagen es 2560 × 1200 px.</p>
+          <p class="nj-hero-lead">Cada diapositiva puede ser una imagen terminada o un recuadro que armas aquí: color, textos y una foto.</p>
+          <p class="nj-size"><span>2560 × 1200 px</span></p>
           <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
             <input type="hidden" name="action" value="nj_hero_save">
             <?php wp_nonce_field('nj_hero_save', 'nj_hero_nonce'); ?>

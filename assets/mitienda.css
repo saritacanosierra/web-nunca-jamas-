@@ -42,7 +42,7 @@
 }
 .nj-cat-map {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin: 0 0 14px;
 }
@@ -60,9 +60,16 @@
   box-shadow: inset 0 0 0 1px #dcdcde;
 }
 .nj-cat-map button:hover,
-.nj-cat-map button:focus-visible,
-.nj-cat-block.is-open {
-  box-shadow: inset 3px 0 0 #111, inset 0 0 0 1px #dcdcde;
+.nj-cat-map button:focus-visible {
+  box-shadow: inset 0 0 0 2px #111;
+}
+.nj-cat-map button.is-on {
+  background: #111;
+  color: #fff;
+  box-shadow: none;
+}
+.nj-cat-map button.is-on span {
+  color: #d5d5d5;
 }
 .nj-cat-map small,
 .nj-cat-summary small {
@@ -88,21 +95,56 @@
   line-height: 1.4;
 }
 .nj-cat-block {
+  display: none;
   margin: 0 0 10px;
   background: #fff;
   border-radius: 14px;
   box-shadow: inset 0 0 0 1px #dcdcde;
 }
-.nj-cat-summary {
-  width: 100%;
-  padding: 14px 16px;
+.nj-cat-block.is-open {
+  display: block;
 }
 .nj-cat-body {
-  display: none;
-  padding: 0 16px 16px;
+  padding: 16px;
 }
-.nj-cat-block.is-open .nj-cat-body {
-  display: block;
+.nj-cat-now {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f6f7f7;
+  color: #1d2327;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.nj-promo-texts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0 0 16px;
+}
+.nj-promo-text {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 14px;
+  border: 1px solid #dcdcde;
+  border-radius: 12px;
+  background: #fff;
+}
+.nj-promo-text label {
+  display: grid;
+  gap: 4px;
+  font-weight: 600;
+}
+.nj-promo-text input,
+.nj-promo-text textarea {
+  width: 100%;
+  font-weight: 400;
+}
+.nj-promo-html textarea {
+  min-height: 120px;
+  font-family: Consolas, monospace;
+  font-size: 12px;
 }
 .nj-photo-grid {
   display: grid;
@@ -223,6 +265,7 @@
 }
 .nj-photo-body input,
 .nj-photo-body textarea,
+.nj-photo-body select,
 .nj-prenda-new__fields input,
 .nj-prenda-new__fields select,
 .nj-prenda-card input,
@@ -477,9 +520,26 @@ dialog.nj-modal::backdrop {
   gap: 8px;
   align-content: start;
 }
+.nj-size {
+  margin: 0;
+}
+.nj-size span {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
 .nj-ad-slot .nj-modal-frame {
   width: 100%;
   height: 140px;
+}
+.nj-ad-slot--rail .nj-modal-frame {
+  width: 150px;
+  height: 300px;
 }
 .nj-modal-section {
   display: grid;
@@ -508,6 +568,9 @@ dialog.nj-modal::backdrop {
 }
 .nj-modal-texts {
   grid-template-columns: 1fr 1fr;
+}
+.nj-modal-texts label:nth-child(n + 3) {
+  grid-column: 1 / -1;
 }
 .nj-modal input[type="text"],
 .nj-modal input[type="number"],
@@ -668,32 +731,6 @@ dialog.nj-modal::backdrop {
   gap: 8px;
   margin: 0;
 }
-.nj-banner-list {
-  display: grid;
-  gap: 10px;
-  margin-top: 12px;
-}
-.nj-banner-card {
-  display: grid;
-  grid-template-columns: 168px minmax(0, 1fr);
-  gap: 12px;
-  align-items: center;
-  padding: 10px;
-  background: #fff;
-  border: 1px solid #dcdcde;
-  border-radius: 12px;
-}
-.nj-banner-card img {
-  width: 168px;
-  height: 72px;
-  object-fit: cover;
-  border-radius: 8px;
-  background: #eee;
-}
-.nj-banner-card strong {
-  display: block;
-  margin-bottom: 8px;
-}
 .nj-look-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, 200px);
@@ -808,6 +845,24 @@ dialog.nj-modal::backdrop {
 }
 .nj-help-row textarea,
 .nj-help-page textarea { width: 100%; max-width: none; }
+.nj-franja-list { display: grid; gap: 28px; }
+.nj-franja { max-width: 720px; }
+.nj-regalo-card { max-width: 720px; }
+.nj-regalo-html {
+  display: grid;
+  gap: 6px;
+  margin-top: 18px;
+  max-width: 720px;
+  font-weight: 600;
+}
+.nj-regalo-html textarea {
+  width: 100%;
+  max-width: none;
+  min-height: 240px;
+  font-family: Consolas, monospace;
+  font-weight: 400;
+  font-size: 13px;
+}
 .nj-tema-photos {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 220px));
@@ -951,16 +1006,13 @@ dialog.nj-modal::backdrop {
     position: static;
   }
   .nj-menu-group.is-open .nj-menu-parent,
-  .nj-menu-row,
-  .nj-banner-card {
+  .nj-menu-row {
     grid-template-columns: 1fr;
-  }
-  .nj-banner-card img {
-    width: 100%;
   }
   .nj-cat-map,
   .nj-pill-row,
-  .nj-ad-slots {
+  .nj-ad-slots,
+  .nj-promo-texts {
     grid-template-columns: 1fr;
   }
   .nj-pill-row::before {

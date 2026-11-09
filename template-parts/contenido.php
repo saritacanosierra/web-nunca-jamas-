@@ -8,7 +8,9 @@ if (!have_posts()) {
 while (have_posts()) {
     the_post();
     if (function_exists('is_checkout') && (is_checkout() || is_cart() || is_account_page())) {
+        echo '<main class="shop-frame"><div class="wrap">';
         the_content();
+        echo '</div></main>';
         continue;
     }
     echo '<main class="section"><div class="wrap">';

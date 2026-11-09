@@ -58,7 +58,7 @@ if (!function_exists('nj_espacios_merge_row')) {
                 $row['src'] = $file;
             }
         }
-        foreach (array('alt', 'kicker', 'title', 'label') as $key) {
+        foreach (array('alt', 'kicker', 'title', 'label', 'button', 'note', 'html') as $key) {
             if (isset($over[$key]) && trim((string) $over[$key]) !== '') {
                 $row[$key] = (string) $over[$key];
             }
@@ -429,7 +429,20 @@ if (!function_exists('nj_espacios_admin_save')) {
                 $item['src'] = nj_espacios_file(isset($row['src']) ? $row['src'] : '');
                 $item['alt'] = nj_espacios_text(isset($row['alt']) ? $row['alt'] : '');
                 $item['label'] = nj_espacios_text(isset($row['label']) ? $row['label'] : '');
-                if ($item['image'] < 1 && $item['src'] === '') {
+                if (in_array($item['kind'], array('gift', 'collect', 'three_d'), true)) {
+                    $title = isset($row['title']) ? $row['title'] : '';
+                    $note = isset($row['note']) ? $row['note'] : '';
+                    $item['kicker'] = nj_espacios_text(isset($row['kicker']) ? $row['kicker'] : '');
+                    $item['title'] = function_exists('sanitize_textarea_field') ? sanitize_textarea_field($title) : nj_espacios_text($title);
+                    $item['button'] = nj_espacios_text(isset($row['button']) ? $row['button'] : '');
+                    $item['note'] = function_exists('sanitize_textarea_field') ? sanitize_textarea_field($note) : nj_espacios_text($note);
+                }
+                $html = isset($row['html']) ? (string) $row['html'] : '';
+                if (strlen($html) > 12000) {
+                    $html = substr($html, 0, 12000);
+                }
+                $item['html'] = function_exists('nj_regalo_html') ? nj_regalo_html($html) : '';
+                if ($item['image'] < 1 && $item['src'] === '' && $item['html'] === '') {
                     continue;
                 }
                 if (count($clean) >= 6) {

@@ -39,8 +39,8 @@ if (!function_exists('nj_tienda_admin_assets')) {
             wp_enqueue_media();
         }
         $uri = get_template_directory_uri();
-        wp_enqueue_style('nj-tienda', $uri . '/assets/mitienda.css', array('nj-hero-admin'), '1.1.14');
-        wp_enqueue_script('nj-tienda', $uri . '/assets/mitienda.js', array('jquery', 'nj-hero-admin'), '1.1.14', true);
+        wp_enqueue_style('nj-tienda', $uri . '/assets/mitienda.css', array('nj-hero-admin'), '1.1.24');
+        wp_enqueue_script('nj-tienda', $uri . '/assets/mitienda.js', array('jquery', 'nj-hero-admin'), '1.1.24', true);
     }
 }
 add_action('admin_enqueue_scripts', 'nj_tienda_admin_assets', 20);
@@ -53,7 +53,7 @@ if (!function_exists('nj_tienda_notice')) {
             'cuentos' => 'El carrusel de cuentos quedó guardado.',
             'categorias' => 'Las categorías quedaron guardadas.',
             'pills' => 'La fila de la tienda quedó guardada.',
-            'banners' => 'La foto de cada categoría quedó guardada.',
+            'regalo' => 'Las franjas quedaron guardadas.',
             'looks' => 'Los looks quedaron guardados.',
             'prenda' => 'La prenda quedó guardada.',
             'oculta' => 'La prenda ya no se muestra en la tienda.',
@@ -89,6 +89,7 @@ if (!function_exists('nj_tienda_admin_page')) {
               <button type="button" data-panel="banner" class="is-on">Banner principal</button>
               <button type="button" data-panel="cuentos">Carrusel de cuentos</button>
               <button type="button" data-panel="campanas">Campañas</button>
+              <button type="button" data-panel="regalo">Franja de la tienda</button>
               <button type="button" data-panel="categorias">Categorías</button>
               <button type="button" data-panel="looks">Looks</button>
               <button type="button" data-panel="prendas">Prendas</button>
@@ -105,6 +106,9 @@ if (!function_exists('nj_tienda_admin_page')) {
               </section>
               <section class="nj-screen" data-screen="campanas" id="campanas">
                 <?php nj_espacios_panel_promo(); ?>
+              </section>
+              <section class="nj-screen" data-screen="regalo" id="regalo">
+                <?php if (function_exists('nj_espacios_panel_regalo')) { nj_espacios_panel_regalo(); } ?>
               </section>
               <section class="nj-screen" data-screen="categorias" id="categorias">
                 <?php nj_espacios_panel_styles(); ?>

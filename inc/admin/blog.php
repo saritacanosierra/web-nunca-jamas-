@@ -40,17 +40,21 @@ if (!function_exists('nj_blog_admin_fields')) {
           </section>
           <section class="nj-modal-section">
             <h3>Publicidad</h3>
-            <p class="nj-prenda-note">Dos imágenes de la nota. La primera se ve a la mitad del texto y la segunda al final. El enlace es opcional: al tocarla se abre esa página.</p>
+            <p class="nj-prenda-note">La primera va al lado del texto, en vertical, a <strong>600 × 1200 px</strong>. La segunda va al final, a lo ancho, a <strong>1400 × 560 px</strong>. El enlace es opcional: al tocarla se abre esa página.</p>
             <div class="nj-ad-slots">
               <?php
               $ads = nj_blog_ads($post ? (int) $post->ID : 0);
-              $places = array('Dentro de la nota', 'Al final de la nota');
+              $places = array(
+                  array('Al lado, vertical', 'rail', '600 × 1200 px'),
+                  array('Al final, horizontal', 'banner', '1400 × 560 px'),
+              );
               foreach ($places as $index => $place) :
                   $ad = $ads[$index];
                   $src = $ad['src'];
                   ?>
-                <div class="nj-ad-slot" data-nj-photo>
-                  <strong><?php echo esc_html($place); ?></strong>
+                <div class="nj-ad-slot nj-ad-slot--<?php echo esc_attr($place[1]); ?>" data-nj-photo>
+                  <strong><?php echo esc_html($place[0]); ?></strong>
+                  <p class="nj-size"><span><?php echo esc_html($place[2]); ?></span></p>
                   <div class="nj-modal-frame">
                     <img alt=""<?php echo $src !== '' ? ' src="' . esc_url($src) . '"' : ' hidden'; ?>>
                     <span class="nj-modal-photo__ph">Subir imagen</span>

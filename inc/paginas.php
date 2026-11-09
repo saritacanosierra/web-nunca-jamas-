@@ -741,8 +741,14 @@ if (!function_exists('nj_pages_shipping')) {
         $zone->add_location('CO', 'country');
         $zone->save();
         $instance = $zone->add_shipping_method('free_shipping');
-        $method = WC_Shipping_Zones::get_shipping_method($instance);
-        if ($method) {
+        $method = false;
+        if ($instance) {
+            $found = WC_Shipping_Zones::get_shipping_method($instance);
+            if (is_object($found)) {
+                $method = $found;
+            }
+        }
+        if (is_object($method)) {
             update_option($method->get_instance_option_key(), array(
                 'title' => 'Envio gratis',
                 'requires' => 'min_amount',

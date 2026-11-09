@@ -19,16 +19,15 @@ while (have_posts()) {
         <img src="<?php echo esc_url($nj_image); ?>" alt="">
       </figure>
     <?php endif; ?>
-    <div class="blog-body">
-      <?php echo $nj_note['before']; ?>
-    </div>
-    <?php echo function_exists('nj_blog_ad_html') ? nj_blog_ad_html($nj_note['ads'][0]) : ''; ?>
-    <?php if ($nj_note['after'] !== '') : ?>
-      <div class="blog-body">
-        <?php echo $nj_note['after']; ?>
+    <div class="blog-read">
+      <div class="blog-copy">
+        <div class="blog-body">
+          <?php echo $nj_note['before'] . $nj_note['after']; ?>
+        </div>
+        <?php echo function_exists('nj_blog_ad_html') ? nj_blog_ad_html($nj_note['ads'][1]) : ''; ?>
       </div>
-    <?php endif; ?>
-    <?php echo function_exists('nj_blog_ad_html') ? nj_blog_ad_html($nj_note['ads'][1]) : ''; ?>
+      <?php echo function_exists('nj_blog_ad_html') ? nj_blog_ad_html($nj_note['ads'][0], 'rail') : ''; ?>
+    </div>
   </article>
 
   <?php if ($nj_related) : ?>

@@ -598,6 +598,12 @@ if (!function_exists('nj_prendas_apply')) {
         update_post_meta($id, '_nj_home_nuevo', empty($_POST['en_nuevo']) ? '0' : '1');
         update_post_meta($id, '_nj_home_coleccion', empty($_POST['en_coleccion']) ? '0' : '1');
         update_post_meta($id, '_nj_personalizado', empty($_POST['personalizado']) ? '0' : '1');
+        $nj_plain = function ($key) {
+            $value = isset($_POST[$key]) ? wp_unslash($_POST[$key]) : '';
+            return function_exists('sanitize_textarea_field') ? sanitize_textarea_field($value) : trim(strip_tags((string) $value));
+        };
+        update_post_meta($id, '_nj_envios', $nj_plain('envios'));
+        update_post_meta($id, '_nj_cuidados', $nj_plain('cuidados'));
         return $id;
     }
 }

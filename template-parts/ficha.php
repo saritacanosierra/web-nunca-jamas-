@@ -41,7 +41,9 @@ foreach ($nj_payload['variations'] as $nj_variation) {
     <div class="ficha__track" data-ficha-track>
       <?php foreach ($nj_frames as $frame) : ?>
         <figure class="ficha__slide" style="--frame-position: <?php echo esc_attr($frame['position']); ?>">
-          <img src="<?php echo esc_url($frame['src']); ?>" alt="<?php echo esc_attr($nj_ficha['alt']); ?>">
+          <button type="button" class="ficha__zoom-open" data-ficha-open-zoom aria-label="Ver la foto de cerca">
+            <img src="<?php echo esc_url($frame['src']); ?>" data-zoom="<?php echo esc_url(isset($frame['zoom']) ? $frame['zoom'] : $frame['src']); ?>" alt="<?php echo esc_attr($nj_ficha['alt']); ?>">
+          </button>
           <?php if (!empty($nj_ficha['personalizado'])) : ?>
             <span class="ficha__embroider is-cursiva" data-ficha-embroider hidden></span>
           <?php endif; ?>
@@ -117,11 +119,6 @@ foreach ($nj_payload['variations'] as $nj_variation) {
       <?php endif; ?>
     </aside>
   </div>
-  <div class="ficha__perks">
-    <p>Elige tu talla</p>
-    <p>Envío a Colombia</p>
-    <p>Cambios con calma</p>
-  </div>
   <div class="wrap ficha__detail" data-ficha-tabs>
     <div class="ficha__tablist" role="tablist">
       <?php foreach ($nj_ficha['tabs'] as $index => $tab) : ?>
@@ -134,7 +131,6 @@ foreach ($nj_payload['variations'] as $nj_variation) {
       </div>
     <?php endforeach; ?>
   </div>
-  <?php require __DIR__ . '/beneficios.php'; ?>
   <div class="ficha-bar">
     <img src="<?php echo esc_url($nj_ficha['image']); ?>" alt="">
     <div class="ficha-bar__copy">
@@ -151,4 +147,14 @@ foreach ($nj_payload['variations'] as $nj_variation) {
     <?php endif; ?>
     <button type="button" data-ficha-add>A mi bolsa</button>
   </div>
+  <dialog class="ficha-zoom" data-ficha-zoom aria-label="Foto de la prenda">
+    <button type="button" class="ficha-zoom__close" data-ficha-zoom-close aria-label="Cerrar">×</button>
+    <div class="ficha-zoom__layout">
+      <div class="ficha-zoom__thumbs" data-ficha-zoom-thumbs></div>
+      <div class="ficha-zoom__stage" data-ficha-zoom-stage>
+        <img alt="" data-ficha-zoom-photo>
+        <p class="ficha-zoom__hint">Clic en la foto para acercar</p>
+      </div>
+    </div>
+  </dialog>
 </article>

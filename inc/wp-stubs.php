@@ -30,6 +30,18 @@ if (!defined('DAY_IN_SECONDS')) {
     define('DAY_IN_SECONDS', 86400);
 }
 
+if (!function_exists('get_current_user_id')) {
+    function get_current_user_id() {
+        return 0;
+    }
+}
+
+if (!function_exists('get_user_meta')) {
+    function get_user_meta($user_id, $key = '', $single = false) {
+        return $single ? '' : array();
+    }
+}
+
 if (!function_exists('get_template_directory')) {
     function get_template_directory() {
         return dirname(__DIR__);
@@ -784,6 +796,12 @@ if (!function_exists('wc_get_page_permalink')) {
     }
 }
 
+if (!function_exists('wc_get_account_endpoint_url')) {
+    function wc_get_account_endpoint_url($endpoint, $value = '', $permalink = '') {
+        return '';
+    }
+}
+
 if (!function_exists('wc_get_cart_url')) {
     function wc_get_cart_url() {
         return '';
@@ -1128,6 +1146,15 @@ if (!function_exists('wp_remote_get')) {
     }
 }
 
+if (!function_exists('check_ajax_referer')) {
+    /**
+     * @return int|false
+     */
+    function check_ajax_referer($action = -1, $query_arg = false, $die = true) {
+        return 1;
+    }
+}
+
 if (!function_exists('wp_send_json')) {
     function wp_send_json($response, $status_code = null, $flags = 0) {
         echo json_encode($response);
@@ -1436,8 +1463,12 @@ if (!class_exists('WC_Shipping_Zones')) {
         public static function get_zones() {
             return array();
         }
+        /**
+         * @param int $instance_id
+         * @return object|false
+         */
         public static function get_shipping_method($instance_id) {
-            return null;
+            return false;
         }
     }
 }

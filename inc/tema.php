@@ -287,6 +287,104 @@ if (!function_exists('nj_tema_header')) {
     }
 }
 
+if (!function_exists('nj_tema_footer_groups')) {
+    function nj_tema_footer_groups() {
+        $page = function ($key) {
+            return function_exists('nj_page_url') ? nj_page_url($key) : '';
+        };
+        $home = function_exists('nj_home_url') ? nj_home_url() : '';
+        $menu = function_exists('nj_menu') ? nj_menu() : array();
+        $pages = array(
+            array('label' => 'Inicio', 'href' => $home),
+        );
+        if (!empty($menu['newest']['label']) && !empty($menu['newest']['href'])) {
+            $pages[] = array(
+                'label' => $menu['newest']['label'],
+                'href' => $menu['newest']['href'],
+            );
+        }
+        $pages[] = array(
+            'label' => 'Cuentos',
+            'href' => function_exists('nj_blog_url') ? nj_blog_url() : $home,
+        );
+        $pages[] = array(
+            'label' => 'Bolsa',
+            'href' => function_exists('nj_shop_link') ? nj_shop_link('cart') : $home,
+        );
+        $pages[] = array(
+            'label' => 'Mi cuenta',
+            'href' => function_exists('nj_shop_link') ? nj_shop_link('account') : $home,
+        );
+        $categories = array();
+        if (!empty($menu['departments']) && is_array($menu['departments'])) {
+            foreach ($menu['departments'] as $department) {
+                if (empty($department['label']) || empty($department['href'])) {
+                    continue;
+                }
+                $categories[] = array(
+                    'label' => $department['label'],
+                    'href' => $department['href'],
+                );
+            }
+        }
+        if (!empty($menu['collections']['label']) && !empty($menu['collections']['href'])) {
+            $categories[] = array(
+                'label' => $menu['collections']['label'],
+                'href' => $menu['collections']['href'],
+            );
+        }
+        return array(
+            array('title' => 'Páginas', 'links' => $pages),
+            array('title' => 'Categorías', 'links' => $categories),
+            array(
+                'title' => 'Ayuda',
+                'links' => array(
+                    array('label' => 'Preguntas frecuentes', 'href' => $page('preguntas')),
+                    array('label' => 'Envíos', 'href' => $page('envios')),
+                    array('label' => 'Cambios', 'href' => $page('cambios')),
+                    array('label' => 'Guía de tallas', 'href' => $page('tallas')),
+                ),
+            ),
+        );
+    }
+}
+
+if (!function_exists('nj_tema_footer_perks')) {
+    function nj_tema_footer_perks() {
+        $threshold = 250000;
+        if (function_exists('nj_slots_data')) {
+            $bag = nj_slots_data()['bag'];
+            if (isset($bag['free_shipping'])) {
+                $threshold = (int) $bag['free_shipping'];
+            }
+        }
+        $money = function_exists('nj_pages_money')
+            ? nj_pages_money($threshold)
+            : '$' . number_format($threshold, 0, ',', '.');
+        $changes = function_exists('nj_page_url') ? nj_page_url('cambios') : '';
+        return array(
+            array(
+                'icon' => 'truck',
+                'title' => 'Envío gratis',
+                'text' => 'Desde ' . $money,
+                'href' => function_exists('nj_page_url') ? nj_page_url('envios') : '',
+            ),
+            array(
+                'icon' => 'pay',
+                'title' => 'Pago en pesos',
+                'text' => 'Nequi, tarjeta o PSE',
+                'href' => '',
+            ),
+            array(
+                'icon' => 'change',
+                'title' => 'Cambios con calma',
+                'text' => 'Si la talla no queda',
+                'href' => $changes,
+            ),
+        );
+    }
+}
+
 if (!function_exists('nj_tema_footer')) {
     function nj_tema_footer() {
         $saved = nj_tema_stored('footer');

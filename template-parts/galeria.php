@@ -16,20 +16,34 @@ $nj_catalog += array(
     'order' => '',
     'items' => array(),
 );
-$nj_banner = $nj_catalog['banner'];
+$nj_banners = array();
+if (isset($nj_catalog['banners']) && is_array($nj_catalog['banners'])) {
+    $nj_banners = $nj_catalog['banners'];
+} elseif (isset($nj_catalog['banner']) && is_array($nj_catalog['banner'])) {
+    $nj_banners = array($nj_catalog['banner']);
+}
 ?>
 <main class="shop-page">
-  <section class="gift-banner">
-    <div class="gift-banner__mark" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="10" width="18" height="10" rx="1.5"/><path d="M3 14h18M12 10v10M12 10c-2-4-6-4-6-1s4 1 6 1 6-1 6-1-4-3-6 1z"/></svg>
-    </div>
-    <div class="gift-banner__copy">
-      <p><?php nj_e($nj_banner['kicker']); ?></p>
-      <h2><?php echo nl2br(esc_html($nj_banner['title'])); ?></h2>
-      <span><?php nj_e($nj_banner['text']); ?></span>
-    </div>
-    <img src="<?php echo esc_url(nj_img($nj_banner['image'])); ?>" alt="<?php echo esc_attr($nj_banner['alt']); ?>">
-  </section>
+  <?php foreach ($nj_banners as $nj_banner) : ?>
+    <?php $nj_banner_html = isset($nj_banner['html']) ? (string) $nj_banner['html'] : ''; ?>
+    <?php if ($nj_banner_html !== '') : ?>
+    <section class="gift-banner gift-banner--html">
+      <?php echo function_exists('nj_regalo_html') ? nj_regalo_html($nj_banner_html, isset($nj_banner['image']) ? $nj_banner['image'] : '', isset($nj_banner['alt']) ? $nj_banner['alt'] : '') : ''; ?>
+    </section>
+    <?php else : ?>
+    <section class="gift-banner">
+      <div class="gift-banner__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="10" width="18" height="10" rx="1.5"/><path d="M3 14h18M12 10v10M12 10c-2-4-6-4-6-1s4 1 6 1 6-1 6-1-4-3-6 1z"/></svg>
+      </div>
+      <div class="gift-banner__copy">
+        <p><?php nj_e($nj_banner['kicker']); ?></p>
+        <h2><?php echo nl2br(esc_html($nj_banner['title'])); ?></h2>
+        <span><?php nj_e($nj_banner['text']); ?></span>
+      </div>
+      <img src="<?php echo esc_url(nj_img($nj_banner['image'])); ?>" alt="<?php echo esc_attr($nj_banner['alt']); ?>">
+    </section>
+    <?php endif; ?>
+  <?php endforeach; ?>
 
   <div class="wrap catalog">
     <header class="catalog__head">
@@ -100,6 +114,4 @@ $nj_banner = $nj_catalog['banner'];
       <p class="empty-shop">Todavía no hay prendas en esta vista.</p>
     <?php endif; ?>
   </div>
-
-  <?php require __DIR__ . '/beneficios.php'; ?>
 </main>

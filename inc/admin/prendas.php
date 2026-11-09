@@ -131,7 +131,13 @@ if (!function_exists('nj_prendas_admin_fields')) {
                   <textarea name="descripcion" rows="4" placeholder="Tallas, color y una frase para la ficha."><?php echo esc_textarea($product ? nj_prendas_plain($product->get_short_description()) : ''); ?></textarea>
                 </label>
                 <label>Descripción
-                  <textarea name="descripcion_larga" rows="4" placeholder="El texto largo que se lee en la ficha."><?php echo esc_textarea($product ? nj_prendas_plain($product->get_description()) : ''); ?></textarea>
+                  <textarea name="descripcion_larga" rows="4" placeholder="Lo que se lee en la pestaña Descripción de la ficha."><?php echo esc_textarea($product ? nj_prendas_plain($product->get_description()) : ''); ?></textarea>
+                </label>
+                <label>Envíos y devoluciones
+                  <textarea name="envios" rows="4" placeholder="Enviamos a Colombia las prendas que ya están listas."><?php echo esc_textarea($product ? (string) get_post_meta($product->get_id(), '_nj_envios', true) : ''); ?></textarea>
+                </label>
+                <label>Cuidados
+                  <textarea name="cuidados" rows="4" placeholder="Lava la prenda al revés, en agua fría y ciclo suave."><?php echo esc_textarea($product ? (string) get_post_meta($product->get_id(), '_nj_cuidados', true) : ''); ?></textarea>
                 </label>
               </div>
             </section>
@@ -196,7 +202,6 @@ if (!function_exists('nj_prendas_admin_panel')) {
               <button type="button" data-nj-cat-filter="<?php echo (int) $term->term_id; ?>"><?php echo esc_html($term->name); ?></button>
             <?php endforeach; ?>
           </div>
-          <button type="button" class="nj-prenda-stock" data-nj-stock-filter>Por agotarse</button>
         </div>
         <div class="nj-prenda-grid">
           <button type="button" class="nj-prenda-tile nj-prenda-tile--new" data-nj-open="nj-prenda-nueva">Nueva prenda</button>

@@ -5,7 +5,7 @@ body.woocommerce-order-received {
 
 body.woocommerce-order-received .entry-content,
 body.woocommerce-order-received .woocommerce {
-  width: min(960px, calc(100% - 40px));
+  width: min(960px, 100%);
   margin: 32px auto 56px;
   overflow: visible;
 }
@@ -35,7 +35,7 @@ body.woocommerce-order-received .nj-order-pending {
 }
 
 body.woocommerce-order-received.nj-despacho .woocommerce {
-  width: min(760px, calc(100% - 40px));
+  width: min(760px, 100%);
 }
 
 body.woocommerce-order-received.nj-despacho .woocommerce-order {
@@ -489,7 +489,7 @@ body.woocommerce-order-pay {
 }
 
 body.woocommerce-order-pay .woocommerce {
-  width: min(760px, calc(100% - 40px));
+  width: min(760px, 100%);
   margin: 32px auto 56px;
 }
 

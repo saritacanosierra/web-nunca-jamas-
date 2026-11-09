@@ -115,6 +115,7 @@
       + '<input data-nj-id type="hidden" name="espacios[' + index + '][image]" value="0">'
       + '<input type="hidden" name="espacios[' + index + '][src]" value="">'
       + '<input type="hidden" name="espacios[' + index + '][term]" value="0">'
+      + '<p class="nj-size"><span>400 × 400 px</span></p>'
       + '<label>Nombre <input type="text" name="espacios[' + index + '][label]" value="" placeholder="Nombre de la categoría"></label>'
       + '<div class="nj-style-actions"><button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button><button type="button" class="button" data-nj-style-remove>Eliminar</button></div>'
       + '</div>';
@@ -157,6 +158,7 @@
       + '<input data-nj-id type="hidden" name="espacios[' + index + '][image]" value="0">'
       + '<input type="hidden" name="espacios[' + index + '][src]" value="">'
       + '<input type="hidden" name="espacios[' + index + '][alt]" value="">'
+      + '<p class="nj-size"><span>1920 × 560 px</span></p>'
       + '<p class="nj-prenda-actions"><button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button><button type="button" class="button" data-nj-cuento-remove>Quitar</button></p>'
       + '<label>Texto pequeño <input type="text" name="espacios[' + index + '][kicker]" value="" placeholder="Cuentos"></label>'
       + '<label>Título <textarea name="espacios[' + index + '][title]" rows="2"></textarea></label>'
@@ -527,6 +529,7 @@
       + '<input type="hidden" name="espacios[' + index + '][src]" value="">'
       + '<input type="hidden" name="espacios[' + index + '][alt]" value="">'
       + '</div>'
+      + '<p class="nj-size"><span>900 × 1200 px</span></p>'
       + '<p class="nj-prenda-actions"><button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button><button type="button" class="button" data-nj-look-remove>Quitar</button></p>'
       + '<div data-nj-point-list></div>'
       + '<p><button type="button" class="button" data-nj-point-add>Agregar punto</button></p>';
@@ -543,6 +546,13 @@
       card.querySelectorAll("[name]").forEach(function (input) {
         input.name = input.name.replace(/espacios\[\d+\]/, "espacios[" + index + "]");
       });
+      var kind = card.getAttribute("data-nj-kind") || "";
+      var copy = kind ? document.querySelector('[data-nj-promo-copy][data-nj-kind="' + kind + '"]') : null;
+      if (copy) {
+        copy.querySelectorAll("[name]").forEach(function (input) {
+          input.name = input.name.replace(/espacios\[\d+\]/, "espacios[" + index + "]");
+        });
+      }
     });
     var add = document.querySelector("[data-nj-promo-add]");
     if (add) {
@@ -563,11 +573,13 @@
       + '<img alt="" hidden>'
       + '<div class="nj-photo-body">'
       + '<strong>Campaña</strong>'
+      + '<p class="nj-size"><span>1200 × 900 px</span></p>'
       + '<input type="hidden" name="espacios[' + index + '][kind]" value="photo">'
       + '<input data-nj-id type="hidden" name="espacios[' + index + '][image]" value="0">'
       + '<input type="hidden" name="espacios[' + index + '][src]" value="">'
       + '<input type="hidden" name="espacios[' + index + '][alt]" value="">'
       + '<label>Nombre <input type="text" name="espacios[' + index + '][label]" value="" placeholder="Nombre de la campaña"></label>'
+      + '<label class="nj-promo-html">HTML <textarea name="espacios[' + index + '][html]" rows="6" spellcheck="false"></textarea></label>'
       + '<p class="nj-prenda-actions"><button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button><button type="button" class="button" data-nj-promo-remove>Quitar</button></p>'
       + '</div>';
     list.appendChild(card);
@@ -575,6 +587,58 @@
     var field = card.querySelector("input[type=text]");
     if (field) {
       field.focus();
+    }
+  }
+
+  function reindexFranjas(list) {
+    if (!list) {
+      return;
+    }
+    var cards = list.querySelectorAll("[data-nj-franja]");
+    Array.prototype.forEach.call(cards, function (card, index) {
+      card.querySelectorAll("[name]").forEach(function (input) {
+        input.name = input.name.replace(/franjas\[\d+\]/, "franjas[" + index + "]");
+      });
+      var remove = card.querySelector("[data-nj-franja-remove]");
+      if (remove) {
+        remove.hidden = cards.length < 2;
+      }
+    });
+    var add = document.querySelector("[data-nj-franja-add]");
+    if (add) {
+      add.disabled = cards.length >= 12;
+    }
+  }
+
+  function addFranja(list) {
+    if (!list || list.querySelectorAll("[data-nj-franja]").length >= 12) {
+      return;
+    }
+    var current = list.querySelector("[data-nj-franja]");
+    if (!current) {
+      return;
+    }
+    var card = current.cloneNode(true);
+    card.querySelectorAll("input, textarea").forEach(function (input) {
+      if (input.type === "hidden") {
+        input.value = "0";
+      } else {
+        input.value = "";
+      }
+    });
+    var choice = card.querySelector("select");
+    if (choice) {
+      choice.value = "0";
+    }
+    var img = card.querySelector("img");
+    if (img) {
+      img.removeAttribute("src");
+      img.hidden = true;
+    }
+    list.appendChild(card);
+    reindexFranjas(list);
+    if (choice) {
+      choice.focus();
     }
   }
 
@@ -710,6 +774,7 @@
   }
 
   $(function () {
+    reindexFranjas(document.querySelector("[data-nj-franja-list]"));
     document.addEventListener("click", function (event) {
       var catFilter = event.target.closest("[data-nj-cat-filter]");
       if (catFilter) {
@@ -796,17 +861,13 @@
     function openCatBlock(key) {
       var blocks = document.querySelectorAll("[data-nj-cat-block]");
       Array.prototype.forEach.call(blocks, function (item) {
-        var on = item.getAttribute("data-nj-cat-block") === key;
-        item.classList.toggle("is-open", on);
-        var summary = item.querySelector("[data-nj-cat-toggle]");
-        if (summary) {
-          summary.setAttribute("aria-expanded", on ? "true" : "false");
-        }
+        item.classList.toggle("is-open", item.getAttribute("data-nj-cat-block") === key);
       });
-      var opened = document.querySelector('[data-nj-cat-block="' + key + '"]');
-      if (opened && opened.scrollIntoView) {
-        opened.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+      Array.prototype.forEach.call(document.querySelectorAll("[data-nj-cat-jump]"), function (button) {
+        var on = button.getAttribute("data-nj-cat-jump") === key;
+        button.classList.toggle("is-on", on);
+        button.setAttribute("aria-selected", on ? "true" : "false");
+      });
     }
     document.addEventListener("click", function (event) {
       var catJump = event.target.closest("[data-nj-cat-jump]");
@@ -917,6 +978,19 @@
           reindexAllLooks();
         }
       }
+      var addFranjaButton = event.target.closest("[data-nj-franja-add]");
+      if (addFranjaButton) {
+        addFranja(document.querySelector("[data-nj-franja-list]"));
+      }
+      var removeFranja = event.target.closest("[data-nj-franja-remove]");
+      if (removeFranja) {
+        var franja = removeFranja.closest("[data-nj-franja]");
+        var franjaList = franja ? franja.parentNode : null;
+        if (franja && franjaList && franjaList.querySelectorAll("[data-nj-franja]").length > 1 && window.confirm("¿Quitar esta franja?")) {
+          franja.remove();
+          reindexFranjas(franjaList);
+        }
+      }
       var addPromoButton = event.target.closest("[data-nj-promo-add]");
       if (addPromoButton) {
         addPromo(document.querySelector("[data-nj-promo-list]"));
@@ -925,6 +999,11 @@
       if (removePromo) {
         var promoCard = removePromo.closest("[data-nj-promo]");
         if (promoCard && window.confirm("¿Quitar esta campaña?")) {
+          var promoKind = promoCard.getAttribute("data-nj-kind") || "";
+          var promoCopy = promoKind ? document.querySelector('[data-nj-promo-copy][data-nj-kind="' + promoKind + '"]') : null;
+          if (promoCopy) {
+            promoCopy.remove();
+          }
           promoCard.remove();
           reindexPromos(document.querySelector("[data-nj-promo-list]"));
         }

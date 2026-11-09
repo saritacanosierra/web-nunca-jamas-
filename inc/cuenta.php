@@ -80,7 +80,7 @@ if (!function_exists('nj_cuenta_name')) {
 
 if (!function_exists('nj_cuenta_saved_ids')) {
     function nj_cuenta_saved_ids() {
-        if (!function_exists('is_user_logged_in') || !is_user_logged_in() || !function_exists('get_user_meta')) {
+        if (!function_exists('is_user_logged_in') || !is_user_logged_in() || !function_exists('get_user_meta') || !function_exists('get_current_user_id')) {
             return array();
         }
         $saved = get_user_meta(get_current_user_id(), '_nj_favoritos', true);
@@ -129,7 +129,9 @@ if (!function_exists('nj_cuenta_store_ids')) {
 
 if (!function_exists('nj_cuenta_guardar')) {
     function nj_cuenta_guardar() {
-        check_ajax_referer('nj_cuenta', 'nonce');
+        if (function_exists('check_ajax_referer')) {
+            check_ajax_referer('nj_cuenta', 'nonce');
+        }
         $ids = nj_cuenta_posted_ids();
         nj_cuenta_store_ids($ids);
         wp_send_json(array('ok' => true, 'ids' => $ids));
@@ -140,7 +142,9 @@ add_action('wp_ajax_nopriv_nj_cuenta_guardar', 'nj_cuenta_guardar');
 
 if (!function_exists('nj_cuenta_lista')) {
     function nj_cuenta_lista() {
-        check_ajax_referer('nj_cuenta', 'nonce');
+        if (function_exists('check_ajax_referer')) {
+            check_ajax_referer('nj_cuenta', 'nonce');
+        }
         $ids = nj_cuenta_posted_ids();
         nj_cuenta_store_ids($ids);
         if (!function_exists('wc_get_product')) {
@@ -159,6 +163,101 @@ if (!function_exists('nj_cuenta_lista')) {
 }
 add_action('wp_ajax_nj_cuenta_lista', 'nj_cuenta_lista');
 add_action('wp_ajax_nopriv_nj_cuenta_lista', 'nj_cuenta_lista');
+
+if (!function_exists('nj_cuenta_menu')) {
+    function nj_cuenta_menu($items) {
+        $menu = array(
+            'dashboard' => 'Inicio',
+            'orders' => 'Pedidos',
+            'favoritos' => 'Favoritos',
+            'edit-address' => 'Direcciones',
+            'edit-account' => 'Mis datos',
+        );
+        if (is_array($items) && isset($items['payment-methods'])) {
+            $menu['payment-methods'] = 'Pagos';
+        }
+        $menu['customer-logout'] = 'Salir';
+        return $menu;
+    }
+}
+add_filter('woocommerce_account_menu_items', 'nj_cuenta_menu');
+
+if (!function_exists('nj_cuenta_endpoint_url')) {
+    function nj_cuenta_endpoint_url($url, $endpoint) {
+        if ($endpoint === 'favoritos') {
+            return nj_cuenta_favoritos_url();
+        }
+        return $url;
+    }
+}
+add_filter('woocommerce_get_endpoint_url', 'nj_cuenta_endpoint_url', 10, 2);
+
+if (!function_exists('nj_cuenta_home_cards')) {
+    function nj_cuenta_home_cards() {
+        $address = function_exists('wc_get_account_endpoint_url') ? wc_get_account_endpoint_url('edit-address') : '';
+        $details = function_exists('wc_get_account_endpoint_url') ? wc_get_account_endpoint_url('edit-account') : '';
+        return array(
+            array(
+                'href' => nj_cuenta_orders_url(),
+                'title' => 'Pedidos',
+                'text' => 'Revisa cada compra y sigue el envío.',
+            ),
+            array(
+                'href' => nj_cuenta_favoritos_url(),
+                'title' => 'Favoritos',
+                'text' => 'Vuelve a las prendas que guardaste.',
+            ),
+            array(
+                'href' => $address ? $address : nj_cuenta_login_url(),
+                'title' => 'Direcciones',
+                'text' => 'Confirma a dónde enviamos.',
+            ),
+            array(
+                'href' => $details ? $details : nj_cuenta_login_url(),
+                'title' => 'Mis datos',
+                'text' => 'Actualiza tu nombre y tu contraseña.',
+            ),
+        );
+    }
+}
+
+if (!function_exists('nj_cuenta_recent_orders')) {
+    function nj_cuenta_recent_orders() {
+        if (!function_exists('wc_get_orders') || !function_exists('get_current_user_id')) {
+            return array();
+        }
+        $orders = wc_get_orders(array(
+            'customer' => get_current_user_id(),
+            'limit' => 3,
+        ));
+        if (!is_array($orders)) {
+            return array();
+        }
+        $rows = array();
+        foreach ($orders as $order) {
+            if (!is_object($order) || !method_exists($order, 'get_order_number')) {
+                continue;
+            }
+            $created = method_exists($order, 'get_date_created') ? $order->get_date_created() : null;
+            $date = '';
+            if ($created && function_exists('wc_format_datetime')) {
+                $date = wc_format_datetime($created);
+            }
+            $status = method_exists($order, 'get_status') ? (string) $order->get_status() : '';
+            if ($status !== '' && function_exists('wc_get_order_status_name')) {
+                $status = wc_get_order_status_name($status);
+            }
+            $rows[] = array(
+                'number' => $order->get_order_number(),
+                'href' => method_exists($order, 'get_view_order_url') ? $order->get_view_order_url() : nj_cuenta_orders_url(),
+                'date' => $date,
+                'status' => $status,
+                'total' => method_exists($order, 'get_formatted_order_total') ? $order->get_formatted_order_total() : '',
+            );
+        }
+        return $rows;
+    }
+}
 
 if (!function_exists('nj_cuenta_template')) {
     function nj_cuenta_template($template) {

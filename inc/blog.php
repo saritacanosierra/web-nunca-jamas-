@@ -259,7 +259,7 @@ if (!function_exists('nj_blog_posted_ads')) {
 }
 
 if (!function_exists('nj_blog_ad_html')) {
-    function nj_blog_ad_html($ad) {
+    function nj_blog_ad_html($ad, $place = '') {
         if (!is_array($ad) || empty($ad['src'])) {
             return '';
         }
@@ -267,7 +267,9 @@ if (!function_exists('nj_blog_ad_html')) {
         if (!empty($ad['href'])) {
             $image = '<a href="' . esc_url($ad['href']) . '">' . $image . '</a>';
         }
-        return '<aside class="blog-ad">' . $image . '</aside>';
+        $class = $place === 'rail' ? 'blog-ad blog-ad--rail' : 'blog-ad';
+        $label = $place === 'rail' ? '<p class="blog-ad__label">Publicidad</p>' : '';
+        return '<aside class="' . $class . '">' . $label . $image . '</aside>';
     }
 }
 

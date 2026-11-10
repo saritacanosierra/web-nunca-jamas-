@@ -31,11 +31,11 @@ if (!$nj_hero) {
             <?php endif; ?>
           </span>
           <?php if ($src !== '') : ?>
-            <img src="<?php echo esc_url($src); ?>" alt="<?php echo esc_attr($slide['alt']); ?>">
+            <img src="<?php echo esc_url($src); ?>" alt="<?php echo esc_attr($slide['alt']); ?>"<?php echo $i === 0 ? ' fetchpriority="high" decoding="async"' : ' loading="lazy" decoding="async"'; ?>>
           <?php endif; ?>
         </span>
       <?php else : ?>
-        <img src="<?php echo esc_url($src); ?>" alt="<?php echo esc_attr($slide['alt']); ?>"<?php echo $i === 0 ? '' : ' loading="lazy"'; ?>>
+        <img src="<?php echo esc_url($src); ?>" alt="<?php echo esc_attr($slide['alt']); ?>"<?php echo $i === 0 ? ' fetchpriority="high" decoding="async"' : ' loading="lazy" decoding="async"'; ?>>
       <?php endif; ?>
     </a>
   <?php endforeach; ?>

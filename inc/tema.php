@@ -351,7 +351,7 @@ if (!function_exists('nj_tema_footer_groups')) {
 
 if (!function_exists('nj_tema_footer_perks')) {
     function nj_tema_footer_perks() {
-        $threshold = 250000;
+        $threshold = 120000;
         if (function_exists('nj_slots_data')) {
             $bag = nj_slots_data()['bag'];
             if (isset($bag['free_shipping'])) {

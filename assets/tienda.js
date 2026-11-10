@@ -728,7 +728,7 @@
       if (!content.querySelector(".nj-checkout-close")) {
         var panel = document.createElement("div");
         panel.className = "nj-checkout-close";
-        panel.innerHTML = "<button type=\"button\" class=\"nj-checkout-close__button\">Confirmar pedido</button><p class=\"nj-checkout-close__note\">Pagas en Wompi con Nequi, tarjeta o PSE.</p><ul class=\"nj-checkout-trust\"><li>Nequi, tarjeta o PSE</li><li>Envío a Colombia</li><li>Cambios por correo</li></ul>";
+        panel.innerHTML = "<button type=\"button\" class=\"nj-checkout-close__button\">Confirmar pedido</button><p class=\"nj-checkout-close__note\">Pagas en Wompi con Nequi, tarjeta o PSE. El número de la tarjeta no se escribe aquí.</p><ul class=\"nj-checkout-trust\"><li>Nequi, tarjeta o PSE</li><li>Envío a Colombia</li><li>Cambio si la talla no queda</li></ul>";
         content.appendChild(panel);
         panel.querySelector("button").addEventListener("click", checkoutConfirm);
       }

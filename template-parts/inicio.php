@@ -34,7 +34,7 @@ $nj_styles = $nj_portada['styles'];
               <?php endforeach; ?>
             </div>
           <?php endif; ?>
-          <p class="catalog-more"><a class="btn btn-ghost" href="<?php echo esc_url($tab['url']); ?>">Comprar ahora</a></p>
+          <p class="catalog-more"><a class="btn btn-ghost" href="<?php echo esc_url($tab['url']); ?>"><?php echo $tab['id'] === 'coleccion' ? 'Ver la colección' : 'Ver lo nuevo'; ?></a></p>
         </div>
       <?php endforeach; ?>
     </div>
@@ -65,10 +65,10 @@ $nj_styles = $nj_portada['styles'];
             $nj_gift_note = isset($nj_promo['note']) && trim((string) $nj_promo['note']) !== '' ? $nj_promo['note'] : 'Elige talla al comprar. Envío a Colombia sobre las prendas disponibles.';
             ?>
             <h2><?php echo nl2br(esc_html($nj_gift_title)); ?></h2>
-            <a class="btn btn-yellow" href="<?php echo esc_url(nj_shop_link('shop')); ?>"><?php echo esc_html($nj_gift_button); ?></a>
+            <a class="btn btn-yellow" href="<?php echo esc_url(nj_promo_href($nj_promo)); ?>"><?php echo esc_html($nj_gift_button); ?></a>
             <p class="fine"><?php echo esc_html($nj_gift_note); ?></p>
           </div>
-          <a class="promo-gift__photo" href="<?php echo esc_url(nj_section_link('Colecciones')); ?>">
+          <a class="promo-gift__photo" href="<?php echo esc_url(nj_promo_href($nj_promo)); ?>">
             <img data-slot="promo-gift" src="<?php echo esc_url($nj_promo['src']); ?>" alt="<?php echo esc_attr($nj_promo['alt']); ?>">
           </a>
         </article>
@@ -83,7 +83,7 @@ $nj_styles = $nj_portada['styles'];
             ?>
             <p class="eyebrow"><?php echo esc_html($nj_collect_kicker); ?></p>
             <h3><?php echo esc_html($nj_collect_title); ?></h3>
-            <a class="btn btn-yellow" href="<?php echo esc_url(nj_shop_link('shop')); ?>"><?php echo esc_html($nj_collect_button); ?></a>
+            <a class="btn btn-yellow" href="<?php echo esc_url(nj_promo_href($nj_promo)); ?>"><?php echo esc_html($nj_collect_button); ?></a>
           </div>
         </article>
       <?php elseif ($nj_kind === 'three_d') : ?>
@@ -96,12 +96,13 @@ $nj_styles = $nj_portada['styles'];
             ?>
             <p><?php echo esc_html($nj_3d_kicker); ?></p>
             <h2><?php echo nl2br(esc_html($nj_3d_title)); ?></h2>
+            <a class="btn btn-yellow" href="<?php echo esc_url(nj_promo_href($nj_promo)); ?>">Ver la prenda</a>
           </div>
           <span class="badge-3d">3D</span>
         </article>
       <?php else : ?>
         <article class="promo-extra">
-          <a href="<?php echo esc_url(nj_shop_link('shop')); ?>">
+          <a href="<?php echo esc_url(nj_promo_href($nj_promo)); ?>">
             <img src="<?php echo esc_url($nj_promo['src']); ?>" alt="<?php echo esc_attr(isset($nj_promo['alt']) ? $nj_promo['alt'] : ''); ?>">
             <?php if (!empty($nj_promo['label'])) : ?>
               <span><?php echo esc_html($nj_promo['label']); ?></span>

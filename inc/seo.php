@@ -58,6 +58,9 @@ if (!function_exists('nj_seo_noindex')) {
         if (function_exists('is_account_page') && is_account_page()) {
             return true;
         }
+        if (function_exists('is_page') && is_page('favoritos')) {
+            return true;
+        }
         return false;
     }
 }
@@ -180,6 +183,9 @@ if (!function_exists('nj_seo_title_parts')) {
             $parts['title'] = 'Ropa de cuento para niñas';
             unset($parts['tagline']);
         }
+        if (isset($parts['title']) && nj_seo_clip($parts['title'], 55) !== '') {
+            $parts['title'] = nj_seo_clip($parts['title'], 55);
+        }
         return $parts;
     }
 }
@@ -206,12 +212,23 @@ if (!function_exists('nj_seo_head')) {
         $url = nj_seo_url();
         $image = nj_seo_image();
         $title = function_exists('wp_get_document_title') ? wp_get_document_title() : 'Nunca Jamás';
-        $type = (function_exists('is_singular') && is_singular('post')) ? 'article' : 'website';
+        $type = 'website';
+        if (function_exists('is_singular') && is_singular('post')) {
+            $type = 'article';
+        }
+        if (function_exists('is_singular') && is_singular('product')) {
+            $type = 'product';
+        }
+        if ($image !== '' && function_exists('is_front_page') && (is_front_page() || (function_exists('is_singular') && is_singular('product')))) {
+            echo '<link rel="preload" as="image" href="' . esc_url($image) . '" fetchpriority="high">' . "\n";
+        }
         if ($description !== '') {
             echo '<meta name="description" content="' . esc_attr($description) . '">' . "\n";
         }
         if ($url !== '') {
             echo '<link rel="canonical" href="' . esc_url($url) . '">' . "\n";
+            echo '<link rel="alternate" hreflang="es-CO" href="' . esc_url($url) . '">' . "\n";
+            echo '<link rel="alternate" hreflang="x-default" href="' . esc_url($url) . '">' . "\n";
             echo '<meta property="og:url" content="' . esc_url($url) . '">' . "\n";
         }
         echo '<meta property="og:locale" content="es_CO">' . "\n";
@@ -229,6 +246,13 @@ if (!function_exists('nj_seo_head')) {
         echo '<meta name="twitter:title" content="' . esc_attr($title) . '">' . "\n";
         if ($description !== '') {
             echo '<meta name="twitter:description" content="' . esc_attr($description) . '">' . "\n";
+        }
+        if ($type === 'product' && function_exists('wc_get_product') && function_exists('get_queried_object_id')) {
+            $product = wc_get_product(get_queried_object_id());
+            if ($product && $product->get_price() !== '') {
+                echo '<meta property="product:price:amount" content="' . esc_attr($product->get_price()) . '">' . "\n";
+                echo '<meta property="product:price:currency" content="' . esc_attr(function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : 'COP') . '">' . "\n";
+            }
         }
     }
 }
@@ -311,9 +335,24 @@ if (!function_exists('nj_seo_product')) {
                 'name' => 'Nunca Jamás',
             ),
         );
+        $images = array();
         $image = nj_seo_image();
         if ($image !== '') {
-            $data['image'] = array($image);
+            $images[] = $image;
+        }
+        if (method_exists($product, 'get_gallery_image_ids') && function_exists('wp_get_attachment_image_url')) {
+            foreach ($product->get_gallery_image_ids() as $attachment_id) {
+                $gallery = wp_get_attachment_image_url($attachment_id, 'large');
+                if (is_string($gallery) && $gallery !== '' && !in_array($gallery, $images, true)) {
+                    $images[] = $gallery;
+                }
+                if (count($images) >= 6) {
+                    break;
+                }
+            }
+        }
+        if ($images) {
+            $data['image'] = $images;
         }
         $sku = $product->get_sku();
         if ($sku !== '') {
@@ -321,32 +360,121 @@ if (!function_exists('nj_seo_product')) {
         }
         $currency = function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : 'COP';
         $stock = $product->is_in_stock() ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock';
+        $offer = array(
+            'priceCurrency' => $currency,
+            'availability' => $stock,
+            'itemCondition' => 'https://schema.org/NewCondition',
+            'url' => get_permalink($product->get_id()),
+            'seller' => array(
+                '@type' => 'Organization',
+                'name' => 'Nunca Jamás',
+            ),
+            'shippingDetails' => nj_seo_shipping(),
+        );
         if ($product->is_type('variable')) {
             $low = $product->get_variation_price('min');
             $high = $product->get_variation_price('max');
             if ($low !== '') {
-                $data['offers'] = array(
+                $head = array(
                     '@type' => 'AggregateOffer',
                     'lowPrice' => $low,
                     'highPrice' => $high,
-                    'priceCurrency' => $currency,
-                    'availability' => $stock,
-                    'url' => get_permalink($product->get_id()),
                 );
+                $children = $product->get_children();
+                if ($children) {
+                    $head['offerCount'] = count($children);
+                }
+                $data['offers'] = array_merge($head, $offer);
             }
         } else {
             $price = $product->get_price();
             if ($price !== '') {
-                $data['offers'] = array(
+                $data['offers'] = array_merge(array(
                     '@type' => 'Offer',
                     'price' => $price,
-                    'priceCurrency' => $currency,
-                    'availability' => $stock,
-                    'url' => get_permalink($product->get_id()),
-                );
+                ), $offer);
             }
         }
         return $data;
+    }
+}
+
+if (!function_exists('nj_seo_shipping')) {
+    function nj_seo_shipping() {
+        $cost = 15000;
+        if (function_exists('nj_slots_data')) {
+            $bag = nj_slots_data()['bag'];
+            if (isset($bag['shipping_cost'])) {
+                $cost = (int) $bag['shipping_cost'];
+            }
+        }
+        return array(
+            '@type' => 'OfferShippingDetails',
+            'shippingDestination' => array(
+                '@type' => 'DefinedRegion',
+                'addressCountry' => 'CO',
+            ),
+            'shippingRate' => array(
+                '@type' => 'MonetaryAmount',
+                'value' => (string) $cost,
+                'currency' => 'COP',
+            ),
+        );
+    }
+}
+
+if (!function_exists('nj_seo_faq')) {
+    function nj_seo_faq() {
+        if (!function_exists('nj_pages_help_current') || !function_exists('is_page') || !is_page()) {
+            return null;
+        }
+        $help = nj_pages_help_current();
+        if (!is_array($help) || empty($help['items']) || !is_array($help['items'])) {
+            return null;
+        }
+        $entities = array();
+        foreach ($help['items'] as $item) {
+            $question = isset($item['q']) ? trim(wp_strip_all_tags((string) $item['q'])) : '';
+            $answer = isset($item['a']) ? trim(wp_strip_all_tags((string) $item['a'])) : '';
+            if ($question === '' || $answer === '') {
+                continue;
+            }
+            $entities[] = array(
+                '@type' => 'Question',
+                'name' => $question,
+                'acceptedAnswer' => array(
+                    '@type' => 'Answer',
+                    'text' => $answer,
+                ),
+            );
+        }
+        if (count($entities) < 2) {
+            return null;
+        }
+        return array(
+            '@type' => 'FAQPage',
+            'mainEntity' => $entities,
+        );
+    }
+}
+
+if (!function_exists('nj_seo_same_as')) {
+    function nj_seo_same_as() {
+        if (!function_exists('nj_tema_footer')) {
+            return array();
+        }
+        $footer = nj_tema_footer();
+        $links = array();
+        if (empty($footer['socials']) || !is_array($footer['socials'])) {
+            return $links;
+        }
+        foreach ($footer['socials'] as $social) {
+            $href = isset($social['href']) ? (string) $social['href'] : '';
+            if (preg_match('#^https?://#i', $href)) {
+                $links[] = $href;
+            }
+        }
+        return $links;
     }
 }
 
@@ -380,14 +508,20 @@ if (!function_exists('nj_seo_graph')) {
             return;
         }
         $logo = function_exists('nj_tema_logo_url') ? nj_seo_absolute(nj_tema_logo_url()) : nj_seo_image();
+        $organization = array(
+            '@type' => 'Organization',
+            'name' => 'Nunca Jamás',
+            'url' => home_url('/'),
+            'logo' => $logo,
+            'email' => 'saritacanosierra@gmail.com',
+            'areaServed' => 'CO',
+        );
+        $same = nj_seo_same_as();
+        if ($same) {
+            $organization['sameAs'] = $same;
+        }
         $graph = array(
-            array(
-                '@type' => 'Organization',
-                'name' => 'Nunca Jamás',
-                'url' => home_url('/'),
-                'logo' => $logo,
-                'email' => 'saritacanosierra@gmail.com',
-            ),
+            $organization,
             array(
                 '@type' => 'WebSite',
                 'name' => 'Nunca Jamás',
@@ -423,6 +557,10 @@ if (!function_exists('nj_seo_graph')) {
         $article = nj_seo_article();
         if ($article) {
             $graph[] = $article;
+        }
+        $faq = nj_seo_faq();
+        if ($faq) {
+            $graph[] = $faq;
         }
         $json = function_exists('wp_json_encode') ? wp_json_encode(array('@context' => 'https://schema.org', '@graph' => $graph)) : json_encode(array('@context' => 'https://schema.org', '@graph' => $graph));
         echo '<script type="application/ld+json">' . $json . '</script>' . "\n";
@@ -464,6 +602,48 @@ if (!function_exists('nj_seo_sitemap_pages')) {
     }
 }
 
+if (!function_exists('nj_seo_private_paths')) {
+    function nj_seo_private_paths() {
+        $paths = array('/favoritos/');
+        if (function_exists('wc_get_page_id') && function_exists('get_permalink')) {
+            foreach (array('cart', 'checkout', 'myaccount') as $key) {
+                $id = (int) wc_get_page_id($key);
+                if ($id < 1) {
+                    continue;
+                }
+                $link = get_permalink($id);
+                $path = is_string($link) && function_exists('wp_parse_url') ? wp_parse_url($link, PHP_URL_PATH) : '';
+                if (!is_string($path) || $path === '' || $path === '/') {
+                    continue;
+                }
+                $paths[] = '/' . trim($path, '/') . '/';
+            }
+        }
+        return array_values(array_unique($paths));
+    }
+}
+
+if (!function_exists('nj_seo_robots_txt')) {
+    function nj_seo_robots_txt($output, $public) {
+        if ((string) $public === '0') {
+            return $output;
+        }
+        $lines = array();
+        foreach (nj_seo_private_paths() as $path) {
+            $lines[] = 'Disallow: ' . $path;
+        }
+        $lines[] = 'Disallow: /*?add-to-cart=';
+        $lines[] = 'Disallow: /*?orderby=';
+        $lines[] = 'Disallow: /*?*min_price=';
+        $lines[] = 'Disallow: /*?*max_price=';
+        $block = implode("\n", $lines);
+        if (strpos($output, 'Sitemap:') !== false) {
+            return preg_replace('/\nSitemap:/', "\n" . $block . "\nSitemap:", $output, 1);
+        }
+        return rtrim($output) . "\n" . $block . "\n";
+    }
+}
+
 if (function_exists('add_filter')) {
     add_filter('document_title_separator', function () {
         return '|';
@@ -473,6 +653,7 @@ if (function_exists('add_filter')) {
     add_filter('wp_sitemaps_post_types', 'nj_seo_sitemap_types');
     add_filter('wp_sitemaps_add_provider', 'nj_seo_sitemap_provider', 10, 2);
     add_filter('wp_sitemaps_posts_query_args', 'nj_seo_sitemap_pages', 10, 2);
+    add_filter('robots_txt', 'nj_seo_robots_txt', 20, 2);
     remove_action('wp_head', 'rel_canonical');
     add_action('wp_head', 'nj_seo_head', 1);
     add_action('wp_head', 'nj_seo_graph', 2);

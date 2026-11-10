@@ -18,7 +18,7 @@ if (!function_exists('nj_pages_money')) {
 if (!function_exists('nj_pages_faq')) {
     function nj_pages_faq() {
         $mail = nj_pages_mail();
-        $threshold = function_exists('nj_slots_data') ? (int) nj_slots_data()['bag']['free_shipping'] : 250000;
+        $threshold = function_exists('nj_slots_data') ? (int) nj_slots_data()['bag']['free_shipping'] : 120000;
         $fee_amount = function_exists('nj_slots_data') && isset(nj_slots_data()['bag']['shipping_cost']) ? (int) nj_slots_data()['bag']['shipping_cost'] : 15000;
         $free = nj_pages_money($threshold);
         $fee = nj_pages_money($fee_amount);
@@ -90,7 +90,7 @@ if (!function_exists('nj_pages_mail_html')) {
 if (!function_exists('nj_pages_help_default')) {
     function nj_pages_help_default($key) {
         $mail = nj_pages_mail();
-        $threshold = function_exists('nj_slots_data') ? (int) nj_slots_data()['bag']['free_shipping'] : 250000;
+        $threshold = function_exists('nj_slots_data') ? (int) nj_slots_data()['bag']['free_shipping'] : 120000;
         $fee_amount = function_exists('nj_slots_data') && isset(nj_slots_data()['bag']['shipping_cost']) ? (int) nj_slots_data()['bag']['shipping_cost'] : 15000;
         $free = nj_pages_money($threshold);
         $fee = nj_pages_money($fee_amount);
@@ -728,7 +728,7 @@ if (!function_exists('nj_pages_shipping')) {
         if (!class_exists('WC_Shipping_Zones')) {
             return;
         }
-        $threshold = function_exists('nj_slots_data') ? (string) (int) nj_slots_data()['bag']['free_shipping'] : '250000';
+        $threshold = function_exists('nj_slots_data') ? (string) (int) nj_slots_data()['bag']['free_shipping'] : '120000';
         foreach (WC_Shipping_Zones::get_zones() as $zone) {
             foreach ($zone['zone_locations'] as $location) {
                 if ($location->type === 'country' && $location->code === 'CO') {

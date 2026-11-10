@@ -38,7 +38,7 @@ $nj_quick = array(
     <a class="product-card__photos" href="<?php echo esc_url($item['url']); ?>">
       <img class="product-card__photo" src="<?php echo esc_url($item['image']); ?>" alt="<?php echo esc_attr($item['alt']); ?>">
       <?php if (!empty($item['hover'])) : ?>
-        <img class="product-card__hover" src="<?php echo esc_url($item['hover']); ?>" alt="">
+        <img class="product-card__hover" src="<?php echo esc_url($item['hover']); ?>" alt="" loading="lazy" decoding="async">
       <?php endif; ?>
     </a>
     <?php if (!empty($item['badge'])) : ?>
@@ -54,8 +54,8 @@ $nj_quick = array(
     </div>
     <?php if ($nj_sizes) : ?>
       <div class="product-card__sizes">
-        <?php foreach ($nj_sizes as $index => $size) : ?>
-          <button type="button" class="<?php echo $index === 0 ? 'is-selected' : ''; ?>"><?php echo esc_html($size); ?></button>
+        <?php foreach ($nj_sizes as $size) : ?>
+          <button type="button"><?php echo esc_html($size); ?></button>
         <?php endforeach; ?>
       </div>
     <?php endif; ?>

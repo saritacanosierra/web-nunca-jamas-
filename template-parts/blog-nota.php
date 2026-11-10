@@ -16,7 +16,7 @@ while (have_posts()) {
     <p class="blog-meta"><?php echo esc_html(get_the_date()); ?> · <?php echo esc_html(nj_blog_minutes($nj_post_id)); ?></p>
     <?php if ($nj_image !== '') : ?>
       <figure class="blog-hero">
-        <img src="<?php echo esc_url($nj_image); ?>" alt="">
+        <img src="<?php echo esc_url($nj_image); ?>" alt="<?php echo esc_attr(get_the_title()); ?>" decoding="async">
       </figure>
     <?php endif; ?>
     <div class="blog-read">

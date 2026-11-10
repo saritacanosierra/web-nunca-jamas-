@@ -39,10 +39,10 @@ foreach ($nj_payload['variations'] as $nj_variation) {
   <script type="application/json" data-ficha-data><?php echo json_encode($nj_payload, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
   <div class="ficha__stage">
     <div class="ficha__track" data-ficha-track>
-      <?php foreach ($nj_frames as $frame) : ?>
+      <?php foreach ($nj_frames as $nj_frame_index => $frame) : ?>
         <figure class="ficha__slide" style="--frame-position: <?php echo esc_attr($frame['position']); ?>">
           <button type="button" class="ficha__zoom-open" data-ficha-open-zoom aria-label="Ver la foto de cerca">
-            <img src="<?php echo esc_url($frame['src']); ?>" data-zoom="<?php echo esc_url(isset($frame['zoom']) ? $frame['zoom'] : $frame['src']); ?>" alt="<?php echo esc_attr($nj_ficha['alt']); ?>">
+            <img src="<?php echo esc_url($frame['src']); ?>" data-zoom="<?php echo esc_url(isset($frame['zoom']) ? $frame['zoom'] : $frame['src']); ?>" alt="<?php echo esc_attr($nj_ficha['alt']); ?>"<?php echo (int) $nj_frame_index === 0 ? ' fetchpriority="high" decoding="async"' : ' loading="lazy" decoding="async"'; ?>>
           </button>
           <?php if (!empty($nj_ficha['personalizado'])) : ?>
             <span class="ficha__embroider is-cursiva" data-ficha-embroider hidden></span>
@@ -89,6 +89,9 @@ foreach ($nj_payload['variations'] as $nj_variation) {
           <?php endforeach; ?>
         </div>
       <?php endif; ?>
+      <?php if ($nj_sizes && function_exists('nj_compra_guide_html')) : ?>
+        <?php echo nj_compra_guide_html($nj_sizes); ?>
+      <?php endif; ?>
       <?php if (!empty($nj_ficha['personalizado'])) : ?>
         <div class="ficha__custom" data-ficha-custom>
           <?php echo function_exists('nj_personalizado_warning_html') ? nj_personalizado_warning_html() : ''; ?>
@@ -112,6 +115,7 @@ foreach ($nj_payload['variations'] as $nj_variation) {
         <span>Guardar</span>
       </button>
       <button class="ficha__add" type="button" data-ficha-add>Agregar a mi bolsa</button>
+      <?php if (function_exists('nj_compra_trust_html')) { echo nj_compra_trust_html(true); } ?>
       <?php if (!defined('NJ_PREVIEW') && function_exists('woocommerce_template_single_add_to_cart')) : ?>
         <div class="ficha__gateway" aria-hidden="true" inert>
           <?php call_user_func('woocommerce_template_single_add_to_cart'); ?>

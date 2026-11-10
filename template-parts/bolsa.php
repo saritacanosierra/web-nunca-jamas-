@@ -1,5 +1,5 @@
 <?php
-$nj_bag = function_exists('nj_slots_data') ? nj_slots_data()['bag'] : array('free_shipping' => 250000, 'shipping_cost' => 15000, 'whatsapp' => '');
+$nj_bag = function_exists('nj_slots_data') ? nj_slots_data()['bag'] : array('free_shipping' => 120000, 'shipping_cost' => 15000, 'whatsapp' => '');
 $nj_bag['whatsapp'] = function_exists('nj_whatsapp_chat_url') ? nj_whatsapp_chat_url() : '';
 $nj_checkout = function_exists('nj_shop_link') ? nj_shop_link('checkout') : '#';
 ?>
@@ -7,7 +7,7 @@ $nj_checkout = function_exists('nj_shop_link') ? nj_shop_link('checkout') : '#';
 $nj_bag_state = function_exists('nj_bag_state') ? nj_bag_state() : array('lines' => array(), 'subtotal' => 0, 'discount' => 0, 'total' => 0, 'count' => 0, 'note' => '');
 ?>
 <script type="application/json" data-bag-state><?php echo json_encode($nj_bag_state, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
-<div class="bag-drawer" data-bag data-free-shipping="<?php echo esc_attr((string) $nj_bag['free_shipping']); ?>" hidden>
+<div class="bag-drawer" data-bag data-free-shipping="<?php echo esc_attr((string) $nj_bag['free_shipping']); ?>" data-shipping-cost="<?php echo esc_attr((string) (isset($nj_bag['shipping_cost']) ? (int) $nj_bag['shipping_cost'] : 15000)); ?>" hidden>
   <button class="bag-drawer__backdrop" type="button" data-bag-close aria-label="Cerrar bolsa"></button>
   <aside class="bag-drawer__panel" aria-label="Mi bolsa">
     <header class="bag-drawer__head">
@@ -33,11 +33,10 @@ $nj_bag_state = function_exists('nj_bag_state') ? nj_bag_state() : array('lines'
         <p data-bag-coupon-note></p>
       </form>
       <?php echo function_exists('nj_personalizado_warning_html') ? nj_personalizado_warning_html(true) : ''; ?>
+      <?php if (function_exists('nj_compra_trust_html')) { echo nj_compra_trust_html(); } ?>
       <a class="bag-drawer__checkout" href="<?php echo esc_url($nj_checkout); ?>">Pagar</a>
       <?php if (!empty($nj_bag['whatsapp'])) : ?>
-        <a class="bag-drawer__whatsapp" href="<?php echo esc_url($nj_bag['whatsapp']); ?>" aria-label="WhatsApp" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a9 9 0 0 0-7.7 13.5L3 21l4.7-1.2A9 9 0 1 0 12 3zm4.8 12.7c-.2.6-1.2 1.1-1.6 1.1-.4.1-.9.2-2.9-.6-2.4-1-4-3.5-4.1-3.6-.1-.2-1-1.3-1-2.5s.6-1.8.9-2c.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5.2.6.7 2 .8 2.1.1.2.1.3 0 .5-.1.2-.2.3-.3.5l-.2.3c-.1.1-.2.2-.1.4.1.2.6 1 1.3 1.6.9.8 1.6 1 1.8 1.1.2.1.4.1.5-.1.1-.2.6-.7.8-.9.2-.2.3-.2.5-.1.2.1 1.4.7 1.6.8.2.1.4.2.4.3.1.2.1.8-.1 1.4z"/></svg>
-        </a>
+        <a class="bag-drawer__doubt" href="<?php echo esc_url($nj_bag['whatsapp']); ?>" target="_blank" rel="noopener">¿Dudas de la talla? Escríbenos</a>
       <?php endif; ?>
     </div>
   </aside>

@@ -42,9 +42,10 @@ if (!function_exists('nj_home_tabs')) {
         if (!nj_shop_ready()) {
             $cards = array_map('nj_card_from_slot', nj_slots_data()['products']);
             $url = nj_home_url() . '#prendas';
+            $collection = defined('NJ_PREVIEW') ? 'galeria.php?seccion=colecciones' : nj_section_link('Colecciones');
             return array(
                 array('id' => 'nuevo', 'label' => 'Lo nuevo', 'items' => $cards, 'url' => $url),
-                array('id' => 'coleccion', 'label' => 'Colección', 'items' => $cards, 'url' => $url),
+                array('id' => 'coleccion', 'label' => 'Colección', 'items' => $cards, 'url' => $collection),
             );
         }
         $newest = nj_home_wc_products(array(
@@ -73,7 +74,7 @@ if (!function_exists('nj_home_tabs')) {
         }
         return array(
             nj_tab('nuevo', 'Lo nuevo', $newest, nj_shop_link('newest'), true),
-            nj_tab('coleccion', 'Colección', $collection, nj_shop_link('shop'), true),
+            nj_tab('coleccion', 'Colección', $collection, nj_section_link('Colecciones'), true),
         );
     }
 }

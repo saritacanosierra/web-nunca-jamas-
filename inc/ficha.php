@@ -104,6 +104,50 @@ if (!function_exists('nj_ficha_from_card')) {
     }
 }
 
+if (!function_exists('nj_compra_guide_html')) {
+    function nj_compra_guide_html($sizes = array()) {
+        $ages = array(
+            '2t' => '2 años',
+            '3t' => '3 años',
+            '4t' => '4 años',
+            '5t' => '5 años',
+            '6' => '6 años',
+        );
+        $labels = array();
+        foreach ($sizes as $size) {
+            $key = function_exists('nj_menu_key') ? nj_menu_key($size) : strtolower(trim((string) $size));
+            if (!isset($ages[$key])) {
+                $labels = array();
+                break;
+            }
+            $labels[] = $ages[$key];
+        }
+        $url = function_exists('nj_page_url') ? nj_page_url('tallas') : '';
+        $link = $url ? ' <a href="' . esc_url($url) . '">Guía de tallas</a>' : '';
+        if ($labels) {
+            $html = '<p class="nj-guide nj-guide--ages">';
+            foreach ($labels as $label) {
+                $html .= '<span>' . esc_html($label) . '</span>';
+            }
+            return $html . '</p><p class="nj-guide">Si dudas, elige la mayor.' . $link . '</p>';
+        }
+        return '<p class="nj-guide">' . esc_html('2T 2 años · 3T 3 años · 4T 4 años · 5T 5 años · 6 6 años. Si dudas, elige la mayor.') . $link . '</p>';
+    }
+}
+
+if (!function_exists('nj_compra_trust_html')) {
+    function nj_compra_trust_html($line = false) {
+        if ($line) {
+            return '<p class="nj-trust nj-trust--line">Envío a Colombia · Cambio si la talla no queda · Nequi, PSE o tarjeta</p>';
+        }
+        $html = '<ul class="nj-trust">';
+        foreach (array('Envío a Colombia', 'Cambio si la talla no queda', 'Nequi, PSE o tarjeta') as $item) {
+            $html .= '<li>' . esc_html($item) . '</li>';
+        }
+        return $html . '</ul>';
+    }
+}
+
 if (!function_exists('nj_ficha_locate')) {
     function nj_ficha_locate($key) {
         $slots = nj_slots_data();

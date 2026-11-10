@@ -6,7 +6,7 @@
 
 return array(
     'bag' => array(
-        'free_shipping' => 250000,
+        'free_shipping' => 120000,
         'shipping_cost' => 15000,
         'whatsapp' => 'https://nuncajamasropa.com/',
     ),

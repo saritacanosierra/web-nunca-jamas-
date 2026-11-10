@@ -57,8 +57,8 @@ if (!function_exists('nj_classic_whatsapp_field')) {
     function nj_classic_whatsapp_field($fields) {
         $fields['billing']['billing_whatsapp'] = array(
             'type' => 'tel',
-            'label' => 'WhatsApp',
-            'placeholder' => '573001112233',
+            'label' => 'WhatsApp para avisarte el envío',
+            'placeholder' => '300 111 2233',
             'required' => false,
             'priority' => 25,
             'class' => array('form-row-wide'),

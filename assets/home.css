@@ -1,4 +1,4 @@
-@import url("css/tienda.css?v=1.9.27");
+@import url("css/tienda.css?v=1.9.30");
 @import url("css/cuenta.css?v=1.9.10");
 
 :root {
@@ -903,6 +903,10 @@ button { cursor: pointer; }
   padding: 10px 14px;
   font-family: var(--display);
   font-size: 28px;
+}
+.promo-3d__copy .btn {
+  display: inline-flex;
+  margin: 8px 0 6px;
 }
 .promo-3d__copy p {
   margin: 0 0 6px;

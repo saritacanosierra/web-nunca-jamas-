@@ -13,6 +13,8 @@
       <p class="price" data-quick-price></p>
       <p class="quick-view__hint" data-quick-hint>Agrega al carrito seleccionando tu talla</p>
       <div class="quick-view__sizes" data-quick-sizes></div>
+      <?php if (function_exists('nj_compra_guide_html')) { echo nj_compra_guide_html(); } ?>
+      <?php if (function_exists('nj_compra_trust_html')) { echo nj_compra_trust_html(); } ?>
       <p class="quick-view__note" data-quick-note></p>
       <h3 data-quick-heading>Descripción</h3>
       <p data-quick-text></p>

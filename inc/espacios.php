@@ -171,6 +171,23 @@ if (!function_exists('nj_espacios_promos')) {
     }
 }
 
+if (!function_exists('nj_promo_href')) {
+    function nj_promo_href($promo) {
+        $href = isset($promo['href']) ? trim((string) $promo['href']) : '';
+        if ($href !== '') {
+            return $href;
+        }
+        $kind = isset($promo['kind']) ? (string) $promo['kind'] : '';
+        if ($kind === 'collect' && function_exists('nj_section_link')) {
+            return nj_section_link('Colecciones');
+        }
+        if ($kind === 'gift' && function_exists('nj_section_link')) {
+            return nj_section_link('Vestidos');
+        }
+        return function_exists('nj_shop_link') ? nj_shop_link('newest') : '';
+    }
+}
+
 if (!function_exists('nj_espacios_cuentos')) {
     function nj_espacios_cuentos() {
         $items = array();

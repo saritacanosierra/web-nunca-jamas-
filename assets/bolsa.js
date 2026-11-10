@@ -5,6 +5,7 @@
   }
 
   var freeShipping = Number(drawer.getAttribute("data-free-shipping")) || 0;
+  var shippingCost = Number(drawer.getAttribute("data-shipping-cost")) || 0;
   var linesNode = drawer.querySelector("[data-bag-lines]");
   var emptyNode = drawer.querySelector("[data-bag-empty]");
   var shopMode = window.njShop && window.njShop.bag && window.njShop.nonce;
@@ -82,11 +83,11 @@
     if (!lines.length) {
       shipping.textContent = "Elige una talla para armar tu bolsa.";
       meter.style.width = "0%";
-    } else if (missing > 0) {
-      shipping.textContent = "¡Te hacen falta " + money(missing) + " para obtener envío gratis!";
+    } else if (missing > 0 && freeShipping > 0) {
+      shipping.textContent = "Te faltan " + money(missing) + " para el envío gratis." + (shippingCost > 0 ? " Si no, el domicilio es " + money(shippingCost) + "." : "");
       meter.style.width = Math.min(100, (merchandise / freeShipping) * 100) + "%";
     } else {
-      shipping.textContent = "¡Ya tienes envío gratis!";
+      shipping.textContent = "Envío gratis en este pedido.";
       meter.style.width = "100%";
     }
     Array.prototype.forEach.call(document.querySelectorAll(".bag-count"), function (node) {

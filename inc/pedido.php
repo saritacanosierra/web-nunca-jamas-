@@ -226,3 +226,31 @@ if (!function_exists('nj_checkout_privacy_text')) {
     }
 }
 add_filter('woocommerce_get_privacy_policy_text', 'nj_checkout_privacy_text');
+
+if (!function_exists('nj_checkout_short_address')) {
+    function nj_checkout_short_address($fields) {
+        foreach (array('company', 'address_2') as $key) {
+            if (isset($fields[$key])) {
+                $fields[$key]['required'] = false;
+                $fields[$key]['hidden'] = true;
+            }
+        }
+        return $fields;
+    }
+}
+add_filter('woocommerce_default_address_fields', 'nj_checkout_short_address');
+
+if (!function_exists('nj_checkout_short_fields')) {
+    function nj_checkout_short_fields($fields) {
+        unset($fields['billing']['billing_company'], $fields['shipping']['shipping_company'], $fields['order']['order_comments']);
+        return $fields;
+    }
+}
+add_filter('woocommerce_checkout_fields', 'nj_checkout_short_fields');
+
+if (!function_exists('nj_checkout_notes_off')) {
+    function nj_checkout_notes_off() {
+        return false;
+    }
+}
+add_filter('woocommerce_enable_order_notes_field', 'nj_checkout_notes_off');

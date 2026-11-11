@@ -294,7 +294,7 @@ if (!function_exists('nj_personalizado_assets')) {
         if (!function_exists('is_product') || !is_product() || !nj_personalizado_on(get_queried_object_id())) {
             return;
         }
-        wp_enqueue_style('nj-bordado', 'https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap', array(), null);
+        wp_enqueue_style('nj-ficha-font', get_template_directory_uri() . '/assets/fonts/vibes.css', array(), NJ_VERSION);
     }
 }
 add_action('wp_enqueue_scripts', 'nj_personalizado_assets', 20);

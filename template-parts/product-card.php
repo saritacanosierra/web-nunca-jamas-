@@ -36,7 +36,9 @@ $nj_quick = array(
   <script type="application/json" class="product-card__data"><?php echo json_encode($nj_quick, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
   <div class="product-card__media">
     <a class="product-card__photos" href="<?php echo esc_url($item['url']); ?>">
-      <img class="product-card__photo" src="<?php echo esc_url($item['image']); ?>" alt="<?php echo esc_attr($item['alt']); ?>">
+      <?php if (function_exists('nj_card_foto')) { nj_card_foto($item); } else { ?>
+      <img class="product-card__photo" width="600" height="800" decoding="async" src="<?php echo esc_url($item['image']); ?>" alt="<?php echo esc_attr($item['alt']); ?>">
+      <?php } ?>
       <?php if (!empty($item['hover'])) : ?>
         <img class="product-card__hover" src="<?php echo esc_url($item['hover']); ?>" alt="" loading="lazy" decoding="async">
       <?php endif; ?>
@@ -54,8 +56,9 @@ $nj_quick = array(
     </div>
     <?php if ($nj_sizes) : ?>
       <div class="product-card__sizes">
+        <span class="product-card__sizes-hint">Agregar</span>
         <?php foreach ($nj_sizes as $size) : ?>
-          <button type="button"><?php echo esc_html($size); ?></button>
+          <button type="button" data-size="<?php echo esc_attr($size); ?>" aria-label="<?php echo esc_attr('Agregar talla ' . $size); ?>"><?php echo esc_html($size); ?></button>
         <?php endforeach; ?>
       </div>
     <?php endif; ?>
@@ -65,4 +68,5 @@ $nj_quick = array(
     <h3><?php echo esc_html($item['name']); ?></h3>
     <p class="price"><?php echo function_exists('wp_kses_post') ? wp_kses_post($item['price_html']) : $item['price_html']; ?></p>
   </a>
+  <?php echo function_exists('nj_testimonios_nota') ? nj_testimonios_nota('product-card__nota') : ''; ?>
 </article>

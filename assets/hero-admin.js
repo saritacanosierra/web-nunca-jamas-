@@ -19,6 +19,23 @@
     if (color && canvas) {
       canvas.style.setProperty("--hero-bg", color.value);
     }
+    var alto = field(card, "alto");
+    var pixels = alto ? Number(alto.value || 0) : 0;
+    if (pixels > 0 && pixels < 320) {
+      pixels = 320;
+      alto.value = "320";
+    }
+    var shown = card.querySelector(".nj-hero-alto output");
+    if (shown) {
+      shown.textContent = pixels > 0 ? pixels + " px" : "Auto";
+    }
+    if (pixels > 0) {
+      card.classList.add("has-alto");
+      card.style.setProperty("--hero-admin-h", pixels + "px");
+    } else {
+      card.classList.remove("has-alto");
+      card.style.removeProperty("--hero-admin-h");
+    }
   }
 
   function reindex(list) {
@@ -94,6 +111,12 @@
       if (event.target.closest(".nj-hero-pick")) {
         pick(card);
       }
+      if (event.target.closest(".nj-hero-html-pick")) {
+        var htmlFile = card.querySelector(".nj-hero-html-file");
+        if (htmlFile) {
+          htmlFile.click();
+        }
+      }
       if (event.target.closest(".nj-hero-clear")) {
         var image = field(card, "image");
         var src = field(card, "src");
@@ -124,6 +147,23 @@
         list.insertBefore(card.nextElementSibling, card);
         reindex(list);
       }
+    });
+
+    list.addEventListener("change", function (event) {
+      var fileInput = event.target.closest(".nj-hero-html-file");
+      if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+        return;
+      }
+      var card = fileInput.closest(".nj-hero-slide");
+      var box = card ? field(card, "html") : null;
+      var reader = new FileReader();
+      reader.onload = function () {
+        if (box) {
+          box.value = String(reader.result || "").slice(0, 12000);
+        }
+        fileInput.value = "";
+      };
+      reader.readAsText(fileInput.files[0]);
     });
 
     list.addEventListener("input", function (event) {

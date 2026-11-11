@@ -225,12 +225,379 @@ if (!function_exists('nj_menu_links')) {
     }
 }
 
+if (!function_exists('nj_colecciones_padre')) {
+    function nj_colecciones_padre() {
+        if (!function_exists('nj_category_index')) {
+            return null;
+        }
+        $index = nj_category_index();
+        return isset($index['colecciones']) ? $index['colecciones'] : null;
+    }
+}
+
+if (!function_exists('nj_coleccion_tiempo')) {
+    function nj_coleccion_tiempo($term_id) {
+        $term_id = (int) $term_id;
+        if (!function_exists('get_posts')) {
+            return $term_id;
+        }
+        $posts = get_posts(array(
+            'post_type' => 'product',
+            'post_status' => 'publish',
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'orderby' => 'date',
+            'order' => 'DESC',
+            'tax_query' => array(array(
+                'taxonomy' => 'product_cat',
+                'field' => 'term_id',
+                'terms' => $term_id,
+                'include_children' => false,
+            )),
+        ));
+        if ($posts) {
+            $date = get_post_field('post_date', $posts[0]);
+            $time = strtotime((string) $date);
+            if ($time) {
+                return $time;
+            }
+        }
+        return $term_id;
+    }
+}
+
+if (!function_exists('nj_coleccion_foto')) {
+    function nj_coleccion_foto($term_id) {
+        $term_id = (int) $term_id;
+        $thumb = function_exists('get_term_meta') ? (int) get_term_meta($term_id, 'thumbnail_id', true) : 0;
+        if ($thumb > 0 && function_exists('wp_get_attachment_image_url')) {
+            $url = wp_get_attachment_image_url($thumb, 'large');
+            if (is_string($url) && $url !== '') {
+                return $url;
+            }
+        }
+        if (!function_exists('get_posts')) {
+            return '';
+        }
+        $posts = get_posts(array(
+            'post_type' => 'product',
+            'post_status' => 'publish',
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'orderby' => 'date',
+            'order' => 'DESC',
+            'tax_query' => array(array(
+                'taxonomy' => 'product_cat',
+                'field' => 'term_id',
+                'terms' => $term_id,
+                'include_children' => false,
+            )),
+        ));
+        if ($posts && function_exists('get_the_post_thumbnail_url')) {
+            $url = get_the_post_thumbnail_url($posts[0], 'large');
+            if (is_string($url) && $url !== '') {
+                return $url;
+            }
+        }
+        return '';
+    }
+}
+
+if (!function_exists('nj_colecciones_puntos')) {
+    function nj_colecciones_puntos($items) {
+        if (!$items) {
+            return array();
+        }
+        $items[0]['reciente'] = true;
+        foreach ($items as $index => $item) {
+            if ($index === 0) {
+                $items[$index]['spot'] = 'recent';
+            } elseif ($index === 1) {
+                $items[$index]['spot'] = 'side';
+            } elseif ($index < 4) {
+                $items[$index]['spot'] = 'mid';
+            } else {
+                $items[$index]['spot'] = 'more';
+            }
+        }
+        return $items;
+    }
+}
+
+if (!function_exists('nj_colecciones_preview')) {
+    function nj_colecciones_preview() {
+        $slots = nj_slots_data();
+        $catalog = isset($slots['catalogs']['colecciones']) ? $slots['catalogs']['colecciones'] : array();
+        $pills = isset($catalog['pills']) ? $catalog['pills'] : array();
+        $peso = array('especiales' => 3, 'cuentos' => 2, 'basicos' => 1);
+        $groups = array();
+        foreach ($pills as $pill) {
+            $groups[$pill['id']] = array(
+                'id' => $pill['id'],
+                'label' => $pill['label'],
+                'href' => 'galeria.php?seccion=colecciones&tipo=' . rawurlencode($pill['id']),
+                'image' => '',
+                'lead' => '',
+                'reciente' => false,
+                'todas' => 'galeria.php?seccion=colecciones',
+                'peso' => isset($peso[$pill['id']]) ? $peso[$pill['id']] : 0,
+            );
+        }
+        foreach ($slots['catalog_products'] as $product) {
+            if (!isset($product['section']) || $product['section'] !== 'colecciones') {
+                continue;
+            }
+            $type = isset($product['type']) ? $product['type'] : '';
+            if (!isset($groups[$type]) || $groups[$type]['image'] !== '') {
+                continue;
+            }
+            $groups[$type]['image'] = function_exists('nj_img') ? nj_img($product['src']) : $product['src'];
+        }
+        $items = array_values($groups);
+        usort($items, function ($a, $b) {
+            return $b['peso'] <=> $a['peso'];
+        });
+        return nj_colecciones_puntos($items);
+    }
+}
+
+if (!function_exists('nj_colecciones_lista')) {
+    function nj_colecciones_lista() {
+        if (defined('NJ_PREVIEW') || !function_exists('get_terms')) {
+            return nj_colecciones_preview();
+        }
+        $parent = nj_colecciones_padre();
+        if (!$parent || !isset($parent->term_id)) {
+            return array();
+        }
+        $parent_link = get_term_link($parent);
+        if (is_wp_error($parent_link) || !$parent_link) {
+            $parent_link = '';
+        }
+        $children = get_terms(array(
+            'taxonomy' => 'product_cat',
+            'hide_empty' => false,
+            'parent' => (int) $parent->term_id,
+        ));
+        if (is_wp_error($children) || !$children) {
+            return nj_colecciones_desde_menu($parent);
+        }
+        $items = array();
+        foreach ($children as $child) {
+            $link = get_term_link($child);
+            if (is_wp_error($link) || !$link) {
+                continue;
+            }
+            $lead = function_exists('term_description') ? term_description($child->term_id, 'product_cat') : '';
+            $lead = trim(wp_strip_all_tags((string) $lead));
+            $items[] = array(
+                'id' => (int) $child->term_id,
+                'label' => $child->name,
+                'href' => $link,
+                'image' => nj_coleccion_foto($child->term_id),
+                'lead' => $lead,
+                'reciente' => false,
+                'todas' => $parent_link,
+                'tiempo' => nj_coleccion_tiempo($child->term_id),
+            );
+        }
+        usort($items, function ($a, $b) {
+            if ($a['tiempo'] === $b['tiempo']) {
+                return $b['id'] <=> $a['id'];
+            }
+            return $b['tiempo'] <=> $a['tiempo'];
+        });
+        return nj_colecciones_puntos($items);
+    }
+}
+
+if (!function_exists('nj_coleccion_term_de_enlace')) {
+    function nj_coleccion_term_de_enlace($href, $label) {
+        $slug = '';
+        $path = function_exists('wp_parse_url') ? wp_parse_url((string) $href, PHP_URL_PATH) : parse_url((string) $href, PHP_URL_PATH);
+        if (is_string($path) && $path !== '') {
+            $slug = basename(trim($path, '/'));
+        }
+        if ($slug !== '' && $slug !== 'colecciones' && function_exists('get_term_by')) {
+            $term = get_term_by('slug', $slug, 'product_cat');
+            if ($term && !is_wp_error($term)) {
+                return $term;
+            }
+        }
+        $label = trim((string) $label);
+        if ($label !== '' && function_exists('get_term_by')) {
+            $term = get_term_by('name', $label, 'product_cat');
+            if ($term && !is_wp_error($term)) {
+                return $term;
+            }
+        }
+        return null;
+    }
+}
+
+if (!function_exists('nj_colecciones_desde_menu')) {
+    function nj_colecciones_desde_menu($parent) {
+        $children = array();
+        if (!defined('NJ_PREVIEW') && function_exists('nj_tema_menu_live')) {
+            $saved = nj_tema_menu_live();
+            if (is_array($saved) && !empty($saved['collections']['children']) && is_array($saved['collections']['children'])) {
+                $children = $saved['collections']['children'];
+            }
+        }
+        if (!$children && function_exists('nj_slots_data')) {
+            $menu = nj_slots_data()['menu'];
+            if (!empty($menu['collections']['children']) && is_array($menu['collections']['children'])) {
+                $children = $menu['collections']['children'];
+            }
+        }
+        $parent_id = ($parent && isset($parent->term_id)) ? (int) $parent->term_id : 0;
+        $parent_link = '';
+        if ($parent_id && function_exists('get_term_link')) {
+            $link = get_term_link($parent);
+            if (!is_wp_error($link) && $link) {
+                $parent_link = $link;
+            }
+        }
+        $items = array();
+        $seen = array();
+        foreach ($children as $child) {
+            if (!is_array($child)) {
+                continue;
+            }
+            $term = nj_coleccion_term_de_enlace(isset($child['href']) ? $child['href'] : '', isset($child['label']) ? $child['label'] : '');
+            if (!$term || (int) $term->term_id === $parent_id || isset($seen[(int) $term->term_id])) {
+                continue;
+            }
+            $seen[(int) $term->term_id] = true;
+            $link = function_exists('get_term_link') ? get_term_link($term) : '';
+            if (is_wp_error($link) || !$link) {
+                $link = isset($child['href']) ? $child['href'] : '';
+            }
+            $items[] = array(
+                'id' => (int) $term->term_id,
+                'label' => $term->name,
+                'href' => $link,
+                'image' => nj_coleccion_foto($term->term_id),
+                'lead' => '',
+                'reciente' => false,
+                'todas' => $parent_link,
+                'tiempo' => nj_coleccion_tiempo($term->term_id),
+            );
+        }
+        usort($items, function ($a, $b) {
+            if ($a['tiempo'] === $b['tiempo']) {
+                return $b['id'] <=> $a['id'];
+            }
+            return $b['tiempo'] <=> $a['tiempo'];
+        });
+        return nj_colecciones_puntos($items);
+    }
+}
+
+if (!function_exists('nj_colecciones_menu')) {
+    function nj_colecciones_menu($menu) {
+        if (!is_array($menu) || empty($menu['collections']) || !is_array($menu['collections'])) {
+            return $menu;
+        }
+        $lista = nj_colecciones_lista();
+        if (!$lista) {
+            return $menu;
+        }
+        $children = array();
+        foreach ($lista as $item) {
+            $children[] = array(
+                'label' => $item['label'],
+                'href' => $item['href'],
+                'reciente' => !empty($item['reciente']),
+                'image' => isset($item['image']) ? $item['image'] : '',
+                'spot' => isset($item['spot']) ? $item['spot'] : 'more',
+            );
+        }
+        $menu['collections']['mosaico'] = true;
+        $menu['collections']['children'] = $children;
+        if (!empty($lista[0]['todas'])) {
+            $menu['collections']['href'] = $lista[0]['todas'];
+        }
+        return $menu;
+    }
+}
+
+if (!function_exists('nj_menu_vistas')) {
+    function nj_menu_vistas() {
+        return array(
+            'bebes' => array('Pijamas', 'Conjuntos', 'Tutus', 'Personalizados', 'Accesorios', 'Baby showers'),
+            'ninas' => array('Pijamas', 'Vestidos', 'Blusas', 'Faldas', 'Pantalones', 'Shorts', 'Accesorios', 'Vestidos de baño', 'Escolar'),
+        );
+    }
+}
+
+if (!function_exists('nj_term_por_nombre')) {
+    function nj_term_por_nombre($label) {
+        if (!function_exists('get_terms')) {
+            return null;
+        }
+        $key = nj_menu_key($label);
+        $terms = get_terms(array(
+            'taxonomy' => 'product_cat',
+            'hide_empty' => false,
+        ));
+        if (is_wp_error($terms) || !$terms) {
+            return null;
+        }
+        foreach ($terms as $term) {
+            if (nj_menu_key($term->name) === $key || nj_menu_key($term->slug) === $key) {
+                return $term;
+            }
+        }
+        return null;
+    }
+}
+
+if (!function_exists('nj_vista_enlace')) {
+    function nj_vista_enlace($label, $padre) {
+        $term = nj_term_por_nombre($label);
+        if ($term && function_exists('get_term_link')) {
+            $link = get_term_link($term);
+            if (!is_wp_error($link) && $link) {
+                return $link;
+            }
+        }
+        $base = nj_section_link($padre);
+        $sep = strpos($base, '?') === false ? '?' : '&';
+        return $base . $sep . 'nj=' . rawurlencode($label);
+    }
+}
+
+if (!function_exists('nj_menu_aplicar_vistas')) {
+    function nj_menu_aplicar_vistas($menu) {
+        if (empty($menu['departments']) || !is_array($menu['departments'])) {
+            return $menu;
+        }
+        $vistas = nj_menu_vistas();
+        foreach ($menu['departments'] as $i => $department) {
+            $key = nj_menu_key(isset($department['label']) ? $department['label'] : '');
+            if (!isset($vistas[$key])) {
+                continue;
+            }
+            $children = array();
+            foreach ($vistas[$key] as $label) {
+                $children[] = array(
+                    'label' => $label,
+                    'href' => nj_vista_enlace($label, $department['label']),
+                );
+            }
+            $menu['departments'][$i]['children'] = $children;
+        }
+        return $menu;
+    }
+}
+
 if (!function_exists('nj_menu')) {
     function nj_menu() {
         if (!defined('NJ_PREVIEW') && function_exists('nj_tema_menu_live')) {
             $saved = nj_tema_menu_live();
             if (is_array($saved)) {
-                return $saved;
+                return nj_colecciones_menu(nj_menu_aplicar_vistas($saved));
             }
         }
         $menu = nj_slots_data()['menu'];
@@ -240,17 +607,17 @@ if (!function_exists('nj_menu')) {
         }
         $menu['collections'] = nj_menu_links($menu['collections']);
         if (defined('NJ_PREVIEW')) {
-            return $menu;
+            return nj_colecciones_menu(nj_menu_aplicar_vistas($menu));
         }
         $index = nj_category_index();
         if (!$index) {
-            return $menu;
+            return nj_colecciones_menu(nj_menu_aplicar_vistas($menu));
         }
         foreach ($menu['departments'] as $i => $department) {
             $menu['departments'][$i] = nj_menu_apply($department, $index);
         }
         $menu['collections'] = nj_menu_apply($menu['collections'], $index);
-        return $menu;
+        return nj_colecciones_menu(nj_menu_aplicar_vistas($menu));
     }
 }
 

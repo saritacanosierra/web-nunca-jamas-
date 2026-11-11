@@ -16,6 +16,8 @@ if (!function_exists('nj_hero_blank')) {
             'text' => '',
             'button' => '',
             'color' => '#64bfae',
+            'html' => '',
+            'alto' => 0,
         );
     }
 }
@@ -80,10 +82,33 @@ if (!function_exists('nj_hero_sanitize_row')) {
         $slide['text'] = nj_hero_note(isset($row['text']) ? $row['text'] : '');
         $slide['button'] = nj_hero_plain(isset($row['button']) ? $row['button'] : '');
         $slide['color'] = nj_hero_color(isset($row['color']) ? $row['color'] : '');
+        $html = isset($row['html']) ? (string) $row['html'] : '';
+        if (strlen($html) > 12000) {
+            $html = substr($html, 0, 12000);
+        }
+        $slide['html'] = function_exists('nj_regalo_html') ? nj_regalo_html($html) : '';
+        $slide['alto'] = nj_hero_alto(isset($row['alto']) ? $row['alto'] : '');
         if ($slide['image']) {
             $slide['src'] = '';
         }
         return $slide;
+    }
+}
+
+if (!function_exists('nj_hero_alto')) {
+    function nj_hero_alto($value) {
+        $value = trim((string) $value);
+        if ($value === '' || (int) $value === 0) {
+            return 0;
+        }
+        $number = (int) $value;
+        if ($number < 320) {
+            return 320;
+        }
+        if ($number > 1600) {
+            return 1600;
+        }
+        return $number;
     }
 }
 
@@ -93,7 +118,8 @@ if (!function_exists('nj_hero_is_usable')) {
         if (($slide['type'] ?? 'image') === 'image') {
             return $has_image;
         }
-        return $slide['title'] !== '' || $slide['text'] !== '' || $slide['eyebrow'] !== '' || $has_image;
+        $html = isset($slide['html']) ? trim((string) $slide['html']) : '';
+        return $html !== '' || $slide['title'] !== '' || $slide['text'] !== '' || $slide['eyebrow'] !== '' || $has_image;
     }
 }
 
@@ -163,8 +189,8 @@ if (!function_exists('nj_hero_admin_assets')) {
             wp_enqueue_media();
         }
         $uri = get_template_directory_uri();
-        wp_enqueue_style('nj-hero-admin', $uri . '/assets/hero-admin.css', array(), '1.0.0');
-        wp_enqueue_script('nj-hero-admin', $uri . '/assets/hero-admin.js', array('jquery'), '1.0.0', true);
+        wp_enqueue_style('nj-hero-admin', $uri . '/assets/hero-admin.css', array(), '1.0.4');
+        wp_enqueue_script('nj-hero-admin', $uri . '/assets/hero-admin.js', array('jquery'), '1.0.3', true);
     }
 }
 add_action('admin_enqueue_scripts', 'nj_hero_admin_assets');

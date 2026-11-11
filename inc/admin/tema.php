@@ -3,6 +3,13 @@
  * Pantalla de Editar el tema. Los datos viven en inc/tema.php.
  */
 
+if (!function_exists('nj_tema_secreto')) {
+    function nj_tema_secreto($name, $filled) {
+        $value = $filled && function_exists('nj_pagos_secreto_mascara') ? nj_pagos_secreto_mascara() : '';
+        echo '<input type="password" name="' . esc_attr($name) . '" value="' . esc_attr($value) . '" autocomplete="new-password">';
+    }
+}
+
 if (!function_exists('nj_tema_page_select')) {
     function nj_tema_page_select($name, $selected) {
         $pages = function_exists('get_pages') ? get_pages(array(
@@ -202,6 +209,10 @@ if (!function_exists('nj_tema_admin_page')) {
                           <button type="button" class="button button-primary" data-nj-pick>Elegir logo</button>
                           <button type="button" class="button" data-nj-clear>Quitar</button>
                         </p>
+                        <label class="nj-promo-alto">Tamaño del logo
+                          <input type="number" min="40" max="200" name="logo_alto" value="<?php echo (int) $settings['logo_alto']; ?>">
+                          <small>Alto en el encabezado, de 40 a 200 px. 86 es el tamaño de ahora.</small>
+                        </label>
                       </div>
                     </div>
                     <div class="nj-photo nj-photo--square" data-nj-photo>
@@ -323,7 +334,8 @@ if (!function_exists('nj_tema_admin_page')) {
                 </section>
                 <section class="nj-screen" data-screen="ayuda" id="ayuda">
                   <h2>Ayuda</h2>
-                  <p>Preguntas, envíos, cambios y la guía de tallas. La foto queda a un lado y el texto al otro. Agrega, cambia o quita cada texto. Un correo escrito en el texto se vuelve enlace solo.</p>
+                  <p>Las cuatro páginas van juntas. La foto es una miniatura. Abre una página para cambiar sus textos. Un correo escrito en el texto se vuelve enlace solo.</p>
+                  <div class="nj-help-grid">
                   <?php
                     $nj_help_pages = array(
                         'preguntas' => 'Preguntas frecuentes',
@@ -349,10 +361,8 @@ if (!function_exists('nj_tema_admin_page')) {
                         );
                         $nj_help_name = 'ayuda[' . $nj_help_key . ']';
                   ?>
-                    <div class="nj-menu-group is-open nj-help-page">
-                      <h3><?php echo esc_html($nj_help_label); ?></h3>
-                      <div class="nj-menu-body">
-                        <div class="nj-photo" data-nj-photo>
+                    <article class="nj-help-page">
+                      <div class="nj-photo" data-nj-photo>
                           <img alt=""<?php echo $nj_help_page['image_url'] === '' ? ' hidden' : ' src="' . esc_url($nj_help_page['image_url']) . '"'; ?>>
                           <div class="nj-photo-body">
                             <strong>Foto al lado del texto</strong>
@@ -364,6 +374,9 @@ if (!function_exists('nj_tema_admin_page')) {
                             <p class="nj-prenda-note">Si la quitas, vuelve la foto de la marca.</p>
                           </div>
                         </div>
+                      <details>
+                        <summary><?php echo esc_html($nj_help_label); ?></summary>
+                        <div class="nj-help-fields">
                         <label>Texto de entrada
                           <textarea name="<?php echo esc_attr($nj_help_name); ?>[lead]" rows="2"><?php echo esc_textarea($nj_help_page['lead']); ?></textarea>
                         </label>
@@ -389,9 +402,11 @@ if (!function_exists('nj_tema_admin_page')) {
                         <?php endif; ?>
                         <p class="nj-menu-subhead">Preguntas</p>
                         <?php nj_tema_help_list($nj_help_name . '[items]', 'answer', $nj_help_page['items'], 'Agregar pregunta', 12, array('q', 'a')); ?>
-                      </div>
-                    </div>
+                        </div>
+                      </details>
+                    </article>
                   <?php endforeach; ?>
+                  </div>
                 </section>
                 <section class="nj-screen" data-screen="portada" id="portada">
                   <h2>Ajustes de portada</h2>
@@ -460,13 +475,13 @@ if (!function_exists('nj_tema_admin_page')) {
                         <input type="text" name="wompi_public_key" value="<?php echo esc_attr(isset($nj_wompi['public_key']) ? $nj_wompi['public_key'] : ''); ?>" autocomplete="off">
                       </label>
                       <label>Llave privada
-                        <input type="password" name="wompi_private_key" value="" placeholder="<?php echo empty($nj_wompi['private_key']) ? '' : 'Hay una llave guardada'; ?>" autocomplete="new-password">
+                        <?php nj_tema_secreto('wompi_private_key', !empty($nj_wompi['private_key'])); ?>
                       </label>
                       <label>Llave de eventos
-                        <input type="password" name="wompi_event_key" value="" placeholder="<?php echo empty($nj_wompi['event_secret_key']) ? '' : 'Hay una llave guardada'; ?>" autocomplete="new-password">
+                        <?php nj_tema_secreto('wompi_event_key', !empty($nj_wompi['event_secret_key'])); ?>
                       </label>
                       <label>Llave de integridad
-                        <input type="password" name="wompi_integrity_key" value="" placeholder="<?php echo empty($nj_wompi['integrity_key']) ? '' : 'Hay una llave guardada'; ?>" autocomplete="new-password">
+                        <?php nj_tema_secreto('wompi_integrity_key', !empty($nj_wompi['integrity_key'])); ?>
                       </label>
                     </div>
                     <h3>Llaves de prueba</h3>
@@ -475,19 +490,52 @@ if (!function_exists('nj_tema_admin_page')) {
                         <input type="text" name="wompi_test_public_key" value="<?php echo esc_attr(isset($nj_wompi['test_public_key']) ? $nj_wompi['test_public_key'] : ''); ?>" autocomplete="off">
                       </label>
                       <label>Llave privada de prueba
-                        <input type="password" name="wompi_test_private_key" value="" placeholder="<?php echo empty($nj_wompi['test_private_key']) ? '' : 'Hay una llave guardada'; ?>" autocomplete="new-password">
+                        <?php nj_tema_secreto('wompi_test_private_key', !empty($nj_wompi['test_private_key'])); ?>
                       </label>
                       <label>Eventos de prueba
-                        <input type="password" name="wompi_test_event_key" value="" placeholder="<?php echo empty($nj_wompi['test_event_secret_key']) ? '' : 'Hay una llave guardada'; ?>" autocomplete="new-password">
+                        <?php nj_tema_secreto('wompi_test_event_key', !empty($nj_wompi['test_event_secret_key'])); ?>
                       </label>
                       <label>Integridad de prueba
-                        <input type="password" name="wompi_test_integrity_key" value="" placeholder="<?php echo empty($nj_wompi['test_integrity_key']) ? '' : 'Hay una llave guardada'; ?>" autocomplete="new-password">
+                        <?php nj_tema_secreto('wompi_test_integrity_key', !empty($nj_wompi['test_integrity_key'])); ?>
                       </label>
                       <label>Dirección de eventos
                         <input type="text" readonly value="<?php echo esc_attr(home_url('/?wc-api=wc_wompi')); ?>">
                       </label>
                     </div>
-                    <p class="nj-prenda-note">Copia esa dirección en el comercio de Wompi, en eventos. Si dejas vacía una llave privada, se conserva la que ya estaba.</p>
+                    <p class="nj-prenda-note">Copia esa dirección en el comercio de Wompi, en eventos. Los puntos indican que la llave ya está guardada. Si no los cambias, se conserva.</p>
+                  <?php endif; ?>
+                  <?php
+                    $nj_addi = function_exists('nj_addi_settings') ? nj_addi_settings() : array('enabled' => 'no', 'slug' => '');
+                    $nj_addi_plugin = function_exists('nj_addi_plugin_on') && nj_addi_plugin_on();
+                    $nj_addi_gateway = $nj_addi_plugin && function_exists('nj_addi_plugin') ? nj_addi_plugin() : array();
+                    $nj_addi_has_id = !empty($nj_addi_gateway['prod_client_id']);
+                    $nj_addi_has_secret = !empty($nj_addi_gateway['prod_client_secret']);
+                  ?>
+                  <h3>Addi</h3>
+                  <?php if (!$nj_addi_plugin) : ?>
+                    <p>En cada ficha de $50.000 o más aparece el pago a cuotas. Para que Addi salga también al pagar, instala el plugin Addi en Plugins y vuelve a guardar aquí.</p>
+                  <?php elseif (function_exists('nj_addi_plugin_ready') && nj_addi_plugin_ready()) : ?>
+                    <p>Addi está listo. En el checkout aparece junto a Nequi, tarjeta o PSE, y el cliente termina el pago en Addi.</p>
+                  <?php else : ?>
+                    <p>Falta el ally slug, el Client ID o el Client Secret que Addi te envió. Con los tres, Addi aparece al pagar.</p>
+                  <?php endif; ?>
+                  <label class="nj-check"><input type="checkbox" name="addi_enabled" value="1" <?php checked($nj_addi['enabled'] === 'yes'); ?>> Mostrar Addi</label>
+                  <div class="nj-tema-fields">
+                    <label>Ally slug
+                      <input type="text" name="addi_slug" value="<?php echo esc_attr($nj_addi['slug']); ?>" autocomplete="off" placeholder="tu-tienda-ecommerce">
+                    </label>
+                    <?php if ($nj_addi_plugin) : ?>
+                      <label>Client ID
+                        <input type="text" name="addi_client_id" value="<?php echo esc_attr($nj_addi_has_id ? $nj_addi_gateway['prod_client_id'] : ''); ?>" autocomplete="off">
+                      </label>
+                      <label>Client Secret
+                        <?php nj_tema_secreto('addi_client_secret', $nj_addi_has_secret); ?>
+                      </label>
+                    <?php endif; ?>
+                  </div>
+                  <?php if ($nj_addi_plugin) : ?>
+                    <label class="nj-check"><input type="checkbox" name="addi_testmode" value="1" <?php checked(isset($nj_addi_gateway['testmode']) && $nj_addi_gateway['testmode'] === 'yes'); ?>> Modo de pruebas de Addi</label>
+                    <p class="nj-prenda-note">Los puntos del Client Secret indican que ya está guardado. Si no los cambias, se conserva. El widget de la ficha lo pone el tema.</p>
                   <?php endif; ?>
                 </section>
                 <section class="nj-screen" data-screen="css" id="css">

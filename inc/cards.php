@@ -183,6 +183,36 @@ if (!function_exists('nj_card_variations')) {
     }
 }
 
+if (!function_exists('nj_card_foto')) {
+    function nj_card_foto($item) {
+        static $shown = 0;
+        $shown++;
+        $item = is_array($item) ? $item : array();
+        $alt = isset($item['alt']) ? (string) $item['alt'] : '';
+        $eager = $shown <= 4;
+        $id = isset($item['image_id']) ? (int) $item['image_id'] : 0;
+        if ($id > 0 && function_exists('wp_get_attachment_image')) {
+            echo wp_get_attachment_image($id, 'woocommerce_thumbnail', false, array(
+                'class' => 'product-card__photo',
+                'alt' => $alt,
+                'loading' => $eager ? 'eager' : 'lazy',
+                'fetchpriority' => $shown <= 2 ? 'high' : 'low',
+                'decoding' => 'async',
+                'sizes' => '(max-width: 700px) 50vw, 280px',
+            ));
+            return;
+        }
+        $src = isset($item['image']) ? (string) $item['image'] : '';
+        echo '<img class="product-card__photo" width="600" height="800" decoding="async"';
+        if ($shown <= 2) {
+            echo ' fetchpriority="high"';
+        } elseif (!$eager) {
+            echo ' loading="lazy"';
+        }
+        echo ' src="' . esc_url($src) . '" alt="' . esc_attr($alt) . '">';
+    }
+}
+
 if (!function_exists('nj_card_from_product')) {
     function nj_card_from_product($product) {
         $extra = nj_card_extra_images($product);
@@ -195,6 +225,7 @@ if (!function_exists('nj_card_from_product')) {
             'id' => $product->get_id(),
             'variations' => nj_card_variations($product),
             'image' => $image,
+            'image_id' => method_exists($product, 'get_image_id') ? (int) $product->get_image_id() : 0,
             'hover' => isset($extra[0]) ? $extra[0] : '',
             'gallery' => nj_card_gallery($image, $extra),
             'alt' => $product->get_name(),

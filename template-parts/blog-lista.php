@@ -1,4 +1,8 @@
 <?php
+$nj_blog_texto = function ($key, $fallback) {
+    $value = function_exists('nj_espacio_texto') ? nj_espacio_texto($key) : '';
+    return $value !== '' ? $value : $fallback;
+};
 $query = function_exists('nj_blog_query') ? nj_blog_query() : null;
 $posts = ($query && !empty($query->posts)) ? $query->posts : array();
 $featured = $posts ? array_shift($posts) : null;
@@ -6,9 +10,9 @@ $featured = $posts ? array_shift($posts) : null;
 <main class="blog">
   <header class="blog-mast">
     <div class="wrap">
-      <p class="blog-kicker">Cuentos</p>
-      <h1>Historias para leer juntos</h1>
-      <p>Cuentos y notas sobre por qué leer en la niñez acompaña el día, la noche y la forma de nombrar lo que se siente.</p>
+      <p class="blog-kicker"><?php echo esc_html($nj_blog_texto('blog_kicker', 'Cuentos')); ?></p>
+      <h1><?php echo esc_html($nj_blog_texto('blog_title', 'Historias para leer juntos')); ?></h1>
+      <p><?php echo esc_html($nj_blog_texto('blog_lead', 'Cuentos y notas sobre por qué leer en la niñez acompaña el día, la noche y la forma de nombrar lo que se siente.')); ?></p>
     </div>
   </header>
 
@@ -26,11 +30,11 @@ $featured = $posts ? array_shift($posts) : null;
           <?php endif; ?>
         </a>
         <div class="blog-feature__copy">
-          <p class="blog-kicker">El más reciente</p>
+          <p class="blog-kicker"><?php echo esc_html($nj_blog_texto('blog_recent', 'El más reciente')); ?></p>
           <h2><a href="<?php echo esc_url(get_permalink($featured)); ?>"><?php echo esc_html(get_the_title($featured)); ?></a></h2>
           <p><?php echo esc_html(function_exists('get_the_excerpt') ? get_the_excerpt($featured) : (isset($featured->post_excerpt) ? $featured->post_excerpt : '')); ?></p>
           <p class="blog-meta"><?php echo esc_html(get_the_date('', $featured)); ?> · <?php echo esc_html(nj_blog_minutes($featured->ID)); ?></p>
-          <a class="btn btn-yellow" href="<?php echo esc_url(get_permalink($featured)); ?>">Leer el cuento</a>
+          <a class="btn btn-yellow" href="<?php echo esc_url(get_permalink($featured)); ?>"><?php echo esc_html($nj_blog_texto('blog_read', 'Leer el cuento')); ?></a>
         </div>
       </article>
 

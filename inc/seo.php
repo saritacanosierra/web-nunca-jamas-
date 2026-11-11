@@ -108,8 +108,11 @@ if (!function_exists('nj_seo_url')) {
             return wc_get_page_permalink('shop');
         }
         if (function_exists('is_tax') && (is_tax() || is_category() || is_tag())) {
-            $term = get_queried_object();
-            $link = ($term && isset($term->term_id)) ? get_term_link($term) : '';
+            $term = null;
+            if (function_exists('get_queried_object')) {
+                $term = get_queried_object();
+            }
+            $link = (is_object($term) && isset($term->term_id) && function_exists('get_term_link')) ? get_term_link($term) : '';
             if (is_wp_error($link) || !is_string($link)) {
                 return '';
             }
@@ -136,9 +139,15 @@ if (!function_exists('nj_seo_description')) {
             return nj_seo_clip('Tienda Nunca Jamás. Elige la prenda y la talla. ' . $brand);
         }
         if (function_exists('is_product_category') && is_product_category()) {
-            $term = get_queried_object();
-            $text = ($term && isset($term->term_id) && function_exists('term_description')) ? term_description($term->term_id, 'product_cat') : '';
-            if (nj_seo_clip($text) === '' && $term) {
+            $term = null;
+            if (function_exists('get_queried_object')) {
+                $term = get_queried_object();
+            }
+            $text = '';
+            if (is_object($term) && isset($term->term_id) && function_exists('term_description')) {
+                $text = term_description($term->term_id, 'product_cat');
+            }
+            if (nj_seo_clip($text) === '' && is_object($term) && isset($term->name) && $term->name !== '') {
                 $text = 'Compra ' . $term->name . ' en Nunca Jamás. ' . $brand;
             }
             return nj_seo_clip($text);
@@ -180,7 +189,7 @@ if (!function_exists('nj_seo_title_parts')) {
     function nj_seo_title_parts($parts) {
         $parts['site'] = 'Nunca Jamás';
         if (function_exists('is_front_page') && is_front_page()) {
-            $parts['title'] = 'Ropa de cuento para niñas';
+            $parts['title'] = function_exists('nj_espacio_texto') ? nj_espacio_texto('seo_title') : 'Ropa de cuento para niñas';
             unset($parts['tagline']);
         }
         if (isset($parts['title']) && nj_seo_clip($parts['title'], 55) !== '') {
@@ -273,17 +282,20 @@ if (!function_exists('nj_seo_crumbs')) {
             $crumbs[] = array('name' => 'Tienda', 'url' => $shop);
         }
         if (function_exists('is_product_category') && is_product_category()) {
-            $term = get_queried_object();
-            if ($term && function_exists('get_ancestors')) {
+            $term = null;
+            if (function_exists('get_queried_object')) {
+                $term = get_queried_object();
+            }
+            if (is_object($term) && isset($term->term_id) && function_exists('get_ancestors')) {
                 $ancestors = array_reverse(get_ancestors($term->term_id, 'product_cat'));
                 foreach ($ancestors as $ancestor_id) {
-                    $ancestor = get_term($ancestor_id, 'product_cat');
-                    $link = ($ancestor && !is_wp_error($ancestor)) ? get_term_link($ancestor) : '';
+                    $ancestor = function_exists('get_term') ? get_term($ancestor_id, 'product_cat') : null;
+                    $link = ($ancestor && !is_wp_error($ancestor) && function_exists('get_term_link')) ? get_term_link($ancestor) : '';
                     if ($ancestor && !is_wp_error($ancestor) && is_string($link)) {
                         $crumbs[] = array('name' => $ancestor->name, 'url' => $link);
                     }
                 }
-                $self = get_term_link($term);
+                $self = function_exists('get_term_link') ? get_term_link($term) : '';
                 $crumbs[] = array('name' => $term->name, 'url' => is_string($self) ? $self : '');
             }
             return $crumbs;

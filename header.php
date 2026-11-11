@@ -3,6 +3,8 @@ require_once __DIR__ . '/inc/helpers.php';
 require_once __DIR__ . '/inc/shop.php';
 require_once __DIR__ . '/inc/cards.php';
 require_once __DIR__ . '/inc/catalog.php';
+require_once __DIR__ . '/inc/colecciones.php';
+require_once __DIR__ . '/inc/testimonios.php';
 require_once __DIR__ . '/inc/portada.php';
 require_once __DIR__ . '/inc/ficha.php';
 require_once __DIR__ . '/inc/tema.php';
@@ -22,11 +24,20 @@ $nj_document_title = isset($nj_document_title) ? (string) $nj_document_title : '
   <?php if (defined('NJ_PREVIEW')) : ?>
   <title><?php echo esc_html($nj_document_title); ?></title>
   <?php endif; ?>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Baloo+2:wght@700;800&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" href="assets/fonts/montserrat-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/fonts/fuentes.css?v=<?php echo rawurlencode(NJ_VERSION); ?>">
   <?php if (defined('NJ_PREVIEW')) : ?>
+    <?php $nj_pantalla = function_exists('nj_pantalla') ? nj_pantalla() : array(); ?>
     <link rel="stylesheet" href="assets/home.css?v=<?php echo rawurlencode(NJ_VERSION); ?>">
+    <link rel="stylesheet" href="assets/css/cuenta.css?v=<?php echo rawurlencode(NJ_VERSION); ?>">
+    <?php if (!empty($nj_pantalla['catalogo'])) : ?>
+    <link rel="stylesheet" href="assets/css/catalogo.css?v=<?php echo rawurlencode(NJ_VERSION); ?>">
+    <?php endif; ?>
+    <?php if (!empty($nj_pantalla['ficha'])) : ?>
+    <link rel="stylesheet" href="assets/fonts/vibes.css?v=<?php echo rawurlencode(NJ_VERSION); ?>">
+    <link rel="stylesheet" href="assets/css/ficha.css?v=<?php echo rawurlencode(NJ_VERSION); ?>">
+    <?php endif; ?>
   <?php endif; ?>
   <?php if (function_exists('wp_head')) { wp_head(); } ?>
 </head>
@@ -98,7 +109,7 @@ $nj_document_title = isset($nj_document_title) ? (string) $nj_document_title : '
       <?php endforeach; ?>
       <a href="<?php echo esc_url($nj_menu['collections']['href']); ?>"><?php nj_e($nj_menu['collections']['label']); ?></a>
       <?php foreach ($nj_menu['collections']['children'] as $child) : ?>
-        <a class="nav-drawer__child" href="<?php echo esc_url($child['href']); ?>"><?php nj_e($child['label']); ?></a>
+        <a class="nav-drawer__child" href="<?php echo esc_url($child['href']); ?>"><?php nj_e($child['label']); ?><?php echo !empty($child['reciente']) ? ' · Nueva' : ''; ?></a>
       <?php endforeach; ?>
       <a href="<?php echo esc_url($nj_menu['newest']['href']); ?>"><?php nj_e($nj_menu['newest']['label']); ?></a>
       <button type="button" data-bag-open>Bolsa</button>

@@ -1,9 +1,12 @@
 <?php
 require_once __DIR__ . '/inc/helpers.php';
 require_once get_template_directory() . '/inc/shop.php';
+require_once get_template_directory() . '/inc/colecciones.php';
+require_once get_template_directory() . '/inc/testimonios.php';
 require_once get_template_directory() . '/inc/bolsa.php';
 require_once get_template_directory() . '/inc/pagos.php';
 require_once get_template_directory() . '/inc/pedido.php';
+require_once get_template_directory() . '/inc/pedidos.php';
 require_once get_template_directory() . '/inc/personalizado.php';
 require_once get_template_directory() . '/inc/cards.php';
 require_once get_template_directory() . '/inc/catalog.php';
@@ -75,20 +78,45 @@ function nj_release_theme_footer() {
 add_action('wp', 'nj_release_theme_footer', 999);
 add_action('template_redirect', 'nj_release_theme_footer', 999);
 
+function nj_fuentes_preload() {
+    $uri = get_template_directory_uri();
+    echo '<link rel="preload" href="' . esc_url($uri . '/assets/fonts/montserrat-latin.woff2') . '" as="font" type="font/woff2" crossorigin>' . "\n";
+    echo '<link rel="preload" href="' . esc_url($uri . '/assets/fonts/anton-latin.woff2') . '" as="font" type="font/woff2" crossorigin>' . "\n";
+}
+add_action('wp_head', 'nj_fuentes_preload', 1);
+
 function nj_assets() {
-    wp_enqueue_style(
-        'nj-fonts',
-        'https://fonts.googleapis.com/css2?family=Anton&family=Baloo+2:wght@700;800&family=Montserrat:wght@400;500;600;700&display=swap',
-        array(),
-        null
-    );
-    wp_enqueue_style('nj-home', get_template_directory_uri() . '/assets/home.css', array('nj-fonts'), NJ_VERSION);
-    $nj_blog_screen = function_exists('is_page') && (is_page('blog') || is_singular('post') || is_home() || is_category());
-    if ($nj_blog_screen) {
-        wp_enqueue_style('nj-blog', get_template_directory_uri() . '/assets/css/blog.css', array('nj-home'), NJ_VERSION);
+    $uri = get_template_directory_uri();
+    wp_enqueue_style('nj-fonts', $uri . '/assets/fonts/fuentes.css', array(), NJ_VERSION);
+    $screen = function_exists('nj_pantalla') ? nj_pantalla() : array();
+    wp_enqueue_style('nj-home', $uri . '/assets/home.css', array('nj-fonts'), NJ_VERSION);
+    wp_enqueue_style('nj-cuenta', $uri . '/assets/css/cuenta.css', array('nj-home'), NJ_VERSION);
+    if (!empty($screen['catalogo'])) {
+        wp_enqueue_style('nj-catalogo', $uri . '/assets/css/catalogo.css', array('nj-home'), NJ_VERSION);
     }
-    wp_enqueue_script('nj-bolsa', get_template_directory_uri() . '/assets/bolsa.js', array(), NJ_VERSION, true);
-    wp_enqueue_script('nj-tienda', get_template_directory_uri() . '/assets/tienda.js', array('nj-bolsa'), NJ_VERSION, true);
+    if (!empty($screen['ficha'])) {
+        wp_enqueue_style('nj-ficha-font', $uri . '/assets/fonts/vibes.css', array(), NJ_VERSION);
+        wp_enqueue_style('nj-ficha', $uri . '/assets/css/ficha.css', array('nj-home'), NJ_VERSION);
+    }
+    if (!empty($screen['checkout'])) {
+        wp_enqueue_style('nj-checkout', $uri . '/assets/css/checkout.css', array('nj-home'), NJ_VERSION);
+    }
+    if (!empty($screen['pedido'])) {
+        wp_enqueue_style('nj-pedido', $uri . '/assets/css/pedido.css', array('nj-home'), NJ_VERSION);
+    }
+    if (!empty($screen['blog'])) {
+        wp_enqueue_style('nj-blog', $uri . '/assets/css/blog.css', array('nj-home'), NJ_VERSION);
+    }
+    wp_enqueue_script('nj-bolsa', $uri . '/assets/bolsa.js', array(), NJ_VERSION, true);
+    if (!empty($screen['tienda'])) {
+        wp_enqueue_script('nj-tienda', $uri . '/assets/tienda.js', array('nj-bolsa'), NJ_VERSION, true);
+    }
+    if (!empty($screen['ficha_js'])) {
+        wp_enqueue_script('nj-ficha', $uri . '/assets/ficha.js', array('nj-tienda'), NJ_VERSION, true);
+    }
+    if (!empty($screen['checkout_js'])) {
+        wp_enqueue_script('nj-checkout', $uri . '/assets/checkout.js', array(), NJ_VERSION, true);
+    }
     if (function_exists('wp_localize_script') && function_exists('wp_create_nonce') && function_exists('WC') && WC() && function_exists('home_url') && function_exists('add_query_arg')) {
         wp_localize_script('nj-bolsa', 'njShop', array(
             'ajax' => add_query_arg('wc-ajax', 'add_to_cart', home_url('/')),

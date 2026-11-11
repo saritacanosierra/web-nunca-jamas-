@@ -109,9 +109,22 @@ if (!function_exists('nj_espacios_panel_promo')) {
               if ($kind === 'three_d' && trim($nj_title) === '') {
                   $nj_title = "EXPERIENCIA\n3D";
               }
+              if ($kind === 'three_d' && trim($nj_button) === '') {
+                  $nj_button = 'Ver la prenda';
+              }
+              $nj_box = nj_promo_metrics($row);
+              $nj_chip_lines = preg_split("/\r\n|\n|\r/", (string) $nj_title);
+              $nj_chip = isset($nj_chip_lines[0]) ? trim($nj_chip_lines[0]) : '';
+              if ($nj_chip === '') {
+                  $nj_chip = 'Texto';
+              }
               ?>
             <div class="nj-promo-text" data-nj-promo-copy data-nj-kind="<?php echo esc_attr($kind); ?>">
               <strong><?php echo esc_html($names[$kind]); ?></strong>
+              <label class="nj-promo-alto">Alto del contenedor
+                <input type="range" min="240" max="1200" step="10" name="espacios[<?php echo (int) $index; ?>][h]" value="<?php echo (int) $nj_box['h']; ?>">
+                <output><?php echo (int) $nj_box['h']; ?> px</output>
+              </label>
               <?php if ($kind !== 'gift') : ?>
                 <label>Texto pequeño
                   <input type="text" name="espacios[<?php echo (int) $index; ?>][kicker]" value="<?php echo esc_attr($nj_kicker); ?>">
@@ -120,11 +133,27 @@ if (!function_exists('nj_espacios_panel_promo')) {
               <label>Título
                 <textarea name="espacios[<?php echo (int) $index; ?>][title]" rows="2"><?php echo esc_textarea($nj_title); ?></textarea>
               </label>
-              <?php if ($kind !== 'three_d') : ?>
-                <label>Botón
-                  <input type="text" name="espacios[<?php echo (int) $index; ?>][button]" value="<?php echo esc_attr($nj_button); ?>">
+              <label>Botón
+                <input type="text" name="espacios[<?php echo (int) $index; ?>][button]" value="<?php echo esc_attr($nj_button); ?>">
+              </label>
+              <div class="nj-promo-stage" data-nj-promo-stage>
+                <button type="button" class="nj-promo-chip" data-nj-promo-chip style="left:<?php echo (int) $nj_box['x']; ?>%;top:<?php echo (int) $nj_box['y']; ?>%;"><?php echo esc_html($nj_chip); ?></button>
+              </div>
+              <div class="nj-promo-place">
+                <label>Horizontal
+                  <input type="number" min="0" max="100" name="espacios[<?php echo (int) $index; ?>][x]" value="<?php echo esc_attr((string) $nj_box['x']); ?>">
                 </label>
-              <?php endif; ?>
+                <label>Vertical
+                  <input type="number" min="0" max="100" name="espacios[<?php echo (int) $index; ?>][y]" value="<?php echo esc_attr((string) $nj_box['y']); ?>">
+                </label>
+                <label>Tamaño del título
+                  <input type="number" min="18" max="96" name="espacios[<?php echo (int) $index; ?>][size]" value="<?php echo esc_attr((string) $nj_box['size']); ?>">
+                </label>
+                <label>Tamaño del texto
+                  <input type="number" min="10" max="32" name="espacios[<?php echo (int) $index; ?>][small]" value="<?php echo esc_attr((string) $nj_box['small']); ?>">
+                </label>
+              </div>
+              <p class="nj-prenda-note">Arrastra el recuadro negro hasta el punto donde quieres el texto. El punto que queda es el centro. El alto alarga el contenedor hacia abajo y la fila usa el alto mayor.</p>
               <?php if ($kind === 'gift') : ?>
                 <label>Nota
                   <textarea name="espacios[<?php echo (int) $index; ?>][note]" rows="3"><?php echo esc_textarea($nj_note); ?></textarea>
@@ -154,6 +183,10 @@ if (!function_exists('nj_espacios_panel_promo')) {
                 <?php if ($kind === 'photo') : ?>
                   <label>Nombre
                     <input type="text" name="espacios[<?php echo (int) $index; ?>][label]" value="<?php echo esc_attr(isset($row['label']) ? $row['label'] : ''); ?>" placeholder="Nombre de la campaña">
+                  </label>
+                  <label class="nj-promo-alto">Alto del contenedor
+                    <input type="range" min="240" max="1200" step="10" name="espacios[<?php echo (int) $index; ?>][h]" value="<?php echo (int) nj_promo_metrics($row)['h']; ?>">
+                    <output><?php echo (int) nj_promo_metrics($row)['h']; ?> px</output>
                   </label>
                   <label class="nj-promo-html">HTML
                     <textarea name="espacios[<?php echo (int) $index; ?>][html]" rows="6" spellcheck="false"><?php echo esc_textarea(isset($row['html']) ? $row['html'] : ''); ?></textarea>
@@ -199,14 +232,14 @@ if (!function_exists('nj_espacios_panel_regalo')) {
         $categories = function_exists('nj_catalog_banner_rows') ? nj_catalog_banner_rows() : array();
         ?>
         <h2>Franja de la tienda</h2>
-        <p>Cada franja se muestra en la categoría que elijas. <strong>Toda la tienda</strong> se ve al entrar a la tienda y en las categorías que todavía no tienen la suya. Si una categoría está dentro de otra, usa la franja de la de afuera hasta que tenga la propia. La foto va a <strong>1200 × 400 px</strong>.</p>
+        <p>Marca todos los lugares donde se ve cada franja. <strong>Toda la tienda</strong> se ve al entrar a la tienda y en las categorías que todavía no tienen la suya. Si una categoría está dentro de otra, usa la franja de la de afuera hasta que tenga la propia. La foto va a <strong>1200 × 400 px</strong>.</p>
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
           <input type="hidden" name="action" value="nj_regalo">
           <?php wp_nonce_field('nj_regalo', 'nj_regalo_nonce'); ?>
           <div class="nj-franja-list" data-nj-franja-list>
             <?php foreach ($rows as $index => $banner) :
                 $src = nj_espacios_franja_src($banner);
-                $category = isset($banner['category']) ? (int) $banner['category'] : 0;
+                $places = function_exists('nj_regalo_places') ? nj_regalo_places($banner) : array(isset($banner['category']) ? (int) $banner['category'] : 0);
                 ?>
             <div class="nj-franja" data-nj-franja>
               <div class="nj-photo nj-regalo-card" data-nj-photo>
@@ -214,14 +247,13 @@ if (!function_exists('nj_espacios_panel_regalo')) {
                 <div class="nj-photo-body">
                   <input data-nj-id type="hidden" name="franjas[<?php echo (int) $index; ?>][image_id]" value="<?php echo esc_attr((string) (int) $banner['image_id']); ?>">
                   <?php nj_espacios_size('1200 × 400 px'); ?>
-                  <label>Se muestra en
-                    <select name="franjas[<?php echo (int) $index; ?>][category]">
-                      <option value="0"<?php echo $category === 0 ? ' selected' : ''; ?>>Toda la tienda</option>
-                      <?php foreach ($categories as $category_row) : ?>
-                        <option value="<?php echo (int) $category_row['id']; ?>"<?php echo $category === (int) $category_row['id'] ? ' selected' : ''; ?>><?php echo esc_html($category_row['label']); ?></option>
-                      <?php endforeach; ?>
-                    </select>
-                  </label>
+                  <fieldset class="nj-franja-places">
+                    <legend>Se muestra en</legend>
+                    <label class="nj-check"><input type="checkbox" name="franjas[<?php echo (int) $index; ?>][categories][]" value="0"<?php echo in_array(0, $places, true) ? ' checked' : ''; ?>> Toda la tienda</label>
+                    <?php foreach ($categories as $category_row) : ?>
+                      <label class="nj-check"><input type="checkbox" name="franjas[<?php echo (int) $index; ?>][categories][]" value="<?php echo (int) $category_row['id']; ?>"<?php echo in_array((int) $category_row['id'], $places, true) ? ' checked' : ''; ?>> <?php echo esc_html($category_row['label']); ?></label>
+                    <?php endforeach; ?>
+                  </fieldset>
                   <p class="nj-prenda-actions">
                     <button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button>
                     <button type="button" class="button" data-nj-clear>Quitar foto</button>
@@ -280,7 +312,26 @@ if (!function_exists('nj_espacios_panel_styles')) {
         <section class="nj-cat-block is-open" data-nj-cat-block="circulos">
           <div class="nj-cat-body">
             <p class="nj-cat-now">Estás editando la portada. <?php echo count($nj_style_rows); ?> círculos. La foto es cuadrada, <strong>400 × 400 px</strong>. Al guardar, el nombre crea o quita esa categoría en la tienda.</p>
-        <?php nj_espacios_form_open('styles'); ?>
+        <?php
+        nj_espacios_form_open('styles');
+        $nj_circulos = function_exists('nj_circulos_caja') ? nj_circulos_caja() : array('size' => 132, 'gap' => 28, 'place' => 'campanas');
+        ?>
+        <div class="nj-circulos-medidas">
+          <label>Tamaño
+            <input type="number" min="72" max="240" name="circulos[size]" value="<?php echo (int) $nj_circulos['size']; ?>">
+          </label>
+          <label>Separación
+            <input type="number" min="8" max="80" name="circulos[gap]" value="<?php echo (int) $nj_circulos['gap']; ?>">
+          </label>
+          <label>Dónde van
+            <select name="circulos[place]">
+              <option value="prendas"<?php echo $nj_circulos['place'] === 'prendas' ? ' selected' : ''; ?>>Después de las prendas</option>
+              <option value="campanas"<?php echo $nj_circulos['place'] === 'campanas' ? ' selected' : ''; ?>>Después de las campañas</option>
+              <option value="cuentos"<?php echo $nj_circulos['place'] === 'cuentos' ? ' selected' : ''; ?>>Después de los cuentos</option>
+            </select>
+          </label>
+        </div>
+        <p class="nj-prenda-note">El tamaño agranda cada círculo. La separación abre la fila a lo largo. El lugar mueve toda la fila en la portada. Subir y bajar cambia el orden.</p>
         <div class="nj-style-grid" data-nj-style-list>
           <?php foreach ($nj_style_rows as $index => $row) :
               $src = nj_espacio_url(isset($row['image']) ? $row['image'] : 0, isset($row['src']) ? $row['src'] : '');
@@ -298,6 +349,8 @@ if (!function_exists('nj_espacios_panel_styles')) {
                   <input type="text" name="espacios[<?php echo (int) $index; ?>][label]" value="<?php echo esc_attr(isset($row['label']) ? $row['label'] : ''); ?>">
                 </label>
                 <div class="nj-style-actions">
+                  <button type="button" class="button" data-nj-style-up>Subir</button>
+                  <button type="button" class="button" data-nj-style-down>Bajar</button>
                   <button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button>
                   <button type="button" class="button" data-nj-style-remove>Eliminar</button>
                 </div>
@@ -393,5 +446,74 @@ if (!function_exists('nj_espacios_panel_looks')) {
         </div>
         <p><button type="button" class="button" data-nj-look-add>Agregar look</button></p>
         <?php nj_espacios_form_close('Guardar looks');
+    }
+}
+
+if (!function_exists('nj_espacios_panel_textos')) {
+    function nj_espacios_panel_textos() {
+        $texts = nj_espacios_textos();
+        $fields = array(
+            'seo_h1' => array('Título principal de la portada', 'Se ve bajo el banner, junto al botón de la tienda. También lo lee Google. La frase y el botón se cambian en Franja de la portada.'),
+            'seo_title' => array('Título de la pestaña', 'Lo que sale en el navegador, antes de Nunca Jamás.'),
+            'prendas' => array('Título de las prendas', 'La sección de Lo nuevo y Colección.'),
+            'tab_nuevo' => array('Pestaña Lo nuevo', ''),
+            'mas_nuevo' => array('Botón de Lo nuevo', ''),
+            'tab_coleccion' => array('Pestaña Colección', ''),
+            'mas_coleccion' => array('Botón de Colección', ''),
+            'categorias' => array('Título de categorías', 'La fila de círculos.'),
+            'looks' => array('Título de looks', ''),
+            'looks_kicker' => array('Frase bajo los looks', ''),
+            'looks_note' => array('Texto bajo los looks', ''),
+            'blog_kicker' => array('Rótulo del blog', ''),
+            'blog_title' => array('Título del blog', ''),
+            'blog_lead' => array('Texto del blog', ''),
+            'blog_recent' => array('Rótulo del cuento reciente', ''),
+            'blog_read' => array('Botón de leer', ''),
+            'blog_more' => array('Título de sigue leyendo', ''),
+            'contacto' => array('Título de contacto en el pie', ''),
+        );
+        ?>
+        <h2>Títulos</h2>
+        <p>Estos textos salían fijos en la portada, el blog y el pie. Cámbialos y guarda. Si dejas uno vacío, vuelve el texto de siempre.</p>
+        <?php nj_espacios_form_open('textos'); ?>
+        <div class="nj-promo-texts">
+          <?php foreach ($fields as $key => $field) : ?>
+            <label class="nj-promo-text"><?php echo esc_html($field[0]); ?>
+              <?php if ($key === 'looks_note' || $key === 'blog_lead') : ?>
+                <textarea name="espacios[<?php echo esc_attr($key); ?>]" rows="3"><?php echo esc_textarea($texts[$key]); ?></textarea>
+              <?php else : ?>
+                <input type="text" name="espacios[<?php echo esc_attr($key); ?>]" value="<?php echo esc_attr($texts[$key]); ?>">
+              <?php endif; ?>
+              <?php if ($field[1] !== '') : ?>
+                <small><?php echo esc_html($field[1]); ?></small>
+              <?php endif; ?>
+            </label>
+          <?php endforeach; ?>
+        </div>
+        <?php nj_espacios_form_close('Guardar títulos');
+    }
+}
+
+if (!function_exists('nj_espacios_panel_oferta')) {
+    function nj_espacios_panel_oferta() {
+        $texts = nj_espacios_textos();
+        ?>
+        <h2>Franja de la portada</h2>
+        <p>Es la barra blanca bajo el banner: el título grande, la frase y el botón verde. Si dejas un campo vacío, vuelve el texto de siempre.</p>
+        <?php nj_espacios_form_open('textos'); ?>
+          <input type="hidden" name="nj_volver" value="oferta">
+          <div class="nj-promo-texts">
+            <label class="nj-promo-text">Título
+              <input type="text" name="espacios[seo_h1]" value="<?php echo esc_attr($texts['seo_h1']); ?>">
+            </label>
+            <label class="nj-promo-text">Frase
+              <input type="text" name="espacios[offer_lead]" value="<?php echo esc_attr($texts['offer_lead']); ?>">
+            </label>
+            <label class="nj-promo-text">Texto del botón
+              <input type="text" name="espacios[offer_button]" value="<?php echo esc_attr($texts['offer_button']); ?>">
+              <small>El botón abre la tienda.</small>
+            </label>
+          </div>
+        <?php nj_espacios_form_close('Guardar franja');
     }
 }

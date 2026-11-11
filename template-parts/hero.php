@@ -6,15 +6,22 @@ $nj_hero = array_values(array_filter(nj_hero_rows(), 'nj_hero_is_usable'));
 if (!$nj_hero) {
     return;
 }
+$nj_hero_alto = isset($nj_hero[0]['alto']) ? (int) $nj_hero[0]['alto'] : 0;
 ?>
-<section class="hero hero--banners<?php echo $nj_hero[0]['type'] === 'build' ? ' is-build' : ''; ?>" data-hero>
+<section class="hero hero--banners<?php echo $nj_hero[0]['type'] === 'build' ? ' is-build' : ''; ?><?php echo $nj_hero_alto > 0 ? ' has-alto' : ''; ?>"<?php echo $nj_hero_alto > 0 ? ' style="' . esc_attr('--hero-h:' . $nj_hero_alto . 'px') . '"' : ''; ?> data-hero>
   <?php foreach ($nj_hero as $i => $slide) :
       $src = nj_hero_src($slide);
       $build = $slide['type'] === 'build';
       $copy_only = $build && $src === '';
       ?>
-    <a class="hero__slide<?php echo $i === 0 ? ' is-active' : ''; ?><?php echo $build ? ' hero__slide--build' : ''; ?><?php echo $copy_only ? ' is-copy-only' : ''; ?>" href="<?php echo esc_url(nj_hero_href($slide)); ?>"<?php echo $build ? ' style="' . esc_attr('--hero-bg:' . $slide['color']) . '"' : ''; ?>>
-      <?php if ($build) : ?>
+    <?php
+      $nj_hero_html = ($build && !empty($slide['html']) && function_exists('nj_regalo_html')) ? nj_regalo_html($slide['html'], $src, $slide['alt']) : '';
+      $nj_hero_tag = $nj_hero_html !== '' ? 'div' : 'a';
+      ?>
+    <<?php echo $nj_hero_tag; ?> class="hero__slide<?php echo $i === 0 ? ' is-active' : ''; ?><?php echo $build ? ' hero__slide--build' : ''; ?><?php echo $copy_only ? ' is-copy-only' : ''; ?>" data-alto="<?php echo (int) (isset($slide['alto']) ? $slide['alto'] : 0); ?>"<?php echo $nj_hero_html === '' ? ' href="' . esc_url(nj_hero_href($slide)) . '"' : ''; ?><?php echo $build ? ' style="' . esc_attr('--hero-bg:' . $slide['color']) . '"' : ''; ?>>
+      <?php if ($nj_hero_html !== '') : ?>
+        <div class="hero__html"><?php echo $nj_hero_html; ?></div>
+      <?php elseif ($build) : ?>
         <span class="hero__build">
           <span class="hero__build-copy">
             <?php if ($slide['eyebrow'] !== '') : ?>
@@ -37,7 +44,7 @@ if (!$nj_hero) {
       <?php else : ?>
         <img src="<?php echo esc_url($src); ?>" alt="<?php echo esc_attr($slide['alt']); ?>"<?php echo $i === 0 ? ' fetchpriority="high" decoding="async"' : ' loading="lazy" decoding="async"'; ?>>
       <?php endif; ?>
-    </a>
+    </<?php echo $nj_hero_tag; ?>>
   <?php endforeach; ?>
   <button class="hero__arrow hero__arrow--prev" type="button" data-prev aria-label="Anterior">
     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5 L8 12 L15 19"/></svg>

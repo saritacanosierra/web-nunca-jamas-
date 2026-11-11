@@ -233,6 +233,29 @@ if (!function_exists('nj_whatsapp_pack')) {
     }
 }
 
+if (!function_exists('nj_whatsapp_ship')) {
+    function nj_whatsapp_ship($order, $transportadora, $guia) {
+        if (!$order) {
+            return;
+        }
+        $config = nj_whatsapp_config();
+        if ($config['token'] === '') {
+            return;
+        }
+        $customer = function_exists('nj_order_whatsapp') ? nj_order_whatsapp($order) : '';
+        if ($customer === '' || $transportadora === '' || $guia === '') {
+            return;
+        }
+        $result = nj_whatsapp_send($customer, 'nj_envio_cliente', array(
+            $order->get_billing_first_name() ? $order->get_billing_first_name() : 'hola',
+            (string) $order->get_order_number(),
+            $transportadora,
+            $guia,
+        ));
+        nj_whatsapp_note($order, $result, 'el cliente');
+    }
+}
+
 if (!function_exists('nj_whatsapp_templates')) {
     function nj_whatsapp_templates() {
         $home = nj_whatsapp_public_home();
@@ -281,6 +304,18 @@ if (!function_exists('nj_whatsapp_templates')) {
                         'type' => 'BODY',
                         'text' => 'Hola {{1}}, estamos empacando tu pedido {{2}}. Te avisamos por este WhatsApp cuando salga el envío. Gracias.',
                         'example' => array('body_text' => array(array('Ana', '2501'))),
+                    ),
+                ),
+            ),
+            array(
+                'name' => 'nj_envio_cliente',
+                'language' => 'es',
+                'category' => 'UTILITY',
+                'components' => array(
+                    array(
+                        'type' => 'BODY',
+                        'text' => 'Hola {{1}}, tu pedido {{2}} ya salió. Lo enviamos con {{3}}. El número de guía es {{4}}. Gracias.',
+                        'example' => array('body_text' => array(array('Ana', '2501', 'Servientrega', '9921847751'))),
                     ),
                 ),
             ),
@@ -388,7 +423,7 @@ if (!function_exists('nj_whatsapp_panel')) {
         $can = function_exists('current_user_can') && current_user_can('manage_woocommerce');
         ?>
         <h2>WhatsApp</h2>
-        <p>Cuando un pedido se paga, el cliente recibe el comprobante por WhatsApp y a este número te llega el pedido con el botón Empacando. Al empacar, el cliente recibe otro aviso. El correo sigue saliendo igual.</p>
+        <p>Cuando un pedido se paga, el cliente recibe el comprobante por WhatsApp y a este número te llega el pedido con el botón Empacando. Al empacar, el cliente recibe otro aviso. Al marcarlo enviado, recibe la transportadora y la guía. El correo sigue saliendo igual.</p>
         <?php if ($detail !== '') : ?>
           <div class="notice notice-success"><p><?php echo esc_html($detail); ?></p></div>
         <?php endif; ?>
@@ -418,7 +453,7 @@ if (!function_exists('nj_whatsapp_panel')) {
               <button type="submit" class="button button-primary" name="nj_whatsapp_save" value="1">Guardar WhatsApp</button>
               <button type="submit" class="button" name="nj_whatsapp_templates" value="1">Crear plantillas</button>
             </p>
-            <p class="nj-prenda-note">Las plantillas son el comprobante al cliente, el pedido a la tienda y el aviso de empacando. Meta tiene que aprobarlas.</p>
+            <p class="nj-prenda-note">Las plantillas son el comprobante al cliente, el pedido a la tienda, el aviso de empacando y el aviso de envío con la guía. Meta tiene que aprobarlas.</p>
           </form>
         <?php endif; ?>
         <?php

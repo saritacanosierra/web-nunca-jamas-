@@ -604,6 +604,16 @@ if (!function_exists('nj_prendas_apply')) {
         };
         update_post_meta($id, '_nj_envios', $nj_plain('envios'));
         update_post_meta($id, '_nj_cuidados', $nj_plain('cuidados'));
+        $look = array();
+        if (isset($_POST['look']) && is_array($_POST['look'])) {
+            foreach ($_POST['look'] as $look_id) {
+                $look_id = absint($look_id);
+                if ($look_id > 0 && $look_id !== (int) $id && !in_array($look_id, $look, true)) {
+                    $look[] = $look_id;
+                }
+            }
+        }
+        update_post_meta($id, '_nj_look', array_slice($look, 0, 4));
         return $id;
     }
 }

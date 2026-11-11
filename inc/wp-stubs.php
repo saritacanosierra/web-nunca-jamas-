@@ -1267,6 +1267,26 @@ if (!class_exists('WC_Order')) {
     }
 }
 
+if (!class_exists('WC_Order_Item_Product')) {
+    class WC_Order_Item_Product {
+        public function set_name($name) {
+            return $this;
+        }
+        public function set_quantity($quantity) {
+            return $this;
+        }
+        public function set_total($total) {
+            return $this;
+        }
+        public function add_meta_data($key, $value, $unique = false) {
+            return $this;
+        }
+        public function save() {
+            return 0;
+        }
+    }
+}
+
 if (!function_exists('wc_get_order')) {
     function wc_get_order($the_order = false) {
         if ($the_order instanceof WC_Order) {

@@ -15,9 +15,25 @@
 .nj-hero-slide__bar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
   padding: 12px 14px;
   border-bottom: 1px solid #dcdcde;
+}
+.nj-hero-alto {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 240px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.nj-hero-alto input[type="range"] {
+  width: 140px;
+}
+.nj-hero-alto output {
+  min-width: 58px;
+  font-weight: 600;
 }
 .nj-hero-index {
   width: 28px;
@@ -57,6 +73,10 @@
   background: #7ec8c0;
   overflow: hidden;
 }
+.nj-hero-slide.has-alto .nj-hero-canvas {
+  aspect-ratio: auto;
+  height: var(--hero-admin-h, 480px);
+}
 .nj-hero-slide.is-build .nj-hero-canvas {
   background: var(--hero-bg, #64bfae);
 }
@@ -79,6 +99,8 @@
 }
 .nj-hero-slide.is-build .nj-hero-photo[hidden],
 .nj-hero-slide.is-image .nj-hero-compose,
+.nj-hero-slide.is-image .nj-hero-html,
+.nj-hero-slide.is-build .nj-hero-image-tools,
 .nj-hero-slide.is-build .nj-hero-empty,
 .nj-hero-slide.is-image .nj-hero-photo:not([hidden]) + .nj-hero-empty,
 .nj-hero-slide.is-image .nj-hero-build-fields {
@@ -112,7 +134,7 @@
   font-size: 11px;
 }
 .nj-hero-compose strong {
-  font-family: "Baloo 2", sans-serif;
+  font-family: Montserrat, sans-serif;
   font-size: clamp(28px, 4vw, 48px);
   line-height: 0.95;
 }
@@ -169,6 +191,36 @@
 .nj-hero-build-fields label:nth-child(n + 2) {
   grid-column: 1 / -1;
 }
+.nj-hero-html {
+  padding: 12px 14px 14px;
+  border-bottom: 1px solid #dcdcde;
+  background: #f6f7f7;
+}
+.nj-hero-html-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+.nj-hero-html-row span {
+  color: #646970;
+  font-size: 12px;
+  font-weight: 400;
+}
+.nj-hero-html-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+.nj-hero-html textarea {
+  width: 100%;
+  min-height: 140px;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+}
 .nj-hero-actions {
   display: flex;
   align-items: center;
@@ -178,6 +230,8 @@
   margin-left: auto;
 }
 .nj-hero-slide.is-image .nj-hero-compose,
+.nj-hero-slide.is-image .nj-hero-html,
+.nj-hero-slide.is-build .nj-hero-image-tools,
 .nj-hero-slide.is-image .nj-hero-build-fields,
 .nj-hero-slide.is-build .nj-hero-empty {
   display: none;

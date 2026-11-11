@@ -84,7 +84,7 @@
     }
   }
 
-  function movePill(card, direction) {
+  function moveCard(card, direction, reindex) {
     if (!card || !card.parentNode) {
       return;
     }
@@ -97,7 +97,14 @@
     } else {
       card.parentNode.insertBefore(sibling, card);
     }
-    reindexPills(card.parentNode);
+    reindex(card.parentNode);
+  }
+
+  function movePill(card, direction) {
+    if (!card || !card.parentNode) {
+      return;
+    }
+    moveCard(card, direction, reindexPills);
   }
 
   function addStyleCard(list) {
@@ -117,7 +124,7 @@
       + '<input type="hidden" name="espacios[' + index + '][term]" value="0">'
       + '<p class="nj-size"><span>400 × 400 px</span></p>'
       + '<label>Nombre <input type="text" name="espacios[' + index + '][label]" value="" placeholder="Nombre de la categoría"></label>'
-      + '<div class="nj-style-actions"><button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button><button type="button" class="button" data-nj-style-remove>Eliminar</button></div>'
+      + '<div class="nj-style-actions"><button type="button" class="button" data-nj-style-up>Subir</button><button type="button" class="button" data-nj-style-down>Bajar</button><button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button><button type="button" class="button" data-nj-style-remove>Eliminar</button></div>'
       + '</div>';
     list.appendChild(card);
     reindexStyles(list);
@@ -579,6 +586,7 @@
       + '<input type="hidden" name="espacios[' + index + '][src]" value="">'
       + '<input type="hidden" name="espacios[' + index + '][alt]" value="">'
       + '<label>Nombre <input type="text" name="espacios[' + index + '][label]" value="" placeholder="Nombre de la campaña"></label>'
+      + '<label class="nj-promo-alto">Alto del contenedor <input type="range" min="240" max="1200" step="10" name="espacios[' + index + '][h]" value="460"><output>460 px</output></label>'
       + '<label class="nj-promo-html">HTML <textarea name="espacios[' + index + '][html]" rows="6" spellcheck="false"></textarea></label>'
       + '<p class="nj-prenda-actions"><button type="button" class="button button-primary" data-nj-pick>Cambiar foto</button><button type="button" class="button" data-nj-promo-remove>Quitar</button></p>'
       + '</div>';
@@ -620,16 +628,17 @@
     }
     var card = current.cloneNode(true);
     card.querySelectorAll("input, textarea").forEach(function (input) {
+      if (input.type === "checkbox") {
+        input.checked = input.value === "0";
+        return;
+      }
       if (input.type === "hidden") {
         input.value = "0";
       } else {
         input.value = "";
       }
     });
-    var choice = card.querySelector("select");
-    if (choice) {
-      choice.value = "0";
-    }
+    var choice = card.querySelector(".nj-franja-places input");
     var img = card.querySelector("img");
     if (img) {
       img.removeAttribute("src");
@@ -869,6 +878,17 @@
         button.setAttribute("aria-selected", on ? "true" : "false");
       });
     }
+    function njTestimonioIndex() {
+      Array.prototype.forEach.call(document.querySelectorAll("[data-testimonio]"), function (row, index) {
+        Array.prototype.forEach.call(row.querySelectorAll("[name]"), function (field) {
+          field.name = field.name.replace(/items\[[^\]]+\]/, "items[" + index + "]");
+        });
+      });
+    }
+    var testimonioForm = document.querySelector(".nj-testimonio-form");
+    if (testimonioForm) {
+      testimonioForm.addEventListener("submit", njTestimonioIndex);
+    }
     document.addEventListener("click", function (event) {
       var catJump = event.target.closest("[data-nj-cat-jump]");
       if (catJump) {
@@ -894,6 +914,23 @@
         }
         if (box) {
           pick(box);
+        }
+      }
+      var testimonioAdd = event.target.closest("[data-testimonio-add]");
+      if (testimonioAdd) {
+        var testimonioLista = document.querySelector("[data-testimonio-lista]");
+        var testimonioTpl = document.getElementById("nj-testimonio-nuevo");
+        if (testimonioLista && testimonioTpl) {
+          testimonioLista.appendChild(testimonioTpl.content.cloneNode(true));
+          njTestimonioIndex();
+        }
+      }
+      var testimonioRemove = event.target.closest("[data-testimonio-remove]");
+      if (testimonioRemove) {
+        var testimonioRow = testimonioRemove.closest("[data-testimonio]");
+        if (testimonioRow) {
+          testimonioRow.remove();
+          njTestimonioIndex();
         }
       }
       var clearButton = event.target.closest("[data-nj-clear]");
@@ -1029,6 +1066,14 @@
       if (pillDown) {
         movePill(pillDown.closest("[data-nj-pill]"), 1);
       }
+      var styleUp = event.target.closest("[data-nj-style-up]");
+      if (styleUp) {
+        moveCard(styleUp.closest("[data-nj-style]"), -1, reindexStyles);
+      }
+      var styleDown = event.target.closest("[data-nj-style-down]");
+      if (styleDown) {
+        moveCard(styleDown.closest("[data-nj-style]"), 1, reindexStyles);
+      }
       var addStyle = event.target.closest("[data-nj-style-add]");
       if (addStyle) {
         addStyleCard(document.querySelector("[data-nj-style-list]"));
@@ -1062,7 +1107,7 @@
       if (addMenu) {
         var group = addMenu.closest("[data-nj-menu-group]");
         var list = group ? group.querySelector("[data-nj-menu-children]") : null;
-        if (list && list.children.length < 8) {
+        if (list && list.children.length < 12) {
           var row = document.createElement("div");
           row.className = "nj-menu-row";
           row.innerHTML = '<input type="text" placeholder="Nombre"><input type="url" placeholder="https://"><button type="button" class="button" data-nj-menu-remove>Quitar</button>';
@@ -1312,11 +1357,95 @@
         event.preventDefault();
       }
     });
+    function promoField(card, key) {
+      return card.querySelector('[name$="[' + key + ']"]');
+    }
+    function placePromoChip(card) {
+      var chip = card.querySelector("[data-nj-promo-chip]");
+      var x = promoField(card, "x");
+      var y = promoField(card, "y");
+      if (!chip || !x || !y) {
+        return;
+      }
+      chip.style.left = x.value + "%";
+      chip.style.top = y.value + "%";
+    }
+    root.querySelectorAll("[data-nj-promo-copy]").forEach(placePromoChip);
+    root.addEventListener("pointerdown", function (event) {
+      var chip = event.target.closest("[data-nj-promo-chip]");
+      if (!chip || event.button !== 0) {
+        return;
+      }
+      var card = chip.closest("[data-nj-promo-copy]");
+      var stage = chip.closest("[data-nj-promo-stage]");
+      var x = card ? promoField(card, "x") : null;
+      var y = card ? promoField(card, "y") : null;
+      if (!card || !stage || !x || !y) {
+        return;
+      }
+      event.preventDefault();
+      function move(ev) {
+        var rect = stage.getBoundingClientRect();
+        if (!rect.width || !rect.height) {
+          return;
+        }
+        var nextX = Math.round(((ev.clientX - rect.left) / rect.width) * 100);
+        var nextY = Math.round(((ev.clientY - rect.top) / rect.height) * 100);
+        x.value = String(Math.max(0, Math.min(100, nextX)));
+        y.value = String(Math.max(0, Math.min(100, nextY)));
+        placePromoChip(card);
+      }
+      function stop() {
+        document.removeEventListener("pointermove", move);
+        document.removeEventListener("pointerup", stop);
+      }
+      document.addEventListener("pointermove", move);
+      document.addEventListener("pointerup", stop);
+    });
+    root.addEventListener("input", function (event) {
+      var card = event.target.closest("[data-nj-promo-copy]");
+      if (!card) {
+        return;
+      }
+      if (event.target.name && event.target.name.indexOf("[title]") !== -1) {
+        var chip = card.querySelector("[data-nj-promo-chip]");
+        var line = String(event.target.value || "").split(/\r?\n/)[0].trim();
+        if (chip) {
+          chip.textContent = line || "Texto";
+        }
+      }
+      if (event.target.name && (event.target.name.indexOf("[x]") !== -1 || event.target.name.indexOf("[y]") !== -1)) {
+        placePromoChip(card);
+      }
+    });
+    root.querySelectorAll(".nj-promo-alto input").forEach(function (input) {
+      var out = input.parentNode.querySelector("output");
+      if (out) {
+        out.textContent = input.value + " px";
+      }
+    });
+    root.addEventListener("input", function (event) {
+      var range = event.target.closest(".nj-promo-alto input");
+      if (!range) {
+        return;
+      }
+      var out = range.parentNode.querySelector("output");
+      if (out) {
+        out.textContent = range.value + " px";
+      }
+    });
     var initial = (window.location.hash || "").replace("#", "");
+    if (!initial && window.URLSearchParams) {
+      var pedidos = new URLSearchParams(window.location.search);
+      if (pedidos.get("nj_vista") || pedidos.get("updated") === "pedido" || pedidos.get("updated") === "guia" || pedidos.get("updated") === "entregado") {
+        initial = "pedidos";
+      }
+    }
     if (!initial) {
       var first = root.querySelector("[data-screen]");
       initial = first ? first.getAttribute("data-screen") : "banner";
     }
     show(initial);
   });
+
 })(jQuery);

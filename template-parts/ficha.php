@@ -60,6 +60,12 @@ foreach ($nj_payload['variations'] as $nj_variation) {
       <p class="ficha__kicker"><?php nj_e($nj_ficha['kicker']); ?></p>
       <h1><?php nj_e($nj_ficha['name']); ?></h1>
       <p class="ficha__price"><?php echo function_exists('wp_kses_post') ? wp_kses_post($nj_ficha['price_html']) : $nj_ficha['price_html']; ?></p>
+      <?php
+        $nj_testimonios = function_exists('nj_testimonios_lista') ? nj_testimonios_lista() : array();
+        $nj_compra_modo = 'nota';
+        require __DIR__ . '/testimonio-compra.php';
+      ?>
+      <?php if (function_exists('nj_addi_widget')) { echo nj_addi_widget(isset($nj_ficha['price']) ? $nj_ficha['price'] : 0); } ?>
       <?php if (!defined('NJ_PREVIEW') && isset($GLOBALS['product']) && $GLOBALS['product']) : ?>
         <div class="ficha__stock">
           <?php
@@ -116,6 +122,10 @@ foreach ($nj_payload['variations'] as $nj_variation) {
       </button>
       <button class="ficha__add" type="button" data-ficha-add>Agregar a mi bolsa</button>
       <?php if (function_exists('nj_compra_trust_html')) { echo nj_compra_trust_html(true); } ?>
+      <?php
+        $nj_compra_modo = 'muestra';
+        require __DIR__ . '/testimonio-compra.php';
+      ?>
       <?php if (!defined('NJ_PREVIEW') && function_exists('woocommerce_template_single_add_to_cart')) : ?>
         <div class="ficha__gateway" aria-hidden="true" inert>
           <?php call_user_func('woocommerce_template_single_add_to_cart'); ?>
@@ -123,7 +133,8 @@ foreach ($nj_payload['variations'] as $nj_variation) {
       <?php endif; ?>
     </aside>
   </div>
-  <div class="wrap ficha__detail" data-ficha-tabs>
+  <div class="wrap ficha__detail<?php echo !empty($nj_ficha['look']) ? ' has-look' : ''; ?>">
+    <div class="ficha__story" data-ficha-tabs>
     <div class="ficha__tablist" role="tablist">
       <?php foreach ($nj_ficha['tabs'] as $index => $tab) : ?>
         <button type="button" role="tab" data-ficha-tab="<?php echo esc_attr($tab['id']); ?>" aria-selected="<?php echo $index === 0 ? 'true' : 'false'; ?>" class="<?php echo $index === 0 ? 'is-active' : ''; ?>"><?php nj_e($tab['label']); ?></button>
@@ -134,6 +145,32 @@ foreach ($nj_payload['variations'] as $nj_variation) {
         <p><?php echo esc_html($tab['text']); ?></p>
       </div>
     <?php endforeach; ?>
+    </div>
+    <?php if (!empty($nj_ficha['look'])) : ?>
+      <aside class="ficha-look">
+        <h2>Completa tu look</h2>
+        <?php foreach ($nj_ficha['look'] as $nj_look) : ?>
+          <article class="ficha-look__item" data-look-item>
+            <script type="application/json" data-look-data><?php echo json_encode($nj_look, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
+            <img src="<?php echo esc_url($nj_look['image']); ?>" alt="">
+            <div class="ficha-look__copy">
+              <strong><?php echo esc_html($nj_look['name']); ?></strong>
+              <p><?php echo function_exists('wp_kses_post') ? wp_kses_post($nj_look['price_html']) : esc_html($nj_look['price_html']); ?></p>
+              <?php if (!empty($nj_look['sizes'])) : ?>
+                <select data-look-size aria-label="Seleccionar talla de <?php echo esc_attr($nj_look['name']); ?>">
+                  <option value="">Seleccionar talla</option>
+                  <?php foreach ($nj_look['sizes'] as $nj_look_size) : ?>
+                    <option value="<?php echo esc_attr($nj_look_size); ?>"><?php echo esc_html($nj_look_size); ?></option>
+                  <?php endforeach; ?>
+                </select>
+              <?php endif; ?>
+              <p class="ficha-look__alert" data-look-alert hidden>Elige una talla para agregarla.</p>
+              <button type="button" data-look-add>Agregar a la bolsa</button>
+            </div>
+          </article>
+        <?php endforeach; ?>
+      </aside>
+    <?php endif; ?>
   </div>
   <div class="ficha-bar">
     <img src="<?php echo esc_url($nj_ficha['image']); ?>" alt="">

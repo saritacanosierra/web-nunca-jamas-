@@ -63,6 +63,11 @@ if (!function_exists('nj_espacios_merge_row')) {
                 $row[$key] = (string) $over[$key];
             }
         }
+        foreach (array('x', 'y', 'size', 'small', 'h') as $key) {
+            if (isset($over[$key]) && $over[$key] !== '') {
+                $row[$key] = (int) $over[$key];
+            }
+        }
         if (array_key_exists('points', $over) && is_array($over['points'])) {
             $row['points'] = nj_espacios_clean_points($over['points']);
         }
@@ -171,6 +176,50 @@ if (!function_exists('nj_espacios_promos')) {
     }
 }
 
+if (!function_exists('nj_promo_metrics')) {
+    function nj_promo_metrics($promo) {
+        $kind = isset($promo['kind']) ? (string) $promo['kind'] : 'photo';
+        $defaults = array(
+            'gift' => array(40, 42, 52, 11, 460),
+            'collect' => array(50, 46, 40, 11, 460),
+            'three_d' => array(36, 24, 42, 12, 460),
+            'photo' => array(18, 82, 28, 12, 460),
+        );
+        $base = isset($defaults[$kind]) ? $defaults[$kind] : $defaults['photo'];
+        $pick = function ($key, $index, $min, $max) use ($promo, $base) {
+            if (!isset($promo[$key]) || $promo[$key] === '') {
+                return $base[$index];
+            }
+            $number = (int) $promo[$key];
+            if ($number < $min) {
+                return $min;
+            }
+            if ($number > $max) {
+                return $max;
+            }
+            return $number;
+        };
+        return array(
+            'x' => $pick('x', 0, 0, 100),
+            'y' => $pick('y', 1, 0, 100),
+            'size' => $pick('size', 2, 18, 96),
+            'small' => $pick('small', 3, 10, 32),
+            'h' => $pick('h', 4, 240, 1200),
+        );
+    }
+}
+
+if (!function_exists('nj_promo_style')) {
+    function nj_promo_style($promo) {
+        $box = nj_promo_metrics($promo);
+        $style = '--promo-x:' . $box['x'] . '%;--promo-y:' . $box['y'] . '%;--promo-size:' . $box['size'] . 'px;--promo-small:' . $box['small'] . 'px';
+        if ((int) $box['h'] !== 460) {
+            $style .= ';--promo-h:' . $box['h'] . 'px';
+        }
+        return $style;
+    }
+}
+
 if (!function_exists('nj_promo_href')) {
     function nj_promo_href($promo) {
         $href = isset($promo['href']) ? trim((string) $promo['href']) : '';
@@ -200,6 +249,38 @@ if (!function_exists('nj_espacios_cuentos')) {
             );
         }
         return $items;
+    }
+}
+
+if (!function_exists('nj_circulos_caja')) {
+    function nj_circulos_caja($row = null) {
+        if (!is_array($row)) {
+            $saved = nj_espacios_saved();
+            $row = isset($saved['circulos']) && is_array($saved['circulos']) ? $saved['circulos'] : array();
+        }
+        $size = isset($row['size']) && $row['size'] !== '' ? (int) $row['size'] : 132;
+        $gap = isset($row['gap']) && $row['gap'] !== '' ? (int) $row['gap'] : 28;
+        $place = isset($row['place']) ? (string) $row['place'] : 'campanas';
+        if ($size < 72) {
+            $size = 72;
+        }
+        if ($size > 240) {
+            $size = 240;
+        }
+        if ($gap < 8) {
+            $gap = 8;
+        }
+        if ($gap > 80) {
+            $gap = 80;
+        }
+        if (!in_array($place, array('prendas', 'campanas', 'cuentos'), true)) {
+            $place = 'campanas';
+        }
+        return array(
+            'size' => $size,
+            'gap' => $gap,
+            'place' => $place,
+        );
     }
 }
 
@@ -370,6 +451,54 @@ if (!function_exists('nj_espacios_category_keep')) {
     }
 }
 
+if (!function_exists('nj_espacios_texto_defaults')) {
+    function nj_espacios_texto_defaults() {
+        return array(
+            'seo_h1' => 'Nunca Jamás, ropa de cuento para niñas',
+            'offer_lead' => 'Envío a Colombia. Elige la talla y la prenda entra en la bolsa.',
+            'offer_button' => 'Ver la tienda',
+            'seo_title' => 'Ropa de cuento para niñas',
+            'prendas' => 'Prendas únicas para cada día',
+            'tab_nuevo' => 'Lo nuevo',
+            'tab_coleccion' => 'Colección',
+            'mas_nuevo' => 'Ver lo nuevo',
+            'mas_coleccion' => 'Ver la colección',
+            'categorias' => 'Compra por categorías',
+            'looks' => 'Looks inspiradores',
+            'looks_kicker' => 'Nunca Jamás · ropa para niñas',
+            'looks_note' => 'Colecciones soñadas, prendas de línea, accesorios y personalizados para estrenar el cuento.',
+            'blog_kicker' => 'Cuentos',
+            'blog_title' => 'Historias para leer juntos',
+            'blog_lead' => 'Cuentos y notas sobre por qué leer en la niñez acompaña el día, la noche y la forma de nombrar lo que se siente.',
+            'blog_recent' => 'El más reciente',
+            'blog_read' => 'Leer el cuento',
+            'blog_more' => 'Sigue leyendo',
+            'contacto' => 'Contáctanos',
+        );
+    }
+}
+
+if (!function_exists('nj_espacios_textos')) {
+    function nj_espacios_textos() {
+        $defaults = nj_espacios_texto_defaults();
+        $saved = nj_espacios_saved();
+        $over = isset($saved['textos']) && is_array($saved['textos']) ? $saved['textos'] : array();
+        $texts = array();
+        foreach ($defaults as $key => $fallback) {
+            $value = isset($over[$key]) ? trim((string) $over[$key]) : '';
+            $texts[$key] = $value !== '' ? $value : $fallback;
+        }
+        return $texts;
+    }
+}
+
+if (!function_exists('nj_espacio_texto')) {
+    function nj_espacio_texto($key) {
+        $texts = nj_espacios_textos();
+        return isset($texts[$key]) ? $texts[$key] : '';
+    }
+}
+
 if (!function_exists('nj_espacios_text')) {
     function nj_espacios_text($value) {
         if (function_exists('sanitize_text_field')) {
@@ -393,12 +522,34 @@ if (!function_exists('nj_espacios_admin_save')) {
             'styles' => 'categorias',
             'pills' => 'pills',
             'looks' => 'looks',
+            'textos' => 'textos',
         );
         if (!isset($map[$group])) {
             wp_safe_redirect(admin_url('admin.php?page=nj-tienda'));
             exit;
         }
         $raw = isset($_POST['espacios']) && is_array($_POST['espacios']) ? wp_unslash($_POST['espacios']) : array();
+        if ($group === 'textos') {
+            $defaults = nj_espacios_texto_defaults();
+            $saved = nj_espacios_saved();
+            $clean = isset($saved['textos']) && is_array($saved['textos']) ? $saved['textos'] : array();
+            foreach ($raw as $key => $value) {
+                if (!isset($defaults[$key])) {
+                    continue;
+                }
+                $value = function_exists('sanitize_textarea_field') ? sanitize_textarea_field($value) : nj_espacios_text($value);
+                $clean[$key] = trim($value) !== '' ? $value : $defaults[$key];
+            }
+            $saved['textos'] = $clean;
+            update_option('nj_espacios', $saved, true);
+            nj_espacios_purge();
+            $volver = isset($_POST['nj_volver']) ? sanitize_key(wp_unslash($_POST['nj_volver'])) : 'textos';
+            if ($volver !== 'oferta') {
+                $volver = 'textos';
+            }
+            wp_safe_redirect(admin_url('admin.php?page=nj-tienda&updated=' . $volver . '#' . $volver));
+            exit;
+        }
         $previous_terms = array();
         if ($group === 'styles') {
             foreach (nj_espacios_rows('styles') as $row) {
@@ -452,6 +603,25 @@ if (!function_exists('nj_espacios_admin_save')) {
                     $item['title'] = function_exists('sanitize_textarea_field') ? sanitize_textarea_field($title) : nj_espacios_text($title);
                     $item['button'] = nj_espacios_text(isset($row['button']) ? $row['button'] : '');
                     $item['note'] = function_exists('sanitize_textarea_field') ? sanitize_textarea_field($note) : nj_espacios_text($note);
+                    $box = nj_promo_metrics(array(
+                        'kind' => $item['kind'],
+                        'x' => isset($row['x']) ? $row['x'] : '',
+                        'y' => isset($row['y']) ? $row['y'] : '',
+                        'size' => isset($row['size']) ? $row['size'] : '',
+                        'small' => isset($row['small']) ? $row['small'] : '',
+                        'h' => isset($row['h']) ? $row['h'] : '',
+                    ));
+                    $item['x'] = $box['x'];
+                    $item['y'] = $box['y'];
+                    $item['size'] = $box['size'];
+                    $item['small'] = $box['small'];
+                    $item['h'] = $box['h'];
+                } else {
+                    $box = nj_promo_metrics(array(
+                        'kind' => $item['kind'],
+                        'h' => isset($row['h']) ? $row['h'] : '',
+                    ));
+                    $item['h'] = $box['h'];
                 }
                 $html = isset($row['html']) ? (string) $row['html'] : '';
                 if (strlen($html) > 12000) {
@@ -512,6 +682,10 @@ if (!function_exists('nj_espacios_admin_save')) {
         }
         $saved = nj_espacios_saved();
         $saved[$group] = $clean;
+        if ($group === 'styles') {
+            $posted = isset($_POST['circulos']) && is_array($_POST['circulos']) ? wp_unslash($_POST['circulos']) : array();
+            $saved['circulos'] = nj_circulos_caja($posted);
+        }
         update_option('nj_espacios', $saved, true);
         nj_espacios_purge();
         wp_safe_redirect(admin_url('admin.php?page=nj-tienda&updated=' . $map[$group] . '#' . $map[$group]));

@@ -99,11 +99,25 @@ if (!function_exists('nj_register_empacando_status')) {
         foreach ($statuses as $key => $label) {
             $next[$key] = $label;
             if ($key === 'wc-processing') {
+                $next['wc-elaborado'] = 'Elaborado';
                 $next['wc-empacando'] = 'Empacando';
+                $next['wc-despacho'] = 'Despacho';
             }
+            if ($key === 'wc-completed') {
+                $next['wc-entregado'] = 'Entregado';
+            }
+        }
+        if (!isset($next['wc-elaborado'])) {
+            $next['wc-elaborado'] = 'Elaborado';
         }
         if (!isset($next['wc-empacando'])) {
             $next['wc-empacando'] = 'Empacando';
+        }
+        if (!isset($next['wc-despacho'])) {
+            $next['wc-despacho'] = 'Despacho';
+        }
+        if (!isset($next['wc-entregado'])) {
+            $next['wc-entregado'] = 'Entregado';
         }
         return $next;
     }
@@ -112,7 +126,10 @@ add_filter('wc_order_statuses', 'nj_register_empacando_status');
 
 if (!function_exists('nj_empacando_is_paid')) {
     function nj_empacando_is_paid($statuses) {
+        $statuses[] = 'elaborado';
         $statuses[] = 'empacando';
+        $statuses[] = 'despacho';
+        $statuses[] = 'entregado';
         return $statuses;
     }
 }
@@ -123,6 +140,14 @@ if (!function_exists('nj_register_empacando_post_status')) {
         if (!function_exists('register_post_status')) {
             return;
         }
+        register_post_status('wc-elaborado', array(
+            'label' => 'Elaborado',
+            'public' => false,
+            'exclude_from_search' => false,
+            'show_in_admin_all_list' => true,
+            'show_in_admin_status_list' => true,
+            'label_count' => _n_noop('Elaborado <span class="count">(%s)</span>', 'Elaborado <span class="count">(%s)</span>'),
+        ));
         register_post_status('wc-empacando', array(
             'label' => 'Empacando',
             'public' => false,
@@ -130,6 +155,22 @@ if (!function_exists('nj_register_empacando_post_status')) {
             'show_in_admin_all_list' => true,
             'show_in_admin_status_list' => true,
             'label_count' => _n_noop('Empacando <span class="count">(%s)</span>', 'Empacando <span class="count">(%s)</span>'),
+        ));
+        register_post_status('wc-despacho', array(
+            'label' => 'Despacho',
+            'public' => false,
+            'exclude_from_search' => false,
+            'show_in_admin_all_list' => true,
+            'show_in_admin_status_list' => true,
+            'label_count' => _n_noop('Despacho <span class="count">(%s)</span>', 'Despacho <span class="count">(%s)</span>'),
+        ));
+        register_post_status('wc-entregado', array(
+            'label' => 'Entregado',
+            'public' => false,
+            'exclude_from_search' => false,
+            'show_in_admin_all_list' => true,
+            'show_in_admin_status_list' => true,
+            'label_count' => _n_noop('Entregado <span class="count">(%s)</span>', 'Entregado <span class="count">(%s)</span>'),
         ));
     }
 }
@@ -233,6 +274,8 @@ if (!function_exists('nj_paid_notice')) {
         if ($whatsapp !== '') {
             $store .= '<p>WhatsApp del cliente: ' . esc_html($whatsapp) . '</p>';
         }
+        $cedula = function_exists('nj_order_cedula') ? nj_order_cedula($order) : '';
+        $store .= '<p>Cédula: ' . esc_html($cedula !== '' ? $cedula : 'falta') . '</p>';
         $store .= '<p>' . wp_kses_post($address) . '</p>';
         $store .= '<p><a href="' . esc_url(nj_empacar_url($order->get_id())) . '" style="display:inline-block;background:#000;color:#fff;padding:14px 22px;border-radius:999px;text-decoration:none;font-weight:700">Empacando</a></p>';
         $store .= '<p>Al pulsarlo, el cliente recibe el aviso de que su pedido se está empacando.</p>';
@@ -267,6 +310,57 @@ if (!function_exists('nj_pack_notice')) {
     }
 }
 add_action('woocommerce_order_status_empacando', 'nj_pack_notice');
+
+if (!function_exists('nj_envio_aviso')) {
+    function nj_envio_aviso($nombre, $pedido, $transportadora, $guia) {
+        $hola = $nombre !== '' ? 'Hola ' . $nombre . ',' : 'Hola,';
+        return $hola . ' Tu pedido ' . $pedido . ' ya salió. Lo enviamos con ' . $transportadora . '. El número de guía es ' . $guia . '.';
+    }
+}
+
+if (!function_exists('nj_ship_notice')) {
+    function nj_ship_notice($order_id) {
+        if (!function_exists('wc_get_order')) {
+            return;
+        }
+        $order = wc_get_order($order_id);
+        if (!$order || $order->get_meta('_nj_ship_notice') === '1') {
+            return;
+        }
+        $guia = function_exists('nj_pedidos_guia_limpia') ? nj_pedidos_guia_limpia($order->get_meta('_nj_guia')) : trim((string) $order->get_meta('_nj_guia'));
+        if ($guia === '') {
+            return;
+        }
+        $carriers = function_exists('nj_pedidos_transportadoras') ? nj_pedidos_transportadoras() : array();
+        $key = (string) $order->get_meta('_nj_transportadora');
+        $transportadora = isset($carriers[$key]) ? $carriers[$key] : 'la transportadora';
+        $order->update_meta_data('_nj_ship_notice', '1');
+        $order->save();
+        $texto = nj_envio_aviso($order->get_billing_first_name(), (string) $order->get_order_number(), $transportadora, $guia);
+        nj_send_html_mail($order->get_billing_email(), 'Tu pedido ' . $order->get_order_number() . ' ya va en camino', nj_mail_card('Tu pedido ya va en camino', '<p>' . esc_html($texto) . '</p>'));
+        if (function_exists('nj_whatsapp_ship')) {
+            nj_whatsapp_ship($order, $transportadora, $guia);
+        }
+        if (method_exists($order, 'add_order_note')) {
+            $order->add_order_note('Se avisó al cliente del envío con ' . $transportadora . ', guía ' . $guia . '.');
+        }
+    }
+}
+add_action('woocommerce_order_status_completed', 'nj_ship_notice');
+
+if (!function_exists('nj_ship_email_instead')) {
+    function nj_ship_email_instead($enabled, $order) {
+        if (!is_object($order) || !method_exists($order, 'get_meta')) {
+            return $enabled;
+        }
+        $guia = function_exists('nj_pedidos_guia_limpia') ? nj_pedidos_guia_limpia($order->get_meta('_nj_guia')) : trim((string) $order->get_meta('_nj_guia'));
+        if ($guia === '') {
+            return $enabled;
+        }
+        return false;
+    }
+}
+add_filter('woocommerce_email_enabled_customer_completed_order', 'nj_ship_email_instead', 10, 2);
 
 if (!function_exists('nj_order_action_empacando')) {
     function nj_order_action_empacando($actions) {

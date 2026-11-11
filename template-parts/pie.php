@@ -85,7 +85,7 @@ $nj_perk_icon = function ($icon) {
     <?php endforeach; ?>
     <?php if ($nj_footer['email'] !== '' || $nj_footer_wa !== '' || $nj_footer['place'] !== '') : ?>
     <div>
-      <h3>Contáctanos</h3>
+      <h3><?php echo esc_html(function_exists('nj_espacio_texto') && nj_espacio_texto('contacto') !== '' ? nj_espacio_texto('contacto') : 'Contáctanos'); ?></h3>
       <ul class="footer-contact">
         <?php if ($nj_footer['email'] !== '') : ?>
           <li><a href="<?php echo esc_url('mailto:' . $nj_footer['email']); ?>"><?php echo esc_html($nj_footer['email']); ?></a></li>

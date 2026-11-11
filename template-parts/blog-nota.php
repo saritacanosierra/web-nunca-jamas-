@@ -32,7 +32,7 @@ while (have_posts()) {
 
   <?php if ($nj_related) : ?>
     <section class="wrap blog-more">
-      <h2>Sigue leyendo</h2>
+      <h2><?php echo esc_html(function_exists('nj_espacio_texto') && nj_espacio_texto('blog_more') !== '' ? nj_espacio_texto('blog_more') : 'Sigue leyendo'); ?></h2>
       <div class="blog-grid">
         <?php foreach ($nj_related as $nj_post) : ?>
           <article class="blog-card">

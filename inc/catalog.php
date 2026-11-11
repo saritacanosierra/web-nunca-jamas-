@@ -123,6 +123,13 @@ if (!function_exists('nj_catalog_preview')) {
         list($section, $source, $catalog) = nj_catalog_section($section);
         $order = nj_catalog_order($order);
         $items = nj_catalog_sort(nj_catalog_preview_items($slots, $section, $source, $catalog, $type), $order);
+        $busca = nj_busca_valor();
+        if ($busca !== '') {
+            $items = array_values(array_filter($items, function ($item) use ($busca) {
+                $texto = (isset($item['name']) ? $item['name'] : '') . ' ' . (isset($item['kicker']) ? $item['kicker'] : '');
+                return nj_busca_coincide($texto, $busca);
+            }));
+        }
         list($pills, $active_label) = nj_catalog_preview_pills($catalog, $section, $type);
         $section_href = 'galeria.php?seccion=' . rawurlencode($section);
         $crumbs = array(
@@ -133,21 +140,46 @@ if (!function_exists('nj_catalog_preview')) {
             $crumbs[] = array('label' => $active_label, 'href' => '');
         }
         $title = $active_label !== '' ? $active_label : $catalog['title'];
+        $colecciones = ($section === 'colecciones' && function_exists('nj_colecciones_lista')) ? nj_colecciones_lista() : array();
+        $vista = '';
+        $foto = '';
+        $reciente = false;
+        if ($section === 'colecciones' && $colecciones) {
+            if ($type === '') {
+                $vista = 'mosaico';
+                $lead_name = $colecciones[0]['label'];
+                $catalog['lead'] = 'En el año van saliendo varias. La más reciente es ' . $lead_name . '.';
+            } else {
+                $vista = 'una';
+                foreach ($colecciones as $coleccion) {
+                    if ((string) $coleccion['id'] === (string) $type) {
+                        $foto = $coleccion['image'];
+                        $reciente = !empty($coleccion['reciente']);
+                    }
+                }
+            }
+        }
         return array(
             'title' => $title,
             'lead' => $catalog['lead'],
             'crumbs' => $crumbs,
-            'pills' => $pills,
+            'pills' => ($vista === 'mosaico' || $vista === 'una') ? array() : $pills,
             'items' => $items,
+            'vista' => $vista,
+            'colecciones' => $colecciones,
+            'foto' => $foto,
+            'reciente' => $reciente,
             'banners' => function_exists('nj_regalo_visible') ? nj_regalo_visible(null) : array($slots['gift_banner']),
             'banner' => function_exists('nj_regalo_banner') ? nj_regalo_banner() : $slots['gift_banner'],
             'order' => $order,
             'orders' => nj_catalog_orders(),
             'order_name' => 'orden',
             'action' => 'galeria.php',
+            'busca' => $busca,
             'hidden' => array(
                 'seccion' => $section,
                 'tipo' => $type,
+                'nj' => $busca,
             ),
         );
     }
@@ -413,250 +445,7 @@ if (!function_exists('nj_catalog_banner_label')) {
     }
 }
 
-if (!function_exists('nj_regalo_tags')) {
-    function nj_regalo_tags() {
-        $box = array('class' => true, 'style' => true);
-        return array(
-            'div' => $box,
-            'span' => $box,
-            'p' => $box,
-            'h2' => $box,
-            'h3' => $box,
-            'strong' => array('class' => true),
-            'em' => array('class' => true),
-            'br' => array(),
-            'a' => array('href' => true, 'class' => true, 'style' => true, 'target' => true, 'rel' => true),
-            'img' => array('src' => true, 'alt' => true, 'class' => true, 'style' => true, 'width' => true, 'height' => true),
-        );
-    }
-}
-
-if (!function_exists('nj_regalo_html')) {
-    function nj_regalo_html($html, $image = '', $alt = '') {
-        $html = trim((string) $html);
-        if ($html === '') {
-            return '';
-        }
-        $image = trim((string) $image);
-        $alt = trim((string) $alt);
-        if ($image !== '') {
-            $src = function_exists('esc_url') ? esc_url($image) : $image;
-            $label = function_exists('esc_attr') ? esc_attr($alt) : $alt;
-            $tag = '<img src="' . $src . '" alt="' . $label . '">';
-            $html = str_replace('{{foto}}', $tag, $html);
-            $html = preg_replace_callback('/<img\b([^>]*)>/i', function ($match) use ($src, $label) {
-                $attrs = $match[1];
-                $has = preg_match('/\bsrc\s*=\s*(["\'])([^"\']*)\1/i', $attrs, $found);
-                $current = $has ? trim($found[2]) : '';
-                $ready = $current !== '' && (preg_match('#^https?://#i', $current) || strpos($current, '/') === 0);
-                if ($ready) {
-                    return $match[0];
-                }
-                if ($has) {
-                    $attrs = preg_replace('/\bsrc\s*=\s*(["\'])([^"\']*)\1/i', 'src="' . $src . '"', $attrs, 1);
-                } else {
-                    $attrs = ' src="' . $src . '"' . $attrs;
-                }
-                if ($label !== '' && !preg_match('/\balt\s*=/i', $attrs)) {
-                    $attrs .= ' alt="' . $label . '"';
-                }
-                return '<img' . $attrs . '>';
-            }, $html);
-        }
-        if (function_exists('wp_kses')) {
-            return wp_kses($html, nj_regalo_tags());
-        }
-        return $html;
-    }
-}
-
-if (!function_exists('nj_regalo_blank')) {
-    function nj_regalo_blank() {
-        return array(
-            'category' => 0,
-            'kicker' => '',
-            'title' => '',
-            'text' => '',
-            'alt' => '',
-            'image_id' => 0,
-            'image' => '',
-            'html' => '',
-        );
-    }
-}
-
-if (!function_exists('nj_regalo_saved_list')) {
-    function nj_regalo_saved_list() {
-        if (!function_exists('get_option')) {
-            return array();
-        }
-        $saved = get_option('nj_regalo', array());
-        if (!is_array($saved)) {
-            return array();
-        }
-        if (isset($saved['strips']) && is_array($saved['strips'])) {
-            return $saved['strips'];
-        }
-        if (isset($saved['kicker']) || isset($saved['title']) || isset($saved['html']) || isset($saved['image_id'])) {
-            $saved['category'] = 0;
-            $defaults = nj_slots_data()['gift_banner'];
-            foreach (array('kicker', 'title', 'text', 'alt') as $key) {
-                if ((!isset($saved[$key]) || trim((string) $saved[$key]) === '') && !empty($defaults[$key])) {
-                    $saved[$key] = $defaults[$key];
-                }
-            }
-            if (empty($saved['image_id']) && !empty($defaults['image'])) {
-                $saved['image'] = $defaults['image'];
-            }
-            return array($saved);
-        }
-        return array();
-    }
-}
-
-if (!function_exists('nj_regalo_normalize')) {
-    function nj_regalo_normalize($row) {
-        $banner = nj_regalo_blank();
-        if (!is_array($row)) {
-            return $banner;
-        }
-        $banner['category'] = isset($row['category']) ? (int) $row['category'] : 0;
-        foreach (array('kicker', 'title', 'text', 'alt') as $key) {
-            if (isset($row[$key])) {
-                $banner[$key] = (string) $row[$key];
-            }
-        }
-        $banner['html'] = nj_regalo_html(isset($row['html']) ? $row['html'] : '');
-        $image_id = isset($row['image_id']) ? (int) $row['image_id'] : 0;
-        if ($image_id > 0 && function_exists('wp_get_attachment_image_url')) {
-            $url = wp_get_attachment_image_url($image_id, 'large');
-            if (is_string($url) && $url !== '') {
-                $banner['image'] = $url;
-                $banner['image_id'] = $image_id;
-            }
-        }
-        if ($banner['image'] === '' && !empty($row['image'])) {
-            $banner['image'] = (string) $row['image'];
-        }
-        return $banner;
-    }
-}
-
-if (!function_exists('nj_regalo_rows')) {
-    function nj_regalo_rows() {
-        $saved = nj_regalo_saved_list();
-        if (!$saved) {
-            $one = nj_regalo_blank();
-            $defaults = nj_slots_data()['gift_banner'];
-            foreach (array('kicker', 'title', 'text', 'alt', 'image') as $key) {
-                if (!empty($defaults[$key])) {
-                    $one[$key] = $defaults[$key];
-                }
-            }
-            return array($one);
-        }
-        $rows = array();
-        foreach ($saved as $row) {
-            $rows[] = nj_regalo_normalize($row);
-        }
-        return $rows ? $rows : array(nj_regalo_blank());
-    }
-}
-
-if (!function_exists('nj_regalo_banner')) {
-    function nj_regalo_banner() {
-        $rows = nj_regalo_rows();
-        return $rows[0];
-    }
-}
-
-if (!function_exists('nj_regalo_visible')) {
-    function nj_regalo_visible($term) {
-        $rows = nj_regalo_rows();
-        $wanted = array();
-        if ($term && isset($term->term_id)) {
-            $wanted[] = (int) $term->term_id;
-            if (function_exists('get_ancestors')) {
-                foreach (get_ancestors($term->term_id, 'product_cat') as $ancestor_id) {
-                    $wanted[] = (int) $ancestor_id;
-                }
-            }
-        }
-        foreach ($wanted as $id) {
-            $match = array();
-            foreach ($rows as $row) {
-                if ((int) $row['category'] === $id) {
-                    $match[] = $row;
-                }
-            }
-            if ($match) {
-                return $match;
-            }
-        }
-        $global = array();
-        foreach ($rows as $row) {
-            if ((int) $row['category'] === 0) {
-                $global[] = $row;
-            }
-        }
-        return $global;
-    }
-}
-
-if (!function_exists('nj_regalo_save')) {
-    function nj_regalo_save() {
-        $allowed = function_exists('nj_tienda_can') ? nj_tienda_can() : (function_exists('current_user_can') && current_user_can('edit_theme_options'));
-        if (!$allowed) {
-            wp_die('No tienes permiso para cambiar esta franja.');
-        }
-        check_admin_referer('nj_regalo', 'nj_regalo_nonce');
-        $clip = function ($value, $limit) {
-            $value = function_exists('sanitize_textarea_field') ? sanitize_textarea_field($value) : trim(strip_tags((string) $value));
-            if (function_exists('mb_substr')) {
-                return mb_substr($value, 0, $limit);
-            }
-            return substr($value, 0, $limit);
-        };
-        $raw = isset($_POST['franjas']) && is_array($_POST['franjas']) ? wp_unslash($_POST['franjas']) : array();
-        $strips = array();
-        foreach ($raw as $row) {
-            if (!is_array($row) || count($strips) >= 12) {
-                continue;
-            }
-            $category = isset($row['category']) ? absint($row['category']) : 0;
-            if ($category) {
-                $term = nj_category_term($category);
-                if (!$term || is_wp_error($term) || $term->taxonomy !== 'product_cat') {
-                    $category = 0;
-                }
-            }
-            $image_id = isset($row['image_id']) ? absint($row['image_id']) : 0;
-            if ($image_id && function_exists('wp_attachment_is_image') && !wp_attachment_is_image($image_id)) {
-                $image_id = 0;
-            }
-            $html = isset($row['html']) ? (string) $row['html'] : '';
-            if (strlen($html) > 12000) {
-                $html = substr($html, 0, 12000);
-            }
-            $strips[] = array(
-                'category' => $category,
-                'kicker' => $clip(isset($row['kicker']) ? $row['kicker'] : '', 80),
-                'title' => $clip(isset($row['title']) ? $row['title'] : '', 160),
-                'text' => $clip(isset($row['text']) ? $row['text'] : '', 240),
-                'alt' => $clip(isset($row['alt']) ? $row['alt'] : '', 140),
-                'image_id' => $image_id,
-                'html' => nj_regalo_html($html),
-            );
-        }
-        if (!$strips) {
-            $strips[] = nj_regalo_blank();
-        }
-        update_option('nj_regalo', array('strips' => $strips), false);
-        wp_safe_redirect(admin_url('admin.php?page=nj-tienda&updated=regalo#regalo'));
-        exit;
-    }
-}
-add_action('admin_post_nj_regalo', 'nj_regalo_save');
+require_once __DIR__ . '/regalo.php';
 
 if (!function_exists('nj_catalog_banner')) {
     function nj_catalog_banner($term) {
@@ -696,6 +485,55 @@ if (!function_exists('nj_catalog_banner_rows')) {
     }
 }
 
+if (!function_exists('nj_catalog_coleccion_extra')) {
+    function nj_catalog_coleccion_extra($term) {
+        if (!$term || !isset($term->term_id) || !function_exists('nj_colecciones_lista') || !function_exists('nj_colecciones_padre')) {
+            return array();
+        }
+        $parent = nj_colecciones_padre();
+        $lista = nj_colecciones_lista();
+        if (!$parent || !isset($parent->term_id) || !$lista) {
+            return array();
+        }
+        if ((int) $term->term_id === (int) $parent->term_id) {
+            return array(
+                'vista' => 'mosaico',
+                'colecciones' => $lista,
+                'lead' => 'En el año van saliendo varias. La más reciente es ' . $lista[0]['label'] . '.',
+            );
+        }
+        $foto = '';
+        $reciente = false;
+        $found = false;
+        foreach ($lista as $item) {
+            if ((int) $item['id'] === (int) $term->term_id) {
+                $foto = $item['image'];
+                $reciente = !empty($item['reciente']);
+                $found = true;
+            }
+        }
+        if (!$found) {
+            return array();
+        }
+        $pieza = function_exists('nj_coleccion_pieza') ? nj_coleccion_pieza((int) $term->term_id) : array();
+        return array(
+            'vista' => 'una',
+            'colecciones' => $lista,
+            'foto' => $foto,
+            'reciente' => $reciente,
+            'banda' => isset($pieza['banda']) ? $pieza['banda'] : '',
+            'banda_ajuste' => isset($pieza['banda_ajuste']) ? $pieza['banda_ajuste'] : array(),
+            'modo' => isset($pieza['modo']) ? $pieza['modo'] : '',
+            'diseno_html' => isset($pieza['html']) ? $pieza['html'] : '',
+            'diseno_foto' => isset($pieza['image']) ? $pieza['image'] : '',
+            'caja' => function_exists('nj_coleccion_caja') ? nj_coleccion_caja($pieza) : array(),
+        );
+    }
+}
+
+require_once __DIR__ . '/busca.php';
+
+
 if (!function_exists('nj_catalog_from_shop')) {
     function nj_catalog_from_shop() {
         $order = nj_catalog_request_order();
@@ -716,21 +554,33 @@ if (!function_exists('nj_catalog_from_shop')) {
             $crumbs = array_merge($crumbs, nj_catalog_ancestor_crumbs($term));
             $crumbs[] = array('label' => $term->name, 'href' => '');
         }
+        $busca = nj_busca_valor();
         $pills = nj_catalog_category_pills($term && isset($term->term_id) ? (int) $term->term_id : 0);
         $banners = nj_catalog_banner($term);
+        $extra = function_exists('nj_catalog_coleccion_extra') ? nj_catalog_coleccion_extra($term) : array();
+        if (!empty($extra['lead'])) {
+            $lead = $extra['lead'];
+        }
         return array(
             'title' => $title,
             'lead' => $lead,
             'crumbs' => $crumbs,
-            'pills' => $pills,
+            'pills' => !empty($extra['vista']) ? array() : $pills,
             'items' => nj_catalog_shop_items(),
+            'vista' => isset($extra['vista']) ? $extra['vista'] : '',
+            'colecciones' => isset($extra['colecciones']) ? $extra['colecciones'] : array(),
+            'foto' => isset($extra['foto']) ? $extra['foto'] : '',
+            'reciente' => !empty($extra['reciente']),
             'banners' => $banners,
             'banner' => $banners ? $banners[0] : array(),
             'order' => $order,
             'orders' => nj_catalog_orders(),
             'order_name' => 'orderby',
             'action' => $action,
-            'hidden' => array(),
+            'busca' => $busca,
+            'hidden' => array(
+                'nj' => $busca,
+            ),
         );
     }
 }

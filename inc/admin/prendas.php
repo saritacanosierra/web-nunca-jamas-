@@ -82,6 +82,35 @@ if (!function_exists('nj_prendas_admin_gallery')) {
     }
 }
 
+if (!function_exists('nj_prendas_look_catalog')) {
+    function nj_prendas_look_catalog() {
+        if (!function_exists('get_posts')) {
+            return array();
+        }
+        $ids = get_posts(array(
+            'post_type' => 'product',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'orderby' => 'title',
+            'order' => 'ASC',
+            'fields' => 'ids',
+            'no_found_rows' => true,
+        ));
+        $rows = array();
+        foreach ((array) $ids as $id) {
+            $name = function_exists('get_the_title') ? get_the_title($id) : '';
+            if ($name === '') {
+                continue;
+            }
+            $rows[] = array(
+                'id' => (int) $id,
+                'name' => $name,
+            );
+        }
+        return $rows;
+    }
+}
+
 if (!function_exists('nj_prendas_admin_fields')) {
     function nj_prendas_admin_fields($product) {
         $image_id = $product ? (int) $product->get_image_id() : 0;
@@ -157,6 +186,37 @@ if (!function_exists('nj_prendas_admin_fields')) {
               <?php nj_prendas_admin_attributes($product); ?>
             </section>
             <section class="nj-modal-section">
+              <h3>Completa el look</h3>
+              <p class="nj-prenda-note">Escribe el nombre del accesorio que sale en la misma foto y elígelo. En la ficha aparece al lado, con su talla. Hasta cuatro.</p>
+              <?php
+              $nj_look_chosen = array();
+              if ($product && function_exists('get_post_meta')) {
+                  $nj_look_saved = get_post_meta($product->get_id(), '_nj_look', true);
+                  $nj_look_chosen = is_array($nj_look_saved) ? array_map('intval', $nj_look_saved) : array();
+              }
+              ?>
+              <div class="nj-look-search" data-look-search data-look-self="<?php echo $product ? (int) $product->get_id() : 0; ?>">
+                <input type="search" data-look-filter placeholder="Buscar la prenda" autocomplete="off">
+                <div class="nj-look-results" data-look-results hidden></div>
+                <div class="nj-look-chosen" data-look-chosen>
+                  <?php foreach ($nj_look_chosen as $nj_look_id) :
+                      if ($product && (int) $nj_look_id === (int) $product->get_id()) {
+                          continue;
+                      }
+                      $nj_look_name = function_exists('get_the_title') ? get_the_title($nj_look_id) : '';
+                      if ($nj_look_name === '') {
+                          continue;
+                      }
+                      ?>
+                    <label class="nj-look-chip">
+                      <input type="checkbox" name="look[]" value="<?php echo (int) $nj_look_id; ?>" checked>
+                      <?php echo esc_html($nj_look_name); ?>
+                    </label>
+                  <?php endforeach; ?>
+                </div>
+              </div>
+            </section>
+            <section class="nj-modal-section">
               <h3>Más fotos</h3>
               <?php nj_prendas_admin_gallery($product ? $product->get_gallery_image_ids() : array()); ?>
             </section>
@@ -226,6 +286,7 @@ if (!function_exists('nj_prendas_admin_panel')) {
         <?php if (!$products) : ?>
           <p>Todavía no hay prendas publicadas.</p>
         <?php endif; ?>
+        <script type="application/json" id="nj-look-catalog"><?php echo wp_json_encode(nj_prendas_look_catalog(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
         <dialog class="nj-modal" id="nj-prenda-nueva">
           <form class="nj-prenda-card" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
             <div class="nj-modal-bar">

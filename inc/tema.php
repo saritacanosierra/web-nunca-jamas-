@@ -7,6 +7,7 @@ if (!function_exists('nj_tema_defaults')) {
     function nj_tema_defaults() {
         return array(
             'logo' => 0,
+            'logo_alto' => 86,
             'coral' => '#EAA799',
             'teal' => '#64bfae',
             'gold' => '#f1c36b',
@@ -26,6 +27,7 @@ if (!function_exists('nj_tema_settings')) {
         }
         $settings = $defaults;
         $settings['logo'] = isset($saved['logo']) ? (function_exists('absint') ? absint($saved['logo']) : abs((int) $saved['logo'])) : 0;
+        $settings['logo_alto'] = nj_tema_logo_alto(isset($saved['logo_alto']) ? $saved['logo_alto'] : 86);
         foreach (array('coral', 'teal', 'gold', 'ink', 'bg') as $key) {
             $color = isset($saved[$key]) ? (function_exists('sanitize_hex_color') ? sanitize_hex_color($saved[$key]) : '') : '';
             if ($color) {
@@ -34,6 +36,22 @@ if (!function_exists('nj_tema_settings')) {
         }
         $settings['css'] = isset($saved['css']) ? nj_tema_css_clean($saved['css']) : '';
         return $settings;
+    }
+}
+
+if (!function_exists('nj_tema_logo_alto')) {
+    function nj_tema_logo_alto($value) {
+        if ($value === '' || $value === null) {
+            return 86;
+        }
+        $number = (int) $value;
+        if ($number < 40) {
+            return 40;
+        }
+        if ($number > 200) {
+            return 200;
+        }
+        return $number;
     }
 }
 
@@ -422,7 +440,7 @@ if (!function_exists('nj_tema_menu_item')) {
             if ($clean) {
                 $item['children'][] = $clean;
             }
-            if (count($item['children']) >= 8) {
+            if (count($item['children']) >= 12) {
                 break;
             }
         }
@@ -508,6 +526,10 @@ if (!function_exists('nj_tema_css')) {
                 $rules[] = $name . ':' . $settings[$key];
             }
         }
+        $logo_alto = isset($settings['logo_alto']) ? (int) $settings['logo_alto'] : 86;
+        if ($logo_alto !== 86) {
+            $rules[] = '--logo-h:' . $logo_alto . 'px';
+        }
         if ($rules) {
             echo '<style id="nj-tema">:root{' . implode(';', $rules) . '}</style>';
         }
@@ -545,10 +567,10 @@ if (!function_exists('nj_tema_admin_assets')) {
             wp_enqueue_media();
         }
         $uri = get_template_directory_uri();
-        wp_enqueue_style('nj-hero-admin', $uri . '/assets/hero-admin.css', array(), '1.0.0');
-        wp_enqueue_style('nj-tienda', $uri . '/assets/mitienda.css', array('nj-hero-admin'), '1.1.14');
-        wp_enqueue_script('nj-hero-admin', $uri . '/assets/hero-admin.js', array('jquery'), '1.0.0', true);
-        wp_enqueue_script('nj-tienda', $uri . '/assets/mitienda.js', array('jquery', 'nj-hero-admin'), '1.1.14', true);
+        wp_enqueue_style('nj-hero-admin', $uri . '/assets/hero-admin.css', array(), '1.0.4');
+        wp_enqueue_style('nj-tienda', $uri . '/assets/mitienda.css', array('nj-hero-admin'), '1.1.47');
+        wp_enqueue_script('nj-hero-admin', $uri . '/assets/hero-admin.js', array('jquery'), '1.0.3', true);
+        wp_enqueue_script('nj-tienda', $uri . '/assets/mitienda.js', array('jquery', 'nj-hero-admin'), '1.1.30', true);
     }
 }
 add_action('admin_enqueue_scripts', 'nj_tema_admin_assets', 20);
@@ -568,6 +590,7 @@ if (!function_exists('nj_tema_admin_save')) {
             }
             $defaults = nj_tema_defaults();
             $raw['logo'] = 0;
+            $raw['logo_alto'] = 86;
             foreach (array('coral', 'teal', 'gold', 'ink', 'bg') as $key) {
                 $raw[$key] = $defaults[$key];
             }
@@ -588,6 +611,7 @@ if (!function_exists('nj_tema_admin_save')) {
         }
         $saved = array(
             'logo' => $logo,
+            'logo_alto' => nj_tema_logo_alto(isset($_POST['logo_alto']) ? wp_unslash($_POST['logo_alto']) : 86),
             'css' => nj_tema_css_clean(isset($_POST['extra_css']) ? wp_unslash($_POST['extra_css']) : ''),
         );
         foreach (array('coral', 'teal', 'gold', 'ink', 'bg') as $key) {
@@ -630,6 +654,9 @@ if (!function_exists('nj_tema_admin_save')) {
             }
             if (function_exists('nj_pagos_save_wompi')) {
                 nj_pagos_save_wompi();
+            }
+            if (function_exists('nj_addi_save')) {
+                nj_addi_save();
             }
         }
         $section = isset($_POST['nj_tema_section']) ? sanitize_key(wp_unslash($_POST['nj_tema_section'])) : 'identidad';

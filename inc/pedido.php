@@ -240,13 +240,120 @@ if (!function_exists('nj_checkout_short_address')) {
 }
 add_filter('woocommerce_default_address_fields', 'nj_checkout_short_address');
 
+if (!function_exists('nj_sanitize_cedula')) {
+    function nj_sanitize_cedula($value) {
+        $digits = preg_replace('/\D+/', '', (string) $value);
+        return $digits === null ? '' : $digits;
+    }
+}
+
+if (!function_exists('nj_validate_cedula')) {
+    function nj_validate_cedula($value) {
+        $value = nj_sanitize_cedula($value);
+        $largo = function_exists('mb_strlen') ? mb_strlen($value) : strlen($value);
+        if ($largo < 6 || $largo > 12) {
+            return new WP_Error('nj_cedula', 'Escribe la cédula, solo números, para poder enviar el pedido.');
+        }
+    }
+}
+
+if (!function_exists('nj_order_cedula')) {
+    function nj_order_cedula($order) {
+        if (!is_object($order) || !method_exists($order, 'get_meta')) {
+            return '';
+        }
+        foreach (array('_wc_shipping/nj/cedula', '_wc_billing/nj/cedula', '_billing_cedula', 'billing_cedula') as $key) {
+            $value = nj_sanitize_cedula($order->get_meta($key, true));
+            if ($value !== '') {
+                return $value;
+            }
+        }
+        return '';
+    }
+}
+
+if (!function_exists('nj_register_cedula_field')) {
+    function nj_register_cedula_field() {
+        if (!function_exists('woocommerce_register_additional_checkout_field')) {
+            return;
+        }
+        woocommerce_register_additional_checkout_field(array(
+            'id' => 'nj/cedula',
+            'label' => 'Cédula',
+            'location' => 'address',
+            'type' => 'text',
+            'required' => true,
+            'attributes' => array(
+                'autocomplete' => 'off',
+                'maxLength' => '12',
+                'title' => 'La cédula, solo números, para poder enviar el pedido',
+            ),
+            'sanitize_callback' => 'nj_sanitize_cedula',
+            'validate_callback' => 'nj_validate_cedula',
+        ));
+    }
+}
+nj_register_cedula_field();
+
 if (!function_exists('nj_checkout_short_fields')) {
     function nj_checkout_short_fields($fields) {
         unset($fields['billing']['billing_company'], $fields['shipping']['shipping_company'], $fields['order']['order_comments']);
+        $fields['billing']['billing_cedula'] = array(
+            'type' => 'text',
+            'label' => 'Cédula',
+            'placeholder' => '1234567890',
+            'required' => true,
+            'priority' => 22,
+            'class' => array('form-row-wide'),
+            'custom_attributes' => array(
+                'inputmode' => 'numeric',
+                'maxlength' => '12',
+            ),
+        );
         return $fields;
     }
 }
 add_filter('woocommerce_checkout_fields', 'nj_checkout_short_fields');
+
+if (!function_exists('nj_checkout_cedula_error')) {
+    function nj_checkout_cedula_error($data, $errors) {
+        if (!isset($_POST['billing_cedula']) || !is_object($errors) || !method_exists($errors, 'add')) {
+            return;
+        }
+        $error = nj_validate_cedula(wp_unslash($_POST['billing_cedula']));
+        if (is_wp_error($error)) {
+            $errors->add('billing_cedula', $error->get_error_message());
+        }
+    }
+}
+add_action('woocommerce_after_checkout_validation', 'nj_checkout_cedula_error', 10, 2);
+
+if (!function_exists('nj_save_cedula')) {
+    function nj_save_cedula($order_id) {
+        if (!isset($_POST['billing_cedula']) || !function_exists('wc_get_order')) {
+            return;
+        }
+        $order = wc_get_order($order_id);
+        $cedula = nj_sanitize_cedula(wp_unslash($_POST['billing_cedula']));
+        if (!$order || $cedula === '') {
+            return;
+        }
+        $order->update_meta_data('_billing_cedula', $cedula);
+        $order->save();
+    }
+}
+add_action('woocommerce_checkout_update_order_meta', 'nj_save_cedula');
+
+if (!function_exists('nj_admin_cedula_field')) {
+    function nj_admin_cedula_field($fields) {
+        $fields['cedula'] = array(
+            'label' => 'Cédula',
+            'show' => true,
+        );
+        return $fields;
+    }
+}
+add_filter('woocommerce_admin_billing_fields', 'nj_admin_cedula_field');
 
 if (!function_exists('nj_checkout_notes_off')) {
     function nj_checkout_notes_off() {

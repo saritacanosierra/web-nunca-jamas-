@@ -83,6 +83,7 @@ if (!function_exists('nj_ficha_from_card')) {
         }
         $envios = $saved('_nj_envios');
         $cuidados = $saved('_nj_cuidados');
+        $item['look'] = nj_ficha_look($id);
         $item['tabs'] = array(
             array(
                 'id' => 'descripcion',
@@ -101,6 +102,107 @@ if (!function_exists('nj_ficha_from_card')) {
             ),
         );
         return $item;
+    }
+}
+
+if (!function_exists('nj_ficha_look_ids')) {
+    function nj_ficha_look_ids($id) {
+        $id = (int) $id;
+        $ids = array();
+        if ($id > 0 && function_exists('get_post_meta')) {
+            $saved = get_post_meta($id, '_nj_look', true);
+            if (is_array($saved)) {
+                $ids = $saved;
+            }
+        }
+        if ($id > 0 && function_exists('wc_get_product')) {
+            $product = wc_get_product($id);
+            if ($product && method_exists($product, 'get_cross_sell_ids')) {
+                $ids = array_merge($ids, $product->get_cross_sell_ids());
+            }
+        }
+        $clean = array();
+        foreach ($ids as $look_id) {
+            $look_id = (int) $look_id;
+            if ($look_id > 0 && $look_id !== $id && !in_array($look_id, $clean, true)) {
+                $clean[] = $look_id;
+            }
+        }
+        return array_slice($clean, 0, 4);
+    }
+}
+
+if (!function_exists('nj_ficha_look_card')) {
+    function nj_ficha_look_card($product) {
+        if (!is_object($product) || !function_exists('nj_card_from_product')) {
+            return array();
+        }
+        $card = nj_card_from_product($product);
+        return array(
+            'id' => (int) $card['id'],
+            'name' => $card['name'],
+            'image' => $card['image'],
+            'url' => $card['url'],
+            'price' => (int) $card['price'],
+            'regular' => (int) $card['regular'],
+            'price_html' => $card['price_html'],
+            'sizes' => $card['sizes'],
+            'variations' => $card['variations'],
+        );
+    }
+}
+
+if (!function_exists('nj_ficha_look_preview')) {
+    function nj_ficha_look_preview() {
+        if (!function_exists('nj_slots_data')) {
+            return array();
+        }
+        $slots = nj_slots_data();
+        $rows = array();
+        foreach ($slots['catalog_products'] as $product) {
+            if (!isset($product['section']) || $product['section'] !== 'accesorios') {
+                continue;
+            }
+            $rows[] = array(
+                'id' => 0,
+                'name' => $product['name'],
+                'image' => function_exists('nj_img') ? nj_img($product['src']) : $product['src'],
+                'url' => '',
+                'price' => 28000,
+                'regular' => 0,
+                'price_html' => $product['price'],
+                'sizes' => array('Única'),
+                'variations' => array(),
+            );
+            if (count($rows) >= 2) {
+                break;
+            }
+        }
+        return $rows;
+    }
+}
+
+if (!function_exists('nj_ficha_look')) {
+    function nj_ficha_look($id) {
+        $id = (int) $id;
+        if ($id < 1) {
+            return defined('NJ_PREVIEW') ? nj_ficha_look_preview() : array();
+        }
+        $rows = array();
+        foreach (nj_ficha_look_ids($id) as $look_id) {
+            if (!function_exists('wc_get_product')) {
+                continue;
+            }
+            $product = wc_get_product($look_id);
+            if (!$product || (method_exists($product, 'is_visible') && !$product->is_visible())) {
+                continue;
+            }
+            $card = nj_ficha_look_card($product);
+            if ($card) {
+                $rows[] = $card;
+            }
+        }
+        return $rows;
     }
 }
 
@@ -137,11 +239,12 @@ if (!function_exists('nj_compra_guide_html')) {
 
 if (!function_exists('nj_compra_trust_html')) {
     function nj_compra_trust_html($line = false) {
+        $nj_pay = (function_exists('nj_addi_ready') && nj_addi_ready()) ? 'Nequi, PSE, tarjeta o Addi' : 'Nequi, PSE o tarjeta';
         if ($line) {
-            return '<p class="nj-trust nj-trust--line">Envío a Colombia · Cambio si la talla no queda · Nequi, PSE o tarjeta</p>';
+            return '<p class="nj-trust nj-trust--line">Envío a Colombia · Cambio si la talla no queda · ' . esc_html($nj_pay) . '</p>';
         }
         $html = '<ul class="nj-trust">';
-        foreach (array('Envío a Colombia', 'Cambio si la talla no queda', 'Nequi, PSE o tarjeta') as $item) {
+        foreach (array('Envío a Colombia', 'Cambio si la talla no queda', $nj_pay) as $item) {
             $html .= '<li>' . esc_html($item) . '</li>';
         }
         return $html . '</ul>';
